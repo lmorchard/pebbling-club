@@ -1,16 +1,52 @@
 import { App } from "../app";
 import { Cli } from "../cli";
+import { AppModule, CliAppModule } from "../app/modules";
 import { Command } from "commander";
 
-export class Server {
-  app: App;
-  
-  constructor(app: App) {
-    this.app = app;
-  }
+import express from "express";
+import pinoHttp from "pino-http";
 
+export const configSchema = {
+  host: {
+    doc: "Server host",
+    env: "HOST",
+    format: String,
+    default: "localhost",
+  },
+  port: {
+    doc: "Server port",
+    env: "PORT",
+    format: Number,
+    default: 8089,
+  },
+  publicPath: {
+    doc: "Public web static resources path",
+    env: "PUBLIC_PATH",
+    format: String,
+    default: "public",
+  },
+  siteUrl: {
+    doc: "Server base URL",
+    env: "SITE_URL",
+    nullable: true,
+    default: null,
+  },
+  projectDomain: {
+    doc: "Glitch.com project domain",
+    env: "PROJECT_DOMAIN",
+    nullable: true,
+    default: null,
+  },
+  projectId: {
+    doc: "Glitch.com project ID",
+    env: "PROJECT_ID",
+    nullable: true,
+    default: null,
+  },
+} as const;
+
+export class Server extends CliAppModule {
   async init() {
-
     return this;
   }
 
@@ -20,10 +56,27 @@ export class Server {
     program
       .command("serve")
       .description("start the web application server")
-      .action(this.serve.bind(this))
+      .action(this.commandServe.bind(this))
+
+    return this;
   }
 
-  serve() {
-    console.log("SERVE");
+  commandServe() {
+    const { config: { config }, logging: { log } } = this.app;
+    const host = config.get("host");
+    const port = config.get("port");
+
+    const app = express()
+
+    app.use(pinoHttp({ logger: log }));    
+    app.use(express.static(config.get("publicPath")));
+
+    app.get('/', (req, res) => {
+      res.send('Hello World!')
+    });
+
+    app.listen(port, () => {
+      log.info(`Server listening on port ${port}`);
+    });
   }
 }
