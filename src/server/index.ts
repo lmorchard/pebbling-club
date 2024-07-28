@@ -6,6 +6,8 @@ import { Command } from "commander";
 import express from "express";
 import pinoHttp from "pino-http";
 
+import authRouter from "./routes/auth";
+
 export const configSchema = {
   host: {
     doc: "Server host",
@@ -71,6 +73,8 @@ export class Server extends CliAppModule {
 
     app.use(pinoHttp({ logger: log }));    
     app.use(express.static(config.get("publicPath")));
+
+    app.use("/auth", authRouter());
 
     app.get('/', (req, res) => {
       res.send('Hello World!')

@@ -63,14 +63,12 @@ export class Logging extends CliAppModule {
         {
           stream: usePrettyLogs
             ? pretty({
-              colorize: true,
-              singleLine: config.get("logSingleLine"),
-            })
+                colorize: true,
+                singleLine: config.get("logSingleLine"),
+              })
             : process.stdout,
         },
-        {
-          stream: new LogEventStream(this.app.events, Logging.EVENT_LOG),
-        },
+        { stream: new LogEventStream(this.app.events, Logging.EVENT_LOG) },
       ];
       const logOptions = {
         level: config.get("logLevel"),
