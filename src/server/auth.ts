@@ -1,9 +1,7 @@
-import crypto from "crypto";
-import { Router, Express } from "express";
+import { Express } from "express";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Server } from "./index";
-import * as templates from "./templates";
 
 declare global {
   namespace Express {
@@ -35,74 +33,39 @@ export default async function init(server: Server, app: Express) {
   );
 
   /* Configure session management. */
+  /*
+  // TODO: rework this stuff not to hit the DB?
   passport.serializeUser(function (user, cb) {
     process.nextTick(function () {
-      // @ts-ignore
-      cb(null, { id: user.id, username: user.username });
+      cb(null, user.id);
     });
   });
 
-  passport.deserializeUser(function (user: Express.User, cb) {
-    process.nextTick(function () {
-      return cb(null, user);
-    });
-  });
-
-  const router = Router();
-
-  router.get("/", (req, res) => {
-    const { globalProps } = res.locals;
-
-    res.send("Hello AUTH!");
-  });
-
-  router.get("/signup", function (req, res, next) {
-    const { globalProps } = res.locals;
-    res.send(templates.signup({ ...globalProps })());
-  });
-
-  router.get("/login", function (req, res, next) {
-    const { globalProps } = res.locals;
-    res.send(templates.login({ ...globalProps })());
-  });
-
-  router.post(
-    "/login/password",
-    passport.authenticate("local", {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/auth/login",
-      failureMessage: true,
-    })
-  );
-
-  router.post("/logout", function (req, res, next) {
-    req.logout(function (err) {
-      if (err) return next(err);
-      res.redirect("/");
-    });
-  });
-
-  router.post("/signup", function (req, res, next) {
+  passport.deserializeUser(function (id: string, cb) {
     const { passwords } = server.app.services;
-    const { username, password } = req.body;
+    passwords.get(id).then(username => {
+      if (!username) return cb(null, null);
+      return cb(null, { id, username });
+    }).catch(err => cb(err, null));
+  });
+  */
 
-    passwords
-      .create(username, password)
-      .then((id: string) => {
-        var user = {
-          id,
-          username,
-        };
-        req.login(user, function (err) {
-          if (err) return next(err);
-          res.redirect("/");
-        });
-      })
-      .catch((err) => {
-        return next(err);
-      });
+  passport.serializeUser(function (user, cb) {
+    process.nextTick(function () {
+      cb(null, user);
+    });
+  });
+
+  passport.deserializeUser(function (id: Express.User, cb) {
+    process.nextTick(function () {
+      cb(null, id as Express.User);
+    });
   });
 
   app.use(passport.authenticate("session"));
-  app.use("/auth", router);
+
+  app.use(function (req, res, next) {
+    res.locals.globalProps.user = req.user;
+    next();
+  });
 }

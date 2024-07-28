@@ -13,7 +13,7 @@ export const layout = ({
       ${user
         ? html`
             <form action="/auth/logout" method="post">
-              <button type="submit">Logout (${user.username})</button>
+              <button type="submit">Logout (${user.username} (${user.id}))</button>
               <input type="hidden" name="_csrf" value="${csrfToken}" />
             </form>
           `

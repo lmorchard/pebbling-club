@@ -12,6 +12,7 @@ import csrf from "csurf";
 import authInit from "./auth";
 
 import indexRouter from "./routes/index";
+import authRouter from "./routes/auth";
 
 export const configSchema = {
   host: {
@@ -109,16 +110,6 @@ export class Server extends CliAppModule {
       })
     );
     app.use(csrf());
-    app.use(function (req, res, next) {
-      // @ts-ignore
-      const user = req.session?.passport?.user;
-      const csrfToken = req.csrfToken();
-      res.locals.globalProps = {
-        user,
-        csrfToken,
-      };
-      next();
-    });
     /*
     app.use(function(req, res, next) {
       var msgs = req.session.messages || [];
@@ -131,9 +122,16 @@ export class Server extends CliAppModule {
 
     app.use(express.static(config.get("publicPath")));
 
+    app.use(function (req, res, next) {
+      const csrfToken = req.csrfToken();
+      res.locals.globalProps = { csrfToken,};
+      next();
+    });
+  
     await authInit(this, app);
 
-    app.use("/", indexRouter());
+    app.use("/", indexRouter(this, app));
+    app.use("/auth", authRouter(this, app));
 
     app.listen(port, () => {
       log.info(`Server listening on port ${port}`);

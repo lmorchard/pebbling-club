@@ -141,6 +141,15 @@ export class SqliteRepository extends BaseRepository {
     }
   }
 
+  async getUsernameForId(id: string): Promise<undefined | string> {
+    const result = await this.connection("users")
+      .select("username")
+      .where({ id })
+      .first();
+    if (!result) return;
+    return result.username;
+  }
+
   async deleteHashedPasswordAndSaltForUsername(
     username: string,
   ): Promise<string> {

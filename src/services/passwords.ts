@@ -42,7 +42,7 @@ export class PasswordService extends BaseService {
     const result = await this.repository.getHashedPasswordAndSaltForUsername(
       username
     );
-    if (!result) return null;
+    if (!result) return;
 
     const { id, hashedPassword, salt } = result;
 
@@ -56,7 +56,12 @@ export class PasswordService extends BaseService {
       this.hexToArray(hashedPassword)
     );
 
-    return verified ? id : null;
+    return verified ? id : undefined;
+  }
+
+  async get(id: string) {
+    const result = await this.repository.getUsernameForId(id);
+    return result ? result : undefined;
   }
 
   async delete(username: string) {
