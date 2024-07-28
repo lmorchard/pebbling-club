@@ -5,10 +5,12 @@ import { Strategy as LocalStrategy } from "passport-local";
 import { Server } from "./index";
 import * as templates from "./templates";
 
-declare namespace Express {
-  interface User {
-    id: string;
-    username: string;
+declare global {
+  namespace Express {
+    interface User {
+      id: string;
+      username: string;
+    }
   }
 }
 
