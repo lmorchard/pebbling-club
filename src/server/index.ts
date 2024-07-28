@@ -3,10 +3,12 @@ import { Cli } from "../cli";
 import { AppModule, CliAppModule } from "../app/modules";
 import { Command } from "commander";
 
-import express from "express";
+import express, { Express } from "express";
 import pinoHttp from "pino-http";
 
-import authRouter from "./routes/auth";
+import authInit from "./auth";
+
+import indexRouter from "./routes/index";
 
 export const configSchema = {
   host: {
@@ -33,6 +35,7 @@ export const configSchema = {
     nullable: true,
     default: null,
   },
+  /*
   projectDomain: {
     doc: "Glitch.com project domain",
     env: "PROJECT_DOMAIN",
@@ -45,9 +48,12 @@ export const configSchema = {
     nullable: true,
     default: null,
   },
+  */
 } as const;
 
 export class Server extends CliAppModule {
+  serverApp?: Express;
+  
   async init() {
     return this;
   }
@@ -63,22 +69,20 @@ export class Server extends CliAppModule {
     return this;
   }
 
-  commandServe() {
+  async commandServe() {
     const { config, log } = this.app.context;
     
     const host = config.get("host");
     const port = config.get("port");
 
-    const app = express()
+    const app = express();
 
     app.use(pinoHttp({ logger: log }));    
     app.use(express.static(config.get("publicPath")));
 
-    app.use("/auth", authRouter());
+    await authInit(app);
 
-    app.get('/', (req, res) => {
-      res.send('Hello World!')
-    });
+    app.use("/", indexRouter());
 
     app.listen(port, () => {
       log.info(`Server listening on port ${port}`);

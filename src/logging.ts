@@ -27,11 +27,12 @@ export class Logging extends CliAppModule {
   static EVENT_LOG = Symbol("eventLog");
 
   usePrettyLogs: boolean;
-  _log?: Logger<never>;
+  log: Logger<never>;
 
   constructor(app: App) {
     super(app);
     this.usePrettyLogs = false;
+    this.log = this.buildLogger();
   }
 
   async init() {
@@ -52,31 +53,29 @@ export class Logging extends CliAppModule {
     const { prettyLogs, forcePrettyLogs } = command.opts();
     this.usePrettyLogs =
       forcePrettyLogs || (process.stdout.isTTY && prettyLogs);
+    // HACK: rebuild logger to account for usePrettyLogs
+    this.log = this.buildLogger();
   }
 
-  get log() {
+  buildLogger() {
     const { usePrettyLogs } = this;
     const config = this.app.config.config;
 
-    if (!this._log) {
-      const logStreams = [
-        {
-          stream: usePrettyLogs
-            ? pretty({
-                colorize: true,
-                singleLine: config.get("logSingleLine"),
-              })
-            : process.stdout,
-        },
-        { stream: new LogEventStream(this.app.events, Logging.EVENT_LOG) },
-      ];
-      const logOptions = {
-        level: config.get("logLevel"),
-      };
-      this._log = pino(logOptions, pino.multistream(logStreams));
-    }
-
-    return this._log;
+    const logStreams = [
+      {
+        stream: usePrettyLogs
+          ? pretty({
+              colorize: true,
+              singleLine: config.get("logSingleLine"),
+            })
+          : process.stdout,
+      },
+      { stream: new LogEventStream(this.app.events, Logging.EVENT_LOG) },
+    ];
+    const logOptions = {
+      level: config.get("logLevel"),
+    };
+    return pino(logOptions, pino.multistream(logStreams));
   }
 }
 

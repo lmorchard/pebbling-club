@@ -1,21 +1,12 @@
 import path from "path";
 import Knex from "knex";
-
-import { BaseRepository } from "../index";
+import { v4 as uuid } from 'uuid';
+import { BaseRepository } from "../base";
 import { mkdirp } from "mkdirp";
 import { Cli } from "../../cli";
 
-type KnexMigratorCommandName = keyof Knex.Knex.Migrator;
-
-type KnexMigratorParameters<N extends KnexMigratorCommandName> = Parameters<
-  Knex.Knex.Migrator[N]
->;
-
-type KnexSeederCommandName = keyof Knex.Knex.Seeder;
-
-type KnexSeederParameters<N extends KnexSeederCommandName> = Parameters<
-  Knex.Knex.Seeder[N]
->;
+import { SqliteRepositoryCli } from "./cli";
+import { App } from "../../app";
 
 export const configSchema = {
   sqliteDatabaseName: {
@@ -51,18 +42,26 @@ export const configSchema = {
 } as const;
 
 export class SqliteRepository extends BaseRepository {
+  cli: SqliteRepositoryCli;
   _connection?: Knex.Knex<any, unknown[]>;
+
+  constructor(app: App) {
+    super(app);
+    this.cli = new SqliteRepositoryCli(this);
+  }
 
   async init() {
     const { config, log } = this.app.context;
+    return this;
+  }
 
+  async initCli(cli: Cli) {
+    await this.cli.initCli(cli);
     return this;
   }
 
   async deinit() {
-    if (this._connection) {
-      this._connection.destroy();
-    }
+    if (this._connection) this._connection.destroy();
     return this;
   }
 
@@ -97,114 +96,53 @@ export class SqliteRepository extends BaseRepository {
     return this._connection;
   }
 
-  async initCli(cli: Cli) {
-    const { program } = cli;
-
-    const databaseProgram = program
-      .command("sqlite")
-      .description("knex sqlite database maintenance operations");
-
-    databaseProgram
-      .command("init")
-      .description("init sqlite database")
-      .action(this.runInit.bind(this));
-
-    const migrateProgram = databaseProgram
-      .command("migrate")
-      .description("database migration operations");
-
-    migrateProgram
-      .command("make <name>")
-      .description("create a new migration")
-      .action((name) =>
-        this.runMigratorCommand("make", name, this.migratorConfig())
-      );
-
-    migrateProgram
-      .command("latest")
-      .description("run all migrations")
-      .action(() => this.runMigratorCommand("latest", this.migratorConfig()));
-
-    migrateProgram
-      .command("up")
-      .description("run the next migration")
-      .action(() => this.runMigratorCommand("up", this.migratorConfig()));
-
-    migrateProgram
-      .command("down")
-      .description("undo the last migration")
-      .action(() => this.runMigratorCommand("down", this.migratorConfig()));
-
-    migrateProgram
-      .command("currentVersion")
-      .description("show the latest migration version")
-      .action(() =>
-        this.runMigratorCommand("currentVersion", this.migratorConfig())
-      );
-
-    migrateProgram
-      .command("list")
-      .description("list applied migrations")
-      .action(() => this.runMigratorCommand("list", this.migratorConfig()));
-
-    const seedProgram = databaseProgram
-      .command("seed")
-      .description("database seed operations");
-
-    seedProgram
-      .command("make <name>")
-      .description("make a new seed file")
-      .action((name) => this.runSeederCommand("make", name, this.seederConfig()));
-
-    seedProgram
-      .command("run")
-      .description("run all seed files")
-      .action((name) => this.runSeederCommand("run", this.seederConfig()));
-
-    return this;
+  async createHashedPasswordAndSaltForUsername(
+    username: string,
+    hashed_password: string,
+    salt: string
+  ): Promise<string> {
+    const id = uuid();
+    await this.connection("users").insert({
+      id,
+      username,
+      hashed_password,
+      salt,
+    });
+    return id;
   }
 
-  async runInit() {
-    const { connection } = this;
-    await connection.migrate.latest(this.migratorConfig());
-    await connection.seed.run(this.seederConfig());
-  }
-
-  migratorConfig() {
-    const { config } = this.app.context;
-    return {
-      directory: config.get("sqliteDatabaseMigrationsPath"),
-      extension: "cjs",
-    };
-  }
-
-  seederConfig() {
-    const { config } = this.app.context;
-    return {
-      directory: config.get("sqliteDatabaseSeedsPath"),
-      extension: "cjs",
-    };
-  }
-
-  async runMigratorCommand<CommandName extends KnexMigratorCommandName>(
-    name: CommandName,
-    ...args: KnexMigratorParameters<CommandName>
+  async updateHashedPasswordAndSaltForUsername(
+    username: string,
+    hashed_password: string,
+    salt: string
   ) {
-    const { config, log } = this.app.context;
-    const { connection } = this;
-    /* @ts-ignore can't figure out the right handling for ...args */
-    const result = await connection.migrate[name](...args);
-    log.info({ msg: name, result });
+    await this.connection("users")
+      .where("username", username)
+      .update({
+        username,
+        hashed_password,
+        salt,  
+      });
   }
 
-  async runSeederCommand<CommandName extends KnexSeederCommandName>(
-    name: CommandName,
-    ...args: KnexSeederParameters<CommandName>
-  ) {
-    const { config, log } = this.app.context;
-    const { connection } = this;
-    /* @ts-ignore can't figure out the right handling for ...args */
-    const result = await connection.seed[name](...args, this.seederConfig);
-    log.info({ msg: name, result });
+  async getHashedPasswordAndSaltForUsername(
+    username: string
+  ): Promise<{ hashedPassword: string; salt: string }> {
+    const result = await this.connection("users")
+      .select("hashed_password", "salt")
+      .where("username", username)
+      .first();
+    return {
+      hashedPassword: result.hashed_password,
+      salt: result.salt,
+    }
+  }
+
+  async deleteHashedPasswordAndSaltForUsername(
+    username: string,
+  ): Promise<string> {
+    return this.connection("users")
+      .where("username", username)
+      .del();
   }
 }

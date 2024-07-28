@@ -2,8 +2,9 @@ import { Config } from "../config";
 import { Logging } from "../logging";
 import { AppModule } from "./modules";
 import { Events } from "../events";
-import { BaseRepository } from "../repositories/index";
+import { BaseRepository } from "../repositories/base";
 import { SqliteRepository } from "../repositories/sqlite/index";
+import { Services } from "../services";
 
 export class App {
   modules: AppModule[];
@@ -11,13 +12,15 @@ export class App {
   config: Config;
   logging: Logging;
   repository: BaseRepository;
+  services: Services;
 
   constructor() {
     this.modules = [
       this.events = new Events(this),
       this.config = new Config(this),
       this.logging = new Logging(this),
-      this.repository = new SqliteRepository(this),
+      this.repository = new SqliteRepository(this), // TODO make switchable later
+      this.services = new Services(this),
     ];
   }
 
