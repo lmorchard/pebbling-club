@@ -17,25 +17,17 @@ export class BaseRepository extends CliAppModule {
     salt: string
   ) {
     throw new BaseRepositoryMethodUnimplementedError();
-  }  
+  }
 
   async getHashedPasswordAndSaltForUsername(
     username: string
-  ): Promise<{ hashedPassword: string; salt: string }> {
+  ): Promise<undefined | { id: string; hashedPassword: string; salt: string }> {
     throw new BaseRepositoryMethodUnimplementedError();
   }
 
   async deleteHashedPasswordAndSaltForUsername(
-    username: string,
+    username: string
   ): Promise<string> {
     throw new BaseRepositoryMethodUnimplementedError();
-  }
-}
-
-export class MockRepository extends BaseRepository {
-  // @ts-ignore not mocking an app here
-  constructor() {
-    // @ts-ignore not mocking an app here
-    super();
   }
 }

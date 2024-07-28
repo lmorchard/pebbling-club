@@ -127,14 +127,17 @@ export class SqliteRepository extends BaseRepository {
 
   async getHashedPasswordAndSaltForUsername(
     username: string
-  ): Promise<{ hashedPassword: string; salt: string }> {
+  ): Promise<undefined | { id: string, hashedPassword: string; salt: string }> {
     const result = await this.connection("users")
-      .select("hashed_password", "salt")
+      .select("id", "hashed_password", "salt")
       .where("username", username)
       .first();
+    if (!result) return;
+    const { id, salt, hashed_password } = result;
     return {
-      hashedPassword: result.hashed_password,
-      salt: result.salt,
+      id,
+      salt,
+      hashedPassword: hashed_password,
     }
   }
 

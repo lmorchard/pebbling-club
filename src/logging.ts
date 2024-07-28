@@ -13,7 +13,7 @@ export const configSchema = {
     doc: "Logging level",
     env: "LOG_LEVEL",
     format: ["trace", "debug", "info", "warn", "error"],
-    default: "info",
+    default: "debug",
   },
   logSingleLine: {
     doc: "Emit single-line log messages",

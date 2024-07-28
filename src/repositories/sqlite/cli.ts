@@ -28,10 +28,6 @@ export class SqliteRepositoryCli {
     const databaseProgram = program
       .command("sqlite")
       .description("knex sqlite database maintenance operations");
- 
-    databaseProgram
-      .command("play")
-      .action(this.runPlay.bind(this));
 
     databaseProgram
       .command("init")

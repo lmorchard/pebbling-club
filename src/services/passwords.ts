@@ -39,18 +39,24 @@ export class PasswordService extends BaseService {
   }
 
   async verify(username: string, password: string) {
-    const { hashedPassword, salt } =
-      await this.repository.getHashedPasswordAndSaltForUsername(username);
+    const result = await this.repository.getHashedPasswordAndSaltForUsername(
+      username
+    );
+    if (!result) return null;
+
+    const { id, hashedPassword, salt } = result;
 
     const { hashedPassword: submittedHashedPassword } = await this.hashPassword(
       password,
       salt
     );
 
-    return crypto.timingSafeEqual(
+    const verified = crypto.timingSafeEqual(
       this.hexToArray(submittedHashedPassword),
       this.hexToArray(hashedPassword)
     );
+
+    return verified ? id : null;
   }
 
   async delete(username: string) {
