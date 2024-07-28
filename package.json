@@ -6,8 +6,10 @@
     "start": "npm run build && node ./build/index.js",
     "build": "npx tsc",
     "serve": "npm run build && node ./build/index.js serve",
-    "dev": "ts-node ./src/index.ts",
-    "dev:serve": "nodemon --watch src --ext 'js,ts' --exec 'ts-node ./src/index.ts --force-pretty-logs serve'"
+    "test": "glob -c \"node --import tsx --no-warnings --test\" \"./src/**/*.test.ts\"",
+    "test:watch": "glob -c \"node --import tsx --no-warnings --watch --test\" \"./src/**/*.test.ts\"",
+    "dev": "tsx ./src/index.ts",
+    "dev:serve": "nodemon --watch src --ext 'js,ts' --exec 'tsx ./src/index.ts --force-pretty-logs serve'"
   },
   "author": "",
   "license": "ISC",
@@ -22,20 +24,27 @@
     "express-session": "^1.18.0",
     "knex": "^3.1.0",
     "mkdirp": "^3.0.1",
+    "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pino-http": "^10.2.0",
     "pino-pretty": "^11.2.2",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.11",
     "@types/convict": "^6.1.6",
     "@types/escape-html": "^1.0.4",
     "@types/express": "^4.17.21",
+    "@types/glob": "^8.1.0",
     "@types/node": "^20.14.12",
+    "@types/passport": "^1.0.16",
+    "@types/passport-local": "^1.0.38",
+    "@types/uuid": "^10.0.0",
+    "glob": "^11.0.0",
     "nodemon": "^3.1.4",
     "onchange": "^7.1.0",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.16.2",
     "typescript": "^5.5.4"
   }
 }
