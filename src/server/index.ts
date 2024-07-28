@@ -62,7 +62,8 @@ export class Server extends CliAppModule {
   }
 
   commandServe() {
-    const { config: { config }, logging: { log } } = this.app;
+    const { config, log } = this.app.context;
+    
     const host = config.get("host");
     const port = config.get("port");
 

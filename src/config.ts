@@ -9,6 +9,12 @@ import { configSchema as loggingConfigSchema } from "./logging";
 import { configSchema as serverConfigSchema } from "./server/index";
 
 export const configSchema = {
+  dataPath: {
+    doc: "Data directory for application state",
+    env: "DATA_PATH",
+    format: String,
+    default: "data",
+  },
   ...loggingConfigSchema,
   ...serverConfigSchema,
 } as const;
