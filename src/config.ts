@@ -7,6 +7,7 @@ import { Cli } from "./cli";
 
 import { configSchema as loggingConfigSchema } from "./logging";
 import { configSchema as serverConfigSchema } from "./server/index";
+import { configSchema as repositorySqlite3ConfigSchema } from "./repositories/sqlite/index";
 
 export const configSchema = {
   dataPath: {
@@ -17,6 +18,7 @@ export const configSchema = {
   },
   ...loggingConfigSchema,
   ...serverConfigSchema,
+  ...repositorySqlite3ConfigSchema,
 } as const;
 
 export const config = Convict(configSchema);

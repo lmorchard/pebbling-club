@@ -1,5 +1,4 @@
-import { App } from "../app/index";
-import { AppModule } from "../app/modules";
+import { CliAppModule } from "../app/modules";
 
-export class BaseRepository extends AppModule {
+export class BaseRepository extends CliAppModule {
 }

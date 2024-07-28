@@ -5,16 +5,14 @@
   "scripts": {
     "start": "npm run build && node ./build/index.js",
     "build": "npx tsc",
-    "dev": "ts-node ./src/index.ts",
     "serve": "npm run build && node ./build/index.js serve",
-    "serve:dev": "nodemon --watch src --ext 'js,ts' --exec 'ts-node ./src/index.ts serve'",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "ts-node ./src/index.ts",
+    "dev:serve": "nodemon --watch src --ext 'js,ts' --exec 'ts-node ./src/index.ts --force-pretty-logs serve'"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "better-sqlite3": "^11.1.2",
     "commander": "^12.1.0",
     "convict": "^6.2.4",
     "cookie-parser": "^1.4.6",
@@ -22,6 +20,7 @@
     "escape-html": "^1.0.3",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
+    "knex": "^3.1.0",
     "mkdirp": "^3.0.1",
     "passport-local": "^1.0.0",
     "pino-http": "^10.2.0",
