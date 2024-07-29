@@ -16,8 +16,8 @@ export class App {
 
   constructor() {
     this.modules = [
-      this.events = new Events(this),
       this.config = new Config(this),
+      this.events = new Events(this),
       this.logging = new Logging(this),
       this.repository = new SqliteRepository(this), // TODO make switchable later
       this.services = new Services(this),

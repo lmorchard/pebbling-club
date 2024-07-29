@@ -9,6 +9,8 @@ import { configSchema as loggingConfigSchema } from "./logging";
 import { configSchema as serverConfigSchema } from "./server/index";
 import { configSchema as repositorySqlite3ConfigSchema } from "./repositories/sqlite/index";
 
+dotenv.config();
+
 export const configSchema = {
   dataPath: {
     doc: "Data directory for application state",
@@ -72,7 +74,6 @@ export class Config extends CliAppModule {
 
   async preCliAction(thisCommand: Command, actionCommand: Command): Promise<void> {
     const options = thisCommand.opts();
-    dotenv.config();
     // Load config from file, if specified
     if (options.configFile) {
       config.loadFile(options.configFile);

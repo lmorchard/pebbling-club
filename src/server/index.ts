@@ -13,6 +13,7 @@ import authInit from "./auth";
 
 import indexRouter from "./routes/index";
 import authRouter from "./routes/auth";
+import { ServiceStore } from "../services/sessions";
 
 export const configSchema = {
   host: {
@@ -81,10 +82,16 @@ export class Server extends CliAppModule {
 
   async commandServe() {
     const { config, log } = this.app.context;
+    const { services } = this.app;
 
     const host = config.get("host");
     const port = config.get("port");
     const sessionSecret = config.get("sessionSecret");
+
+    // TODO: make this configurable
+    const expirationInterval = 1000 * 60 * 10;
+    // TODO: this seems hacky?'
+    setInterval(() => services.sessions.expireSessions(), expirationInterval);
 
     const app = express();
 
@@ -92,42 +99,38 @@ export class Server extends CliAppModule {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
     app.use(cookieParser());
-
-    /*
-    if (app.get('env') === 'production') {
-      app.set('trust proxy', 1) // trust first proxy
-      sess.cookie.secure = true // serve secure cookies
-    }
-    */
-
     app.use(
       session({
         secret: sessionSecret,
-        resave: false, // don't save session if unmodified
-        saveUninitialized: false, // don't create session until something stored
-        // cookie: { secure: true }, // todo: enable for HTTPS
-        // store: new SQLiteStore({ db: 'sessions.db', dir: './var/db' }) // todo: build a session service and store subclass
+        resave: false,
+        saveUninitialized: false,
+        cookie: { secure: false }, // TODO: need option to enable https in prod
+        store: await services.sessions.buildStore(),
       })
     );
     app.use(csrf());
-    /*
-    app.use(function(req, res, next) {
+
+    // TODO: better flash messages impl needed
+    app.use(function (req, res, next) {
+      // @ts-ignore
       var msgs = req.session.messages || [];
       res.locals.messages = msgs;
-      res.locals.hasMessages = !! msgs.length;
-      req.session.messages = [];
+      res.locals.hasMessages = !!msgs.length;
+      if (msgs) {
+        // @ts-ignore
+        req.session.messages = [];
+      }
       next();
     });
-    */
 
     app.use(express.static(config.get("publicPath")));
 
     app.use(function (req, res, next) {
       const csrfToken = req.csrfToken();
-      res.locals.globalProps = { csrfToken,};
+      res.locals.globalProps = { csrfToken };
       next();
     });
-  
+
     await authInit(this, app);
 
     app.use("/", indexRouter(this, app));

@@ -34,4 +34,20 @@ export class BaseRepository extends CliAppModule {
   ): Promise<string> {
     throw new BaseRepositoryMethodUnimplementedError();
   }
+
+  async deleteSession(sid: string) {
+    throw new BaseRepositoryMethodUnimplementedError();
+  }
+
+  async deleteExpiredSessions(maxAge: number) {
+    throw new BaseRepositoryMethodUnimplementedError();
+  }
+
+  async getSession(sid: string): Promise<undefined | { session: string }> {
+    throw new BaseRepositoryMethodUnimplementedError();
+  }
+
+  async putSession(sid: string, sess: string, expiredDate: Date) {
+    throw new BaseRepositoryMethodUnimplementedError();
+  }
 }

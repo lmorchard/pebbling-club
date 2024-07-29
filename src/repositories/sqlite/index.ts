@@ -1,6 +1,6 @@
 import path from "path";
 import Knex from "knex";
-import { v4 as uuid } from 'uuid';
+import { v4 as uuid } from "uuid";
 import { BaseRepository } from "../base";
 import { mkdirp } from "mkdirp";
 import { Cli } from "../../cli";
@@ -116,18 +116,16 @@ export class SqliteRepository extends BaseRepository {
     hashed_password: string,
     salt: string
   ) {
-    await this.connection("users")
-      .where("username", username)
-      .update({
-        username,
-        hashed_password,
-        salt,  
-      });
+    await this.connection("users").where("username", username).update({
+      username,
+      hashed_password,
+      salt,
+    });
   }
 
   async getHashedPasswordAndSaltForUsername(
     username: string
-  ): Promise<undefined | { id: string, hashedPassword: string; salt: string }> {
+  ): Promise<undefined | { id: string; hashedPassword: string; salt: string }> {
     const result = await this.connection("users")
       .select("id", "hashed_password", "salt")
       .where("username", username)
@@ -138,7 +136,7 @@ export class SqliteRepository extends BaseRepository {
       id,
       salt,
       hashedPassword: hashed_password,
-    }
+    };
   }
 
   async getUsernameForId(id: string): Promise<undefined | string> {
@@ -151,10 +149,30 @@ export class SqliteRepository extends BaseRepository {
   }
 
   async deleteHashedPasswordAndSaltForUsername(
-    username: string,
+    username: string
   ): Promise<string> {
-    return this.connection("users")
-      .where("username", username)
-      .del();
+    return this.connection("users").where("username", username).del();
   }
+
+  async deleteSession(id: string) {
+    await this.connection("sessions").where({ id }).del();
+  }
+
+  async deleteExpiredSessions(maxAge: number) {
+    const minDate = Date.now() - maxAge;
+    await this.connection("sessions").where("modified", "<", minDate).del();
+  }
+
+  async getSession(id: string): Promise<undefined | { session: string }> {
+    return this.connection("sessions").select("session").where({ id }).first();
+  }
+
+  async putSession(id: string, session: string, modified: Date) {
+    await this.connection("sessions")
+      .insert({ id, session, modified: modified.getTime() })
+      .onConflict("id")
+      .merge();
+  }
+
+
 }
