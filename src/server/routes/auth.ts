@@ -1,10 +1,10 @@
 import { Server } from "../index";
 import { Router, Express } from "express";
-import passport from "passport";
+import passport, { AuthenticateCallback } from "passport";
+import { matchedData, body, validationResult } from "express-validator";
 import * as templates from "../templates";
 
 export default function init(server: Server, app: Express) {
-
   const router = Router();
 
   router.get("/", (req, res) => {
@@ -24,7 +24,26 @@ export default function init(server: Server, app: Express) {
   });
 
   router.post(
-    "/login/password",
+    "/login",
+    /*
+    function (req, res, next) {
+      const { globalProps } = res.locals;
+      const authenticateCallback: AuthenticateCallback = (
+        err,
+        user,
+        info,
+        status
+      ) => {
+        if (err) return next(err);
+        if (!user) {
+          return res.send(templates.login({ info, ...globalProps })());
+        }
+        res.redirect("/");
+      };
+
+      passport.authenticate("local", authenticateCallback)(req, res, next);
+    }
+    */
     passport.authenticate("local", {
       successReturnToOrRedirect: "/",
       failureRedirect: "/auth/login",

@@ -1,7 +1,5 @@
-import { App } from "../app";
 import { Cli } from "../cli";
-import { AppModule, CliAppModule } from "../app/modules";
-import { Command } from "commander";
+import { CliAppModule } from "../app/modules";
 
 import express, { Express } from "express";
 import pinoHttp from "pino-http";
@@ -13,7 +11,6 @@ import authInit from "./auth";
 
 import indexRouter from "./routes/index";
 import authRouter from "./routes/auth";
-import { ServiceStore } from "../services/sessions";
 
 export const configSchema = {
   host: {
@@ -117,24 +114,19 @@ export class Server extends CliAppModule {
     );
     app.use(csrf());
 
-    // TODO: better flash messages impl needed
-    app.use(function (req, res, next) {
-      // @ts-ignore
-      var msgs = req.session.messages || [];
-      res.locals.messages = msgs;
-      res.locals.hasMessages = !!msgs.length;
-      if (msgs) {
-        // @ts-ignore
-        req.session.messages = [];
-      }
-      next();
-    });
-
     app.use(express.static(config.get("publicPath")));
 
     app.use(function (req, res, next) {
-      const csrfToken = req.csrfToken();
-      res.locals.globalProps = { csrfToken };
+      // @ts-ignore
+      var messages = req.session.messages || [];
+      if (messages.length) {
+        // @ts-ignore
+        req.session.messages = [];
+      }
+      res.locals.globalProps = {
+        csrfToken: req.csrfToken(),
+        messages
+      };
       next();
     });
 

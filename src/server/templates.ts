@@ -1,19 +1,27 @@
 import { html, TemplateContent } from "../utils/html";
 
-export type GlobalProps = { user?: Express.User; csrfToken: string };
+export type GlobalProps = {
+  user?: Express.User;
+  csrfToken: string;
+  messages?: string[];
+};
 
 export const layout = ({
   content,
   user,
   csrfToken,
+  messages,
 }: { content: TemplateContent } & GlobalProps) => html`
   <html>
     <head> </head>
     <body>
+      ${messages}
       ${user
         ? html`
             <form action="/auth/logout" method="post">
-              <button type="submit">Logout (${user.username} (${user.id}))</button>
+              <button type="submit">
+                Logout (${user.username} (${user.id}))
+              </button>
               <input type="hidden" name="_csrf" value="${csrfToken}" />
             </form>
           `
@@ -29,13 +37,17 @@ export const index = ({ ...globalProps }: {} & GlobalProps) =>
     content: html` <h1>HELLO WORLD</h1> `,
   });
 
-export const login = ({ ...globalProps }: {} & GlobalProps) =>
+export const login = ({
+  info,
+  ...globalProps
+}: { info: string } & GlobalProps) =>
   layout({
     ...globalProps,
     content: html`
       <h1>Login</h1>
       <section>
-        <form action="/auth/login/password" method="post">
+        <form action="/auth/login" method="post">
+          ${info}
           <section>
             <label for="username">Username</label>
             <input
@@ -43,7 +55,6 @@ export const login = ({ ...globalProps }: {} & GlobalProps) =>
               name="username"
               type="text"
               autocomplete="username"
-              required
               autofocus
             />
           </section>
@@ -54,7 +65,6 @@ export const login = ({ ...globalProps }: {} & GlobalProps) =>
               name="password"
               type="password"
               autocomplete="current-password"
-              required
             />
           </section>
           <input type="hidden" name="_csrf" value="${globalProps.csrfToken}" />
