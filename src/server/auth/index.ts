@@ -1,7 +1,7 @@
 import { Express } from "express";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Server } from "./index";
+import { Server } from "../index";
 
 declare global {
   namespace Express {
@@ -57,7 +57,7 @@ export default async function init(server: Server, app: Express) {
   app.use(passport.authenticate("session"));
 
   app.use(function (req, res, next) {
-    res.locals.globalProps.user = req.user;
+    res.locals.layoutProps.user = req.user;
     next();
   });
 }

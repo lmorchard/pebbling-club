@@ -2,32 +2,33 @@ import { Server } from "../index";
 import { Router, Express } from "express";
 import passport, { AuthenticateCallback } from "passport";
 import { matchedData, body, validationResult } from "express-validator";
-import * as templates from "../templates";
+import templateSignup from "./templates/signup";
+import templateLogin from "./templates/login";
 
 export default function init(server: Server, app: Express) {
   const router = Router();
 
   router.get("/", (req, res) => {
-    const { globalProps } = res.locals;
+    const { layoutProps } = res.locals;
 
     res.send("Hello AUTH!");
   });
 
   router.get("/signup", function (req, res, next) {
-    const { globalProps } = res.locals;
-    res.send(templates.signup({ ...globalProps })());
+    const { layoutProps } = res.locals;
+    res.send(templateSignup({ ...layoutProps })());
   });
 
   router.get("/login", function (req, res, next) {
-    const { globalProps } = res.locals;
-    res.send(templates.login({ ...globalProps })());
+    const { layoutProps } = res.locals;
+    res.send(templateLogin({ ...layoutProps })());
   });
 
   router.post(
     "/login",
     /*
     function (req, res, next) {
-      const { globalProps } = res.locals;
+      const { layoutProps } = res.locals;
       const authenticateCallback: AuthenticateCallback = (
         err,
         user,
@@ -36,7 +37,7 @@ export default function init(server: Server, app: Express) {
       ) => {
         if (err) return next(err);
         if (!user) {
-          return res.send(templates.login({ info, ...globalProps })());
+          return res.send(templates.login({ info, ...layoutProps })());
         }
         res.redirect("/");
       };

@@ -9,8 +9,8 @@ import csrf from "csurf";
 
 import authInit from "./auth";
 
-import indexRouter from "./routes/index";
-import authRouter from "./routes/auth";
+import homeRouter from "./home/router";
+import authRouter from "./auth/router";
 
 export const configSchema = {
   host: {
@@ -123,7 +123,7 @@ export class Server extends CliAppModule {
         // @ts-ignore
         req.session.messages = [];
       }
-      res.locals.globalProps = {
+      res.locals.layoutProps = {
         csrfToken: req.csrfToken(),
         messages
       };
@@ -132,7 +132,7 @@ export class Server extends CliAppModule {
 
     await authInit(this, app);
 
-    app.use("/", indexRouter(this, app));
+    app.use("/", homeRouter(this, app));
     app.use("/auth", authRouter(this, app));
 
     app.listen(port, () => {

@@ -1,13 +1,13 @@
 import { Server } from "../index";
 import { Router, Express } from "express";
-import * as templates from "../templates";
+import * as templates from "./templates";
 
 export default function init(server: Server, app: Express) {
   const router = Router();
   
   router.get('/', (req, res) => {
-    const { globalProps } = res.locals;
-    res.send(templates.index({ ...globalProps })());
+    const { layoutProps } = res.locals;
+    res.send(templates.index({ ...layoutProps })());
   });
 
   return router;
