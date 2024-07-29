@@ -24,6 +24,4 @@ export class CliAppModule extends AppModule {
   async initCli(cli: Cli) {
     return this;
   }
-  async preCliAction(thisCommand: Command, actionCommand: Command) { }
-  async postCliAction(thisCommand: Command, actionCommand: Command) { }
 }

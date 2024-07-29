@@ -5,6 +5,7 @@ import { Events } from "./events";
 import { BaseRepository } from "../repositories/base";
 import { SqliteRepository } from "../repositories/sqlite/index";
 import { Services } from "../services";
+import { Server } from "../server/index";
 
 export class App {
   modules: AppModule[];
@@ -13,6 +14,7 @@ export class App {
   logging: Logging;
   repository: BaseRepository;
   services: Services;
+  server: Server;
 
   constructor() {
     this.modules = [
@@ -21,14 +23,11 @@ export class App {
       this.logging = new Logging(this),
       this.repository = new SqliteRepository(this), // TODO make switchable later
       this.services = new Services(this),
+      this.server = new Server(this),
     ];
   }
 
-  add(...modules: AppModule[]) {
-    this.modules.push(...modules);
-    return this;
-  }
-
+  // TODO: this is awkward - maybe get rid of this or iterate through modules to contribute
   get context() {
     return {
       config: this.config.config,

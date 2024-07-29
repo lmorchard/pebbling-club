@@ -9,8 +9,8 @@ import { configSchema as loggingConfigSchema } from "./logging";
 import { configSchema as serverConfigSchema } from "../server/index";
 import { configSchema as repositorySqlite3ConfigSchema } from "../repositories/sqlite/index";
 
-dotenv.config();
-
+// HACK: Hardcoded assemblage of all configuration schemas, would be nice
+// if was dynamic at run-time
 export const configSchema = {
   dataPath: {
     doc: "Data directory for application state",
@@ -23,6 +23,8 @@ export const configSchema = {
   ...repositorySqlite3ConfigSchema,
 } as const;
 
+// Load up the base config from environment and schema
+dotenv.config();
 export const config = Convict(configSchema);
 
 export class Config extends CliAppModule {
@@ -41,6 +43,7 @@ export class Config extends CliAppModule {
       "load config from specified JSON file"
     );
     program.option("-F, --config <name=value...>", "set configuration values");
+    program.hook("preAction", this.preCliAction.bind(this));
 
     const configProgram = program
       .command("config")

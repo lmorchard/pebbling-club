@@ -1,18 +1,13 @@
 import { Command } from "commander";
 import { App } from ".";
-import { AppModule, CliAppModule } from "./modules";
-import { Server } from "../server/index";
+import { CliAppModule } from "./modules";
 
 export class Cli {
   app: App;
   program: Command;
-  server: Server;
 
   constructor() {
     this.app = new App();
-    this.app.add(
-      this.server = new Server(this.app)
-    );
     this.program = new Command();
   }
 
@@ -21,17 +16,12 @@ export class Cli {
     await this.callModules(m => m.initCli(this));
     this.program
       .version(process.env.npm_package_version || "0.0")
-      .hook("preAction", this.preCliAction.bind(this))
-      .hook("postAction", this.postCliAction.bind(this));
+      .hook("postAction", () => void(this.app.deinit()));
     return this;
   }
 
-  async preCliAction(thisCommand: Command, actionCommand: Command) {
-    await this.callModules(m => m.preCliAction(thisCommand, actionCommand));
-  }
-
-  async postCliAction(thisCommand: Command, actionCommand: Command) {
-    await this.callModules(m => m.postCliAction(thisCommand, actionCommand));
+  async run(argv = process.argv) {
+    await this.program.parseAsync(argv);
   }
 
   get cliModules() {
@@ -40,9 +30,5 @@ export class Cli {
 
   async callModules(mapfn: (m: CliAppModule) => Promise<any>) {
     return Promise.all(this.cliModules.map(mapfn));
-  }
-
-  async run(argv = process.argv) {
-    await this.program.parseAsync(argv);
   }
 }

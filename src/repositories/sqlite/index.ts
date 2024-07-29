@@ -38,10 +38,6 @@ export class SqliteRepository extends BaseKnexRepository {
     return this;
   }
 
-  async postCliAction() {
-    this.deinit();
-  }
-
   get connection() {
     const { config, log } = this.app.context;
 

@@ -46,6 +46,7 @@ export class Logging extends CliAppModule {
       "disable pretty printing of logs in a TTY"
     );
     program.option("-C, --force-pretty-logs", "enable pretty printing of logs");
+    program.hook("preAction", this.preCliAction.bind(this));
     return this;
   }
 
