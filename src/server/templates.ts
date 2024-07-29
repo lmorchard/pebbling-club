@@ -55,6 +55,7 @@ export const login = ({
               name="username"
               type="text"
               autocomplete="username"
+              required
               autofocus
             />
           </section>
@@ -65,6 +66,7 @@ export const login = ({
               name="password"
               type="password"
               autocomplete="current-password"
+              required
             />
           </section>
           <input type="hidden" name="_csrf" value="${globalProps.csrfToken}" />

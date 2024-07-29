@@ -45,10 +45,12 @@ export default function init(server: Server, app: Express) {
     }
     */
     passport.authenticate("local", {
-      successReturnToOrRedirect: "/",
       failureRedirect: "/auth/login",
       failureMessage: true,
-    })
+    }),
+    function(req, res) {
+      res.redirect('/');
+    }   
   );
 
   router.post("/logout", function (req, res, next) {
