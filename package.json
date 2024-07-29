@@ -9,7 +9,8 @@
     "test": "glob -c \"node --import tsx --no-warnings --test\" \"./src/**/*.test.ts\"",
     "test:watch": "glob -c \"node --import tsx --no-warnings --watch --test\" \"./src/**/*.test.ts\"",
     "dev": "tsx ./src/index.ts",
-    "dev:serve": "nodemon --watch src --ext 'js,ts' --exec 'tsx ./src/index.ts --force-pretty-logs serve'"
+    "dev:serve": "nodemon --watch src --ext 'js,ts' --exec 'tsx ./src/index.ts --force-pretty-logs serve'",
+    "dev:knex": "npx knex --knexfile ./src/repositories/sqlite/knexfile.ts"
   },
   "author": "",
   "license": "ISC",
@@ -50,6 +51,7 @@
     "glob": "^11.0.0",
     "nodemon": "^3.1.4",
     "onchange": "^7.1.0",
+    "ts-node": "^10.9.2",
     "tsx": "^4.16.2",
     "typescript": "^5.5.4"
   }

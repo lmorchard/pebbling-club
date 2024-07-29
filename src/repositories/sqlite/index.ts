@@ -1,12 +1,9 @@
 import path from "path";
 import Knex from "knex";
 import { v4 as uuid } from "uuid";
-import { BaseRepository } from "../base";
 import { mkdirp } from "mkdirp";
-import { Cli } from "../../cli";
-
-import { SqliteRepositoryCli } from "./cli";
 import { App } from "../../app";
+import { BaseKnexRepository } from "../knex";
 
 export const configSchema = {
   sqliteDatabaseName: {
@@ -41,22 +38,11 @@ export const configSchema = {
   },
 } as const;
 
-export class SqliteRepository extends BaseRepository {
-  cli: SqliteRepositoryCli;
+export class SqliteRepository extends BaseKnexRepository {
   _connection?: Knex.Knex<any, unknown[]>;
-
-  constructor(app: App) {
-    super(app);
-    this.cli = new SqliteRepositoryCli(this);
-  }
 
   async init() {
     const { config, log } = this.app.context;
-    return this;
-  }
-
-  async initCli(cli: Cli) {
-    await this.cli.initCli(cli);
     return this;
   }
 
@@ -74,17 +60,10 @@ export class SqliteRepository extends BaseRepository {
 
     if (!this._connection) {
       log.trace({ msg: "buildDatabaseConnection" });
-
-      const dataPath = config.get("dataPath");
-      mkdirp.sync(dataPath);
-
-      const databaseName = config.get("sqliteDatabaseName");
-      const databasePath = path.join(dataPath, databaseName);
-
       this._connection = Knex({
         client: "sqlite3",
         useNullAsDefault: true,
-        connection: { filename: databasePath },
+        connection: this.knexConnectionOptions(),
         pool: {
           min: 1,
           max: config.get("sqliteDatabaseMaxConnections"),
@@ -94,6 +73,20 @@ export class SqliteRepository extends BaseRepository {
     }
 
     return this._connection;
+  }
+
+  knexConnectionOptions(): Knex.Knex.Config["connection"] {
+    const { config } = this.app.context;
+
+    const dataPath = config.get("dataPath");
+
+    // HACK: this should go elsewhere, rather than a side-effect of getting config
+    mkdirp.sync(dataPath);
+
+    const databaseName = config.get("sqliteDatabaseName");
+    const databasePath = path.join(dataPath, databaseName);
+
+    return { filename: databasePath };
   }
 
   async createHashedPasswordAndSaltForUsername(

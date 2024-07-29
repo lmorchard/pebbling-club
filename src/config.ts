@@ -16,7 +16,7 @@ export const configSchema = {
     doc: "Data directory for application state",
     env: "DATA_PATH",
     format: String,
-    default: "data",
+    default: "data" as string,
   },
   ...loggingConfigSchema,
   ...serverConfigSchema,
@@ -50,12 +50,6 @@ export class Config extends CliAppModule {
       .command("show")
       .description("show current configuration")
       .action(this.commandConfigShow.bind(this));
-
-    configProgram
-      .command("dump")
-      .option("-d, --include-defaults", "include default values")
-      .description("dump current configuration as JSON file")
-      .action(this.commandConfigDump.bind(this));
 
     return this;
   }
@@ -91,26 +85,5 @@ export class Config extends CliAppModule {
       const currentValue = props[name as keyof typeof props];
       log.info({ configName: name, env, doc, defaultValue, currentValue });
     }
-  }
-
-  async commandConfigDump(options: any) {
-    const { includeDefaults = false } = options;
-
-    const schema = configSchema;
-    const props = config.getProperties();
-
-    if (!includeDefaults) {
-      for (const [name, defn] of Object.entries(schema)) {
-        const { default: defaultValue } = defn;
-        const currentValue = props[name as keyof typeof props];
-        if (currentValue === defaultValue) {
-          delete props[name as keyof typeof props];
-        }
-      }
-    }
-
-    process.stdout.write(
-      JSON.stringify(props, null, "  ")
-    );
   }
 }
