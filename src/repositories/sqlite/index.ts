@@ -1,7 +1,6 @@
 import path from "path";
 import Knex from "knex";
 import { v4 as uuid } from "uuid";
-import { mkdirp } from "mkdirp";
 import { App } from "../../app";
 import { BaseKnexRepository } from "../knex";
 
@@ -23,18 +22,6 @@ export const configSchema = {
     env: "SQLITE_MAX_CONNECTIONS",
     format: Number,
     default: 16,
-  },
-  sqliteDatabaseMigrationsPath: {
-    doc: "Path to the directory containing Knex database migrations",
-    env: "DATABASE_MIGRATIONS_PATH",
-    format: String,
-    default: "./src/repositories/sqlite/migrations",
-  },
-  sqliteDatabaseSeedsPath: {
-    doc: "Path to the directory containing Knex database seeds",
-    env: "DATABASE_SEEDS_PATH",
-    format: String,
-    default: "./src/repositories/sqlite/seeds",
   },
 } as const;
 
@@ -79,10 +66,6 @@ export class SqliteRepository extends BaseKnexRepository {
     const { config } = this.app.context;
 
     const dataPath = config.get("dataPath");
-
-    // HACK: this should go elsewhere, rather than a side-effect of getting config
-    mkdirp.sync(dataPath);
-
     const databaseName = config.get("sqliteDatabaseName");
     const databasePath = path.join(dataPath, databaseName);
 

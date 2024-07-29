@@ -10,7 +10,8 @@
     "test:watch": "glob -c \"node --import tsx --no-warnings --watch --test\" \"./src/**/*.test.ts\"",
     "dev": "tsx ./src/index.ts",
     "dev:serve": "nodemon --watch src --ext 'js,ts' --exec 'tsx ./src/index.ts --force-pretty-logs serve'",
-    "dev:knex": "npx knex --knexfile ./src/repositories/sqlite/knexfile.ts"
+    "db": "npx knex --knexfile ./src/repositories/sqlite/knexfile.ts",
+    "db:migrate": "npm run db migrate:latest"
   },
   "author": "",
   "license": "ISC",

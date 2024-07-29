@@ -1,5 +1,5 @@
-import { App } from "./app";
-import { AppModule } from "./app/modules";
+import { App } from ".";
+import { AppModule } from "./modules";
 
 type EventName = string | Symbol
 type EventHandler = (...args: any[]) => any;

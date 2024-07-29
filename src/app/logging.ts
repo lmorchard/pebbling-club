@@ -2,8 +2,8 @@ import stream from "stream";
 import pino, { Logger } from "pino";
 import pretty from "pino-pretty";
 
-import { App } from "./app";
-import { CliAppModule } from "./app/modules";
+import { App } from ".";
+import { CliAppModule } from "./modules";
 import { Events } from "./events";
 import { Cli } from "./cli";
 import { Command } from "commander";

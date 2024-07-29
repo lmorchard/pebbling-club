@@ -1,7 +1,7 @@
-import { Config } from "../config";
-import { Logging } from "../logging";
+import { Config } from "./config";
+import { Logging } from "./logging";
 import { AppModule } from "./modules";
-import { Events } from "../events";
+import { Events } from "./events";
 import { BaseRepository } from "../repositories/base";
 import { SqliteRepository } from "../repositories/sqlite/index";
 import { Services } from "../services";

@@ -1,4 +1,4 @@
-import { Cli } from "../cli";
+import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
 
 import express, { Express } from "express";
@@ -91,7 +91,7 @@ export class Server extends CliAppModule {
     const port = config.get("port");
     const sessionSecret = config.get("sessionSecret");
 
-    // TODO: this seems hacky?'
+    // TODO: this seems hacky? maybe should live in services.sessions?
     setInterval(
       () => services.sessions.expireSessions(),
       config.get("sessionExpirationInterval")

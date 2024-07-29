@@ -1,9 +1,7 @@
-import fs from "fs/promises";
-
 import { Command } from "commander";
-import { App } from "./app";
-import { AppModule, CliAppModule } from "./app/modules";
-import { Server } from "./server/index";
+import { App } from ".";
+import { AppModule, CliAppModule } from "./modules";
+import { Server } from "../server/index";
 
 export class Cli {
   app: App;

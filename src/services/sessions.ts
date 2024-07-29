@@ -1,5 +1,4 @@
-import { Store, MemoryStore, SessionData } from "express-session";
-
+import { Store, SessionData } from "express-session";
 import { BaseRepository } from "../repositories/base";
 import { BaseService } from "./base";
 

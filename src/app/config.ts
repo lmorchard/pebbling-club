@@ -1,13 +1,13 @@
 import * as dotenv from "dotenv";
 import Convict from "convict";
-import { App } from "./app";
-import { CliAppModule } from "./app/modules";
+import { App } from ".";
+import { CliAppModule } from "./modules";
 import { Command } from "commander";
 import { Cli } from "./cli";
 
 import { configSchema as loggingConfigSchema } from "./logging";
-import { configSchema as serverConfigSchema } from "./server/index";
-import { configSchema as repositorySqlite3ConfigSchema } from "./repositories/sqlite/index";
+import { configSchema as serverConfigSchema } from "../server/index";
+import { configSchema as repositorySqlite3ConfigSchema } from "../repositories/sqlite/index";
 
 dotenv.config();
 

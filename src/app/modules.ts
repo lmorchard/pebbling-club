@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { App } from ".";
-import { Cli } from "../cli";
+import { Cli } from "./cli";
 
 export class AppModule {
   app: App;
