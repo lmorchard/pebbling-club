@@ -6,11 +6,12 @@ import { BaseService } from "./base";
 export class SessionsService extends BaseService {
   sessionsMaxAge: number;
 
-  constructor(repository: BaseRepository) {
+  constructor(
+    repository: BaseRepository,
+    options: { sessionsMaxAge?: number }
+  ) {
     super(repository);
-
-    // TODO: make this configurable
-    this.sessionsMaxAge = 1000 * 60 * 60 * 24 * 7;
+    this.sessionsMaxAge = options.sessionsMaxAge || 1000 * 60 * 60 * 24 * 7;
   }
 
   async buildStore() {
@@ -46,15 +47,15 @@ export class ServiceStore extends Store {
     return callback(null, undefined);
   }
 
-  async _put(sid: string, session: SessionData, callback?: (err?: any) => void) {
+  async _put(
+    sid: string,
+    session: SessionData,
+    callback?: (err?: any) => void
+  ) {
     try {
       const modified = new Date();
       const sessionData = JSON.stringify(session);
-      await this.parent.repository.putSession(
-        sid,
-        sessionData,
-        modified
-      );
+      await this.parent.repository.putSession(sid, sessionData, modified);
       return callback?.(null);
     } catch (err) {
       return callback?.(err);

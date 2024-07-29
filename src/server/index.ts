@@ -34,6 +34,12 @@ export const configSchema = {
     format: String,
     default: "trustno1-8675309",
   },
+  sessionExpirationInterval: {
+    doc: "Web session expiration interval",
+    env: "SESSION_EXPIRATION_INTERVAL",
+    format: Number,
+    default: 1000 * 60 * 10,
+  },
   publicPath: {
     doc: "Public web static resources path",
     env: "PUBLIC_PATH",
@@ -88,10 +94,11 @@ export class Server extends CliAppModule {
     const port = config.get("port");
     const sessionSecret = config.get("sessionSecret");
 
-    // TODO: make this configurable
-    const expirationInterval = 1000 * 60 * 10;
     // TODO: this seems hacky?'
-    setInterval(() => services.sessions.expireSessions(), expirationInterval);
+    setInterval(
+      () => services.sessions.expireSessions(),
+      config.get("sessionExpirationInterval")
+    );
 
     const app = express();
 
