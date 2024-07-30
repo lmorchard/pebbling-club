@@ -7,7 +7,7 @@ export default function init(server: Server, app: Express) {
   
   router.get('/', (req, res) => {
     const { layoutProps } = res.locals;
-    res.send(templates.index({ ...layoutProps })());
+    res.send(templates.home({ ...layoutProps })());
   });
 
   return router;

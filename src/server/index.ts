@@ -9,7 +9,6 @@ import csrf from "csurf";
 
 import authInit from "./auth";
 
-import { LayoutProps } from "./common/templates/layout";
 import homeRouter from "./home/router";
 import authRouter from "./auth/router";
 
@@ -70,10 +69,11 @@ declare global {
   namespace Express {
     interface Locals {
       csrfToken: string;
-      messages: string[];
+      messages?: string[];
     }
     namespace session {
-      interface SessionData extends LayoutProps {
+      interface SessionData {
+        messages?: string[];
       }
     }
   }
@@ -128,7 +128,7 @@ export class Server extends CliAppModule {
       })
     );
     app.use(function (req, res, next) {
-      if (req.session.messages?.length()) {
+      if (req.session.messages?.length) {
         res.locals.messages = req.session.messages;
         req.session.messages = [];
       }

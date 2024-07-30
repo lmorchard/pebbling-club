@@ -107,6 +107,14 @@ export class SqliteRepository extends BaseKnexRepository {
     };
   }
 
+  async checkIfUsernameExists(username: string): Promise<boolean> {
+    const result = await this.connection("users")
+      .select("id")
+      .where({ username })
+      .first();
+    return !!result;
+  }
+
   async getUsernameForId(id: string): Promise<undefined | string> {
     const result = await this.connection("users")
       .select("username")

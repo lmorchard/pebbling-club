@@ -2,12 +2,20 @@ import escapeHtml from "escape-html";
 
 export type TemplateContent = string | (() => string);
 
-export const html = (strings: TemplateStringsArray, ...values: any[]) => () =>
-  strings
-    .reduce((result, string, i) => result + string + htmlValue(values[i]), "")
-    .trim();
+export type RenderableTemplate = (
+  props?: Record<string, any>
+) => TemplateContent;
 
-const htmlValue = (value: string | (() => string) | string[] | Record<string, any>): string => {
+export const html =
+  (strings: TemplateStringsArray, ...values: any[]) =>
+  () =>
+    strings
+      .reduce((result, string, i) => result + string + htmlValue(values[i]), "")
+      .trim();
+
+const htmlValue = (
+  value: string | (() => string) | string[] | Record<string, any>
+): string => {
   if (!value) {
     return "";
   } else if (typeof value === "function") {
@@ -22,4 +30,8 @@ const htmlValue = (value: string | (() => string) | string[] | Record<string, an
 
 export const unescaped = (raw: string) => () => raw;
 
-export const urlencode = (raw: string) => () => escapeHtml(encodeURIComponent(raw));
+export const urlencode = (raw: string) => () =>
+  escapeHtml(encodeURIComponent(raw));
+
+export const render = (content: TemplateContent): string =>
+  typeof content === "function" ? content() : content;

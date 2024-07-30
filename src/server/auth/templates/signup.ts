@@ -1,34 +1,33 @@
 import { html } from "../../../utils/html";
 import { layout, LayoutProps } from "../../common/templates/layout";
+import { field } from "../../common/forms";
 
 export interface Props extends LayoutProps {}
 
-export default ({ ...layoutProps }: Props) =>
-  layout({
-    ...layoutProps,
+export default ({ ...locals }: Props) => {
+  const { validation, formData } = locals;
+  const f = field(validation, formData);
+
+  return layout({
+    ...locals,
     content: html`
       <h1>Sign up</h1>
       <section>
         <form action="/auth/signup" method="post">
-          <section>
-            <label for="username">Username</label>
-            <input id="username" name="username" type="text" required />
-          </section>
-          <section>
-            <label for="new-password">Password</label>
-            <input id="new-password" name="password" type="password" required />
-          </section>
-          <section>
-            <label for="new-password-confirm">Password (confirm)</label>
-            <input id="new-password-confirm" name="password-confirm" type="password" />
-          </section>
-          <input type="hidden" name="_csrf" value="${layoutProps.csrfToken}" />
+          <input type="hidden" name="_csrf" value="${locals.csrfToken}" />
+          ${f("Username", "username", { required: true })}
+          ${f("Password", "password", { required: true, type: "password" })}
+          ${f("Password (confirm)", "password-confirm", {
+            required: true,
+            type: "password",
+          })}
           <button type="submit">Sign up</button>
         </form>
         <hr />
         <p class="help">
-          Already have an account? <a href="/auth/login">Sign in</a>
+          Already have an account? <a href="/auth/login">Login</a>
         </p>
       </section>
     `,
   });
+};

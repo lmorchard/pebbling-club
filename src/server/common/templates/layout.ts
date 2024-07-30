@@ -1,9 +1,6 @@
 import { html, TemplateContent } from "../../../utils/html";
 
-export interface LayoutProps {
-  user?: Express.User;
-  csrfToken: string;
-  messages?: string[];
+export interface LayoutProps extends Express.Locals {
 };
 
 export const layout = ({

@@ -24,6 +24,10 @@ export class BaseRepository extends CliAppModule {
   ): Promise<undefined | { id: string; hashedPassword: string; salt: string }> {
     throw new BaseRepositoryMethodUnimplementedError();
   }
+  
+  async checkIfUsernameExists(username: string): Promise<boolean> {
+    throw new BaseRepositoryMethodUnimplementedError();
+  }
 
   async getUsernameForId(id: string): Promise<undefined | string> {
     throw new BaseRepositoryMethodUnimplementedError();

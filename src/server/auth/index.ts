@@ -9,6 +9,9 @@ declare global {
       id: string;
       username: string;
     }
+    interface Locals {
+      user?: Express.User;
+    }
   }
 }
 
