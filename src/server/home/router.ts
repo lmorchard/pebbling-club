@@ -1,14 +1,12 @@
 import { Server } from "../index";
 import { Router, Express } from "express";
-import * as templates from "./templates";
+import templateHome from "./templates";
+import { renderWithLocals } from "../common/templates";
 
 export default function init(server: Server, app: Express) {
   const router = Router();
   
-  router.get('/', (req, res) => {
-    const { layoutProps } = res.locals;
-    res.send(templates.home({ ...layoutProps })());
-  });
+  router.get("/", renderWithLocals(templateHome));
 
   return router;
 }

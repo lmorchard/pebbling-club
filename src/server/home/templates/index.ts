@@ -1,8 +1,10 @@
 import { html } from "../../../utils/html";
 import { layout, LayoutProps } from "../../common/templates/layout";
 
-export const home = ({ ...layoutProps }: {} & LayoutProps) =>
+export interface Props extends LayoutProps {}
+
+export default ({ ...locals }: Props) =>
   layout({
-    ...layoutProps,
+    ...locals,
     content: html` <h1>HELLO WORLD</h1> `,
   });

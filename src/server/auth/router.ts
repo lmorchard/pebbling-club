@@ -16,8 +16,6 @@ export default function init(server: Server, app: Express) {
     res.send("Hello AUTH!");
   });
 
-  router.get("/signup", renderWithLocals(templateSignup));
-
   router.get("/login", renderWithLocals(templateLogin));
 
   router.post(
@@ -27,10 +25,12 @@ export default function init(server: Server, app: Express) {
     withValidation(),
     ifNotValid(renderWithLocals(templateLogin)),
     passport.authenticate("local", {
+      failureMessage: "Username or password incorrect",
+      // failureFlash: "Username or password incorrect",
       failureRedirect: "/auth/login",
-      failureMessage: true,
       successRedirect: "/",
-    })
+    }),
+    //renderWithLocals(templateLogin),
   );
 
   router.post("/logout", function (req, res, next) {
@@ -40,13 +40,15 @@ export default function init(server: Server, app: Express) {
     });
   });
 
+  router.get("/signup", renderWithLocals(templateSignup));
+
   router.post(
     "/signup",
     body("username")
       .trim()
       .isString()
       .notEmpty()
-      .custom(async (value, { req }) => {
+      .custom(async (value) => {
         if (await services.passwords.usernameExists(value))
           throw new Error("Username already exists");
         return true;

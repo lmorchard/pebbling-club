@@ -1,3 +1,42 @@
 body {
   font-size: 16px;
 }
+
+form {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.5em;
+  margin: 1em;
+}
+
+form label {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25em;
+}
+
+form label span.label {
+
+}
+
+form label span.error {
+  color: red;
+}
+
+form section {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25em;
+}
+
+section.flash .message.error {
+
+}
+
+section.flash .message.warn {
+
+}
+
+section.flash .message.info {
+
+}

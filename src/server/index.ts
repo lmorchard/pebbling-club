@@ -5,6 +5,7 @@ import express, { Express } from "express";
 import pinoHttp from "pino-http";
 import cookieParser from "cookie-parser";
 import session from "express-session";
+import flash, { getFlashMessages } from "express-flash-message";
 import csrf from "csurf";
 
 import authInit from "./auth";
@@ -65,11 +66,19 @@ export const configSchema = {
   */
 } as const;
 
+type GetFlashMessages = (
+  type: "error" | "info" | "warn"
+) => string[] | undefined;
+
 declare global {
   namespace Express {
+    interface Request {
+      flash: Express.Response['flash']      
+    }
     interface Locals {
       csrfToken: string;
       messages?: string[];
+      getFlashMessages: GetFlashMessages;
     }
     namespace session {
       interface SessionData {
@@ -78,6 +87,8 @@ declare global {
     }
   }
 }
+
+const SESSION_KEY_FLASH_MESSAGES = "express-flash-message";
 
 export class Server extends CliAppModule {
   serverApp?: Express;
@@ -132,6 +143,24 @@ export class Server extends CliAppModule {
         res.locals.messages = req.session.messages;
         req.session.messages = [];
       }
+      next();
+    });
+
+    app.use(
+      flash({
+        sessionKeyName: SESSION_KEY_FLASH_MESSAGES,
+        // below are optional property you can pass in to track
+        // TODO: emit events here?
+        // onAddFlash: (type, message) => {},
+        // onConsumeFlash: (type: string, messages: string[]) => {},
+      })
+    );
+    app.use(function (req, res, next) {
+      // HACK: copy flash method for compat with Passport
+      req.flash = res.flash;
+      const localsGetFlashMessages: GetFlashMessages = (type) =>
+        getFlashMessages(req, SESSION_KEY_FLASH_MESSAGES, type);
+      res.locals.getFlashMessages = localsGetFlashMessages;
       next();
     });
 

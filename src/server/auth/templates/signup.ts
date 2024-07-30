@@ -21,7 +21,9 @@ export default ({ ...locals }: Props) => {
             required: true,
             type: "password",
           })}
-          <button type="submit">Sign up</button>
+          <section>
+            <button type="submit">Sign up</button>
+          </section>
         </form>
         <hr />
         <p class="help">

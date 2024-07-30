@@ -18,7 +18,7 @@ declare global {
 
 export const withValidation = (): RequestHandler => (req, res, next) => {
   res.locals.validation = validationResult(req);
-  res.locals.formData = matchedData(req);
+  res.locals.formData = matchedData(req, { onlyValidData: false });
   return next();
 };
 

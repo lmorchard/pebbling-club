@@ -59,9 +59,8 @@ export class PasswordService extends BaseService {
     return verified ? id : undefined;
   }
 
-  async getById(id: string) {
-    const result = await this.repository.getUsernameForId(id);
-    return result ? result : undefined;
+  async getUsernameById(id: string) {
+    return await this.repository.getUsernameForId(id);
   }
 
   async usernameExists(username: string) {

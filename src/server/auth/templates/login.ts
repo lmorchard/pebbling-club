@@ -2,11 +2,9 @@ import { html } from "../../../utils/html";
 import { field } from "../../common/forms";
 import { layout, LayoutProps } from "../../common/templates/layout";
 
-export interface Props extends LayoutProps {
-  info?: string;
-}
+export interface Props extends LayoutProps {}
 
-export default ({ info, ...locals }: Props) => {
+export default ({ ...locals }: Props) => {
   const { validation, formData } = locals;
   const f = field(validation, formData);
 
@@ -14,6 +12,7 @@ export default ({ info, ...locals }: Props) => {
     ...locals,
     content: html`
       <h1>Login</h1>
+      ${locals.messages}
       <section>
         <form action="/auth/login" method="post">
           <input type="hidden" name="_csrf" value="${locals.csrfToken}" />
