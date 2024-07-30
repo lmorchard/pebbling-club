@@ -14,7 +14,7 @@ export default function init(server: Server, app: Express) {
 
   router.get("/", (req, res, next) => {
     // TODO: redirect to profile?
-    res.send("Hello AUTH!");
+    res.redirect("/");
   });
 
   router.get("/login", renderWithLocals(templateLogin));
