@@ -1,4 +1,3 @@
-import { Command } from "commander";
 import { App } from ".";
 import { Cli } from "./cli";
 
@@ -9,6 +8,12 @@ export class AppModule {
 
   constructor(app: App) {
     this.app = app;
+  }
+
+  get log() {
+    return this.app.logging.child({
+      module: this.constructor.name
+    });
   }
 
   async init() {

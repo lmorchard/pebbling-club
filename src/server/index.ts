@@ -98,8 +98,8 @@ export class Server extends CliAppModule {
   }
 
   async commandServe() {
-    const { config, log } = this.app.context;
-    const { services } = this.app;
+    const { log } = this;
+    const { config, services } = this.app;
 
     const host = config.get("host");
     const port = config.get("port");

@@ -28,18 +28,14 @@ export const configSchema = {
 export class SqliteRepository extends BaseKnexRepository {
   _connection?: Knex.Knex<any, unknown[]>;
 
-  async init() {
-    const { config, log } = this.app.context;
-    return this;
-  }
-
   async deinit() {
     if (this._connection) this._connection.destroy();
     return this;
   }
 
   get connection() {
-    const { config, log } = this.app.context;
+    const { log } = this;
+    const { config } = this.app;
 
     if (!this._connection) {
       log.trace({ msg: "buildDatabaseConnection" });
@@ -59,7 +55,7 @@ export class SqliteRepository extends BaseKnexRepository {
   }
 
   knexConnectionOptions(): Knex.Knex.Config["connection"] {
-    const { config } = this.app.context;
+    const { config } = this.app;
 
     const dataPath = config.get("dataPath");
     const databaseName = config.get("sqliteDatabaseName");

@@ -27,16 +27,40 @@ export class Logging extends CliAppModule {
   static EVENT_LOG = Symbol("eventLog");
 
   usePrettyLogs: boolean;
-  log: Logger<never>;
+  logger: Logger<never>;
 
   constructor(app: App) {
     super(app);
     this.usePrettyLogs = false;
-    this.log = this.buildLogger();
+    this.logger = this.buildLogger();
   }
 
-  async init() {
-    return this;
+  get child() {
+    return this.logger.child.bind(this.logger);
+  }
+
+  get trace() {
+    return this.logger.trace.bind(this.logger);
+  }
+
+  get debug() {
+    return this.logger.debug.bind(this.logger);
+  }
+
+  get info() {
+    return this.logger.info.bind(this.logger);
+  }
+
+  get warn() {
+    return this.logger.warn.bind(this.logger);
+  }
+
+  get error() {
+    return this.logger.error.bind(this.logger);
+  }
+
+  get fatal() {
+    return this.logger.fatal.bind(this.logger);
   }
 
   async initCli(cli: Cli) {
@@ -54,34 +78,32 @@ export class Logging extends CliAppModule {
     const { prettyLogs, forcePrettyLogs } = command.opts();
     this.usePrettyLogs =
       forcePrettyLogs || (process.stdout.isTTY && prettyLogs);
-    // HACK: rebuild logger to account for usePrettyLogs
-    this.log = this.buildLogger();
+    // Rebuild logger to account for usePrettyLogs
+    this.logger = this.buildLogger();
   }
 
   buildLogger() {
     const { usePrettyLogs } = this;
-    const config = this.app.config.config;
-
-    return pino(
+    const { config } = this.app;
+    const options = {
+      level: config.get("logLevel"),
+    };
+    const destinations = pino.multistream([
       {
-        level: config.get("logLevel"),
+        level: "trace",
+        stream: new LogEventStream(this.app.events, Logging.EVENT_LOG),
       },
-      pino.multistream([
-        {
-          level: "trace",
-          stream: new LogEventStream(this.app.events, Logging.EVENT_LOG),
-        },
-        {
-          level: "trace",
-          stream: usePrettyLogs
-            ? pretty({
-                colorize: true,
-                singleLine: config.get("logSingleLine"),
-              })
-            : process.stdout,
-        },
-      ])
-    );
+      {
+        level: "trace",
+        stream: usePrettyLogs
+          ? pretty({
+              colorize: true,
+              singleLine: config.get("logSingleLine"),
+            })
+          : process.stdout,
+      },
+    ]);
+    return pino(options, destinations);
   }
 }
 

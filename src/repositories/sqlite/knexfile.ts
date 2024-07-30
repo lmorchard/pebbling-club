@@ -11,7 +11,7 @@ const connection = async () => {
   }
 
   // HACK: knex changes working directory, so adjust accordingly
-  const { config } = app.context;
+  const { config } = app;
   let dataPath = config.get("dataPath");
   if (!dataPath.startsWith("/")) {
     dataPath = path.join(__dirname, "..", "..", "..", dataPath);

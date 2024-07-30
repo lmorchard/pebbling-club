@@ -3,7 +3,7 @@ import { describe, it, before, after, mock } from "node:test";
 import { PasswordService } from "./passwords";
 import { MockRepository } from "../utils/mocks";
 
-describe("play", () => {
+describe("services.passwords", () => {
   let repository: MockRepository;
   let passwords: PasswordService;
 
@@ -78,16 +78,16 @@ describe("play", () => {
     const mockCreate = mock.method(
       repository,
       "getHashedPasswordAndSaltForUsername",
-      (username: string) => ({ hashedPassword, salt })
+      (username: string) => ({ id, hashedPassword, salt })
     );
 
     const result0 = await passwords.verify(username, password);
     assert.equal(mockCreate.mock.callCount(), 1);
-    assert(result0);
+    assert.ok(typeof result0 !== "undefined");
 
     const result1 = await passwords.verify(username, passwordIncorrect);
     assert.equal(mockCreate.mock.callCount(), 2);
-    assert(!result1);
+    assert.ok(typeof result1 === "undefined");
   });
 
 });

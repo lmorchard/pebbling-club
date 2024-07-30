@@ -27,25 +27,16 @@ export class App {
     ];
   }
 
-  // TODO: this is awkward - maybe get rid of this or iterate through modules to contribute
-  get context() {
-    return {
-      config: this.config.config,
-      log: this.logging.log,
-    }
-  }
-
   async callModules(mapfn: (m: AppModule) => Promise<any>) {
-    return Promise.all(this.modules.map(mapfn));
+    await Promise.all(this.modules.map(mapfn));
+    return this;
   }
 
   async init() {
-    await this.callModules(m => m.init());
-    return this;
+    return await this.callModules(m => m.init());
   }
 
   async deinit() {
-    await this.callModules(m => m.deinit());
-    return this;
+    return await this.callModules(m => m.deinit());
   }
 }

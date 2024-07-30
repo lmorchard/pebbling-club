@@ -35,6 +35,18 @@ export class Config extends CliAppModule {
     this.config = config;
   }
 
+  get get() {
+    return this.config.get.bind(this.config);
+  }
+
+  get set() {
+    return this.config.set.bind(this.config);
+  }
+
+  get has() {
+    return this.config.has.bind(this.config);
+  }
+  
   async initCli(cli: Cli) {
     const { program } = cli;
 
@@ -57,19 +69,10 @@ export class Config extends CliAppModule {
     return this;
   }
 
-  get(name: keyof typeof configSchema) {
-    return this.config.get(name);
-  }
-
-  has(name: keyof typeof configSchema) {
-    return this.config.get(name);
-  }
-
-  set(name: keyof typeof configSchema, value: any) {
-    return this.config.set(name, value);
-  }
-
-  async preCliAction(thisCommand: Command, actionCommand: Command): Promise<void> {
+  async preCliAction(
+    thisCommand: Command,
+    actionCommand: Command
+  ): Promise<void> {
     const options = thisCommand.opts();
     // Load config from file, if specified
     if (options.configFile) {
@@ -78,7 +81,7 @@ export class Config extends CliAppModule {
   }
 
   async commandConfigShow() {
-    const { log } = this.app.logging;
+    const { log } = this;
 
     const schema = configSchema;
     const props = config.getProperties();
