@@ -62,21 +62,26 @@ export class Logging extends CliAppModule {
     const { usePrettyLogs } = this;
     const config = this.app.config.config;
 
-    const logStreams = [
+    return pino(
       {
-        stream: usePrettyLogs
-          ? pretty({
-              colorize: true,
-              singleLine: config.get("logSingleLine"),
-            })
-          : process.stdout,
+        level: config.get("logLevel"),
       },
-      { stream: new LogEventStream(this.app.events, Logging.EVENT_LOG) },
-    ];
-    const logOptions = {
-      level: config.get("logLevel"),
-    };
-    return pino(logOptions, pino.multistream(logStreams));
+      pino.multistream([
+        {
+          level: "trace",
+          stream: new LogEventStream(this.app.events, Logging.EVENT_LOG),
+        },
+        {
+          level: "trace",
+          stream: usePrettyLogs
+            ? pretty({
+                colorize: true,
+                singleLine: config.get("logSingleLine"),
+              })
+            : process.stdout,
+        },
+      ])
+    );
   }
 }
 

@@ -1,6 +1,6 @@
 import { html, TemplateContent } from "../../../utils/html";
 
-export type LayoutProps = {
+export interface LayoutProps {
   user?: Express.User;
   csrfToken: string;
   messages?: string[];

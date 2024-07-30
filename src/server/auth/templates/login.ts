@@ -1,10 +1,11 @@
 import { html } from "../../../utils/html";
 import { layout, LayoutProps } from "../../common/templates/layout";
 
-export default ({
-  info,
-  ...layoutProps
-}: { info: string } & LayoutProps) =>
+export interface Props extends LayoutProps {
+  info?: string;
+}
+
+export default ({ info, ...layoutProps }: Props) =>
   layout({
     ...layoutProps,
     content: html`
@@ -19,7 +20,6 @@ export default ({
               name="username"
               type="text"
               autocomplete="username"
-              required
               autofocus
             />
           </section>
@@ -30,7 +30,6 @@ export default ({
               name="password"
               type="password"
               autocomplete="current-password"
-              required
             />
           </section>
           <input type="hidden" name="_csrf" value="${layoutProps.csrfToken}" />

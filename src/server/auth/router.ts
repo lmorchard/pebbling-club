@@ -9,49 +9,34 @@ export default function init(server: Server, app: Express) {
   const router = Router();
 
   router.get("/", (req, res) => {
-    const { layoutProps } = res.locals;
-
     res.send("Hello AUTH!");
   });
 
   router.get("/signup", function (req, res, next) {
-    const { layoutProps } = res.locals;
-    res.send(templateSignup({ ...layoutProps })());
+    res.send(templateSignup(res.locals)());
   });
 
   router.get("/login", function (req, res, next) {
-    const { layoutProps } = res.locals;
-    res.send(templateLogin({ ...layoutProps })());
+    res.send(templateLogin(res.locals)());
   });
 
   router.post(
     "/login",
-    /*
+    body("username").trim().isString().notEmpty(),
+    body("password").trim().isString().notEmpty(),
     function (req, res, next) {
-      const { layoutProps } = res.locals;
-      const authenticateCallback: AuthenticateCallback = (
-        err,
-        user,
-        info,
-        status
-      ) => {
-        if (err) return next(err);
-        if (!user) {
-          return res.send(templates.login({ info, ...layoutProps })());
-        }
-        res.redirect("/");
-      };
+      const validation = validationResult(req);
+      if (validation.isEmpty()) return next();
 
-      passport.authenticate("local", authenticateCallback)(req, res, next);
-    }
-    */
+      return res.send("NOPE NOPE NOPE");
+    },
     passport.authenticate("local", {
       failureRedirect: "/auth/login",
       failureMessage: true,
     }),
-    function(req, res) {
-      res.redirect('/');
-    }   
+    function (req, res) {
+      res.redirect("/");
+    }
   );
 
   router.post("/logout", function (req, res, next) {
@@ -61,23 +46,45 @@ export default function init(server: Server, app: Express) {
     });
   });
 
-  router.post("/signup", function (req, res, next) {
-    const { passwords } = server.app.services;
-    const { username, password } = req.body;
+  router.post(
+    "/signup",
+    body("username").trim().isString().notEmpty(),
+    body("password").trim().isString().notEmpty(),
+    body("password-confirm")
+      .trim()
+      .isString()
+      .notEmpty()
+      .custom((value, { req }) => {
+        if (req.body.password !== value) {
+          throw new Error("Passwords do not match");
+        }
+      }),
+    function (req, res, next) {
+      const validation = validationResult(req);
+      if (!validation.isEmpty()) {
+        return res.send(`ERR ${JSON.stringify(validation.array())}`);
+      }
 
-    // TODO: add repeat password and validation
+      const { username, password } = req.body;
 
-    passwords
-      .create(username, password)
-      .then((id: string) => {
-        const user = { id, username };
-        req.login(user, function (err) {
-          if (err) return next(err);
-          res.redirect("/");
-        });
-      })
-      .catch((err) => next(err));
-  });
+
+      // TODO: add repeat password and validation
+      return res.send("OK");
+      /*
+      const { passwords } = server.app.services;
+      passwords
+        .create(username, password)
+        .then((id: string) => {
+          const user = { id, username };
+          req.login(user, function (err) {
+            if (err) return next(err);
+            res.redirect("/");
+          });
+        })
+        .catch((err) => next(err));
+        */
+    }
+  );
 
   return router;
 }

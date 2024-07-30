@@ -9,6 +9,7 @@ import csrf from "csurf";
 
 import authInit from "./auth";
 
+import { LayoutProps } from "./common/templates/layout";
 import homeRouter from "./home/router";
 import authRouter from "./auth/router";
 
@@ -65,6 +66,19 @@ export const configSchema = {
   */
 } as const;
 
+declare global {
+  namespace Express {
+    interface Locals {
+      csrfToken: string;
+      messages: string[];
+    }
+    namespace session {
+      interface SessionData extends LayoutProps {
+      }
+    }
+  }
+}
+
 export class Server extends CliAppModule {
   serverApp?: Express;
 
@@ -103,6 +117,7 @@ export class Server extends CliAppModule {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
     app.use(cookieParser());
+
     app.use(
       session({
         secret: sessionSecret,
@@ -112,26 +127,23 @@ export class Server extends CliAppModule {
         store: await services.sessions.buildStore(),
       })
     );
-    app.use(csrf());
-
-    app.use(express.static(config.get("publicPath")));
-
     app.use(function (req, res, next) {
-      // @ts-ignore
-      var messages = req.session.messages || [];
-      if (messages.length) {
-        // @ts-ignore
+      if (req.session.messages?.length()) {
+        res.locals.messages = req.session.messages;
         req.session.messages = [];
       }
-      res.locals.layoutProps = {
-        csrfToken: req.csrfToken(),
-        messages
-      };
+      next();
+    });
+
+    app.use(csrf());
+    app.use(function (req, res, next) {
+      res.locals.csrfToken = req.csrfToken();
       next();
     });
 
     await authInit(this, app);
 
+    app.use(express.static(config.get("publicPath")));
     app.use("/", homeRouter(this, app));
     app.use("/auth", authRouter(this, app));
 

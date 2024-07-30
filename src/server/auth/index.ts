@@ -38,7 +38,7 @@ export default async function init(server: Server, app: Express) {
 
   /* Configure session management. */
   /*
-  // TODO: rework this stuff not to hit the DB?
+  // TODO: rework this stuff not to hit the DB? maybe lazy load?
   passport.serializeUser(function (user, cb) {
     process.nextTick(function () {
       cb(null, user.id);
@@ -57,7 +57,7 @@ export default async function init(server: Server, app: Express) {
   app.use(passport.authenticate("session"));
 
   app.use(function (req, res, next) {
-    res.locals.layoutProps.user = req.user;
+    res.locals.user = req.user;
     next();
   });
 }

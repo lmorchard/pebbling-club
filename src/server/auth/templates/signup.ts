@@ -1,7 +1,9 @@
 import { html } from "../../../utils/html";
 import { layout, LayoutProps } from "../../common/templates/layout";
 
-export default ({ ...layoutProps }: {} & LayoutProps) =>
+export interface Props extends LayoutProps {}
+
+export default ({ ...layoutProps }: Props) =>
   layout({
     ...layoutProps,
     content: html`
@@ -10,23 +12,15 @@ export default ({ ...layoutProps }: {} & LayoutProps) =>
         <form action="/auth/signup" method="post">
           <section>
             <label for="username">Username</label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              autocomplete="username"
-              required
-            />
+            <input id="username" name="username" type="text" required />
           </section>
           <section>
             <label for="new-password">Password</label>
-            <input
-              id="new-password"
-              name="password"
-              type="password"
-              autocomplete="new-password"
-              required
-            />
+            <input id="new-password" name="password" type="password" required />
+          </section>
+          <section>
+            <label for="new-password-confirm">Password (confirm)</label>
+            <input id="new-password-confirm" name="password-confirm" type="password" />
           </section>
           <input type="hidden" name="_csrf" value="${layoutProps.csrfToken}" />
           <button type="submit">Sign up</button>
