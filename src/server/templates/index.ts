@@ -1,5 +1,5 @@
-import { html } from "../../../utils/html";
-import { layout, LayoutProps } from "../../common/templates/layout";
+import { html } from "../utils/html";
+import { layout, LayoutProps } from "./layout";
 
 export interface Props extends LayoutProps {}
 

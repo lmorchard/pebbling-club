@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { render, TemplateContent } from "../../utils/html";
+import { render, TemplateContent } from "./html";
 
 export const renderWithLocals =
   (template: (props: Express.Locals) => TemplateContent): RequestHandler =>

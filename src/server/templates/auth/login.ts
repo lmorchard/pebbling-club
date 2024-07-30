@@ -1,6 +1,6 @@
-import { html } from "../../../utils/html";
-import { field } from "../../common/forms";
-import { layout, LayoutProps } from "../../common/templates/layout";
+import { html } from "../../utils/html";
+import { field } from "../../utils/forms";
+import { layout, LayoutProps } from "../layout";
 
 export interface Props extends LayoutProps {}
 

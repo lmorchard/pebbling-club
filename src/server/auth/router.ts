@@ -1,17 +1,18 @@
 import { Server } from "../index";
 import { Router, Express } from "express";
+import asyncHandler from "express-async-handler";
 import passport from "passport";
 import { body } from "express-validator";
-import templateSignup from "./templates/signup";
-import templateLogin from "./templates/login";
-import { withValidation, ifNotValid } from "../common/forms";
-import { renderWithLocals } from "../common/templates";
+import templateSignup from "../templates/auth/signup";
+import templateLogin from "../templates/auth/login";
+import { withValidation, ifNotValid } from "../utils/forms";
+import { renderWithLocals } from "../utils/templates";
 
 export default function init(server: Server, app: Express) {
   const { services } = server.app;
   const router = Router();
 
-  router.get("/", (req, res) => {
+  router.get("/", (req, res, next) => {
     // TODO: redirect to profile?
     res.send("Hello AUTH!");
   });
@@ -26,11 +27,9 @@ export default function init(server: Server, app: Express) {
     ifNotValid(renderWithLocals(templateLogin)),
     passport.authenticate("local", {
       failureMessage: "Username or password incorrect",
-      // failureFlash: "Username or password incorrect",
       failureRedirect: "/auth/login",
       successRedirect: "/",
     }),
-    //renderWithLocals(templateLogin),
   );
 
   router.post("/logout", function (req, res, next) {
@@ -65,19 +64,15 @@ export default function init(server: Server, app: Express) {
       }),
     withValidation(),
     ifNotValid(renderWithLocals(templateSignup)),
-    function (req, res, next) {
+    asyncHandler(async (req, res, next) => {
       const { username, password } = res.locals.formData!;
-      services.passwords
-        .create(username, password)
-        .then((id: string) => {
-          const user = { id, username };
-          req.login(user, function (err) {
-            if (err) return next(err);
-            res.redirect("/");
-          });
-        })
-        .catch((err) => next(err));
-    }
+      const id = await services.passwords.create(username, password);
+      const user = { id, username };
+      req.login(user, function (err) {
+        if (err) return next(err);
+        res.redirect("/");
+      });
+    })
   );
 
   return router;

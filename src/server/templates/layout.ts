@@ -1,4 +1,4 @@
-import { html, TemplateContent } from "../../../utils/html";
+import { html, TemplateContent } from "../utils/html";
 
 export interface LayoutProps extends Express.Locals {}
 

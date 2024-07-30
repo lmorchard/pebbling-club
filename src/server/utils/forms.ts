@@ -1,4 +1,4 @@
-import { html, RenderableTemplate, TemplateContent } from "../../utils/html";
+import { html, RenderableTemplate, TemplateContent } from "./html";
 import { RequestHandler } from "express";
 import {
   validationResult,

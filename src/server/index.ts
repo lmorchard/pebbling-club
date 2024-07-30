@@ -1,7 +1,7 @@
 import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
 
-import express, { Express } from "express";
+import express, { Express, ErrorRequestHandler } from "express";
 import pinoHttp from "pino-http";
 import cookieParser from "cookie-parser";
 import session from "express-session";
@@ -12,6 +12,8 @@ import authInit from "./auth";
 
 import homeRouter from "./home/router";
 import authRouter from "./auth/router";
+import { renderWithLocals } from "./utils/templates";
+import templateError from "./templates/error";
 
 export const configSchema = {
   host: {
@@ -73,12 +75,13 @@ type GetFlashMessages = (
 declare global {
   namespace Express {
     interface Request {
-      flash: Express.Response['flash']      
+      flash: Express.Response["flash"];
     }
     interface Locals {
       csrfToken: string;
       messages?: string[];
       getFlashMessages: GetFlashMessages;
+      error?: any;
     }
     namespace session {
       interface SessionData {
@@ -146,15 +149,7 @@ export class Server extends CliAppModule {
       next();
     });
 
-    app.use(
-      flash({
-        sessionKeyName: SESSION_KEY_FLASH_MESSAGES,
-        // below are optional property you can pass in to track
-        // TODO: emit events here?
-        // onAddFlash: (type, message) => {},
-        // onConsumeFlash: (type: string, messages: string[]) => {},
-      })
-    );
+    app.use(flash({ sessionKeyName: SESSION_KEY_FLASH_MESSAGES }));
     app.use(function (req, res, next) {
       // HACK: copy flash method for compat with Passport
       req.flash = res.flash;
@@ -175,6 +170,12 @@ export class Server extends CliAppModule {
     app.use(express.static(config.get("publicPath")));
     app.use("/", homeRouter(this, app));
     app.use("/auth", authRouter(this, app));
+
+    const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
+      res.locals.error = error;
+      renderWithLocals(templateError)(req, res, next);
+    };
+    app.use(errorHandler);
 
     app.listen(port, () => {
       log.info(`Server listening on port ${port}`);
