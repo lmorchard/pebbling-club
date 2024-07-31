@@ -73,11 +73,11 @@ export class PasswordService extends BaseService {
   }
 
   async usernameExists(username: string) {
-    return await this.app.repository.checkIfUsernameExists(username);
+    return await this.app.repository.checkIfPasswordExistsForUsername(username);
   }
 
-  async delete(username: string) {
-    return await this.app.repository.deleteHashedPasswordAndSaltForUsername(username);
+  async delete(id: string) {
+    return await this.app.repository.deleteHashedPasswordAndSaltForId(id);
   }
 
   hexToArray(input: string) {

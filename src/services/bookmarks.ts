@@ -8,6 +8,11 @@ export class BookmarksService extends BaseService {
   async createBatch(bookmarks: BookmarkEditable[]) {
     await this.app.repository.upsertBookmarksBatch(bookmarks);
   }
+
+  async listForOwner(ownerId: string, limit: number) {
+    this.log.debug({ msg: "listForOwner", ownerId, limit });
+    return await this.app.repository.listBookmarksForOwner(ownerId, limit);
+  }
 }
 
 export type Bookmark = {
@@ -19,8 +24,8 @@ export type Bookmark = {
   tags?: string;
   visibility?: string;
   meta?: string;
-  created: Date;
-  modified: Date;
+  created?: Date;
+  modified?: Date;
 };
 
-export type BookmarkEditable = Omit<Bookmark, "id" | "created" | "modified">;
+export type BookmarkEditable = Omit<Bookmark, "id">;

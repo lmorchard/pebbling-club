@@ -9,12 +9,15 @@ import { Strategy as LocalStrategy } from "passport-local";
 import session from "express-session";
 import flash, { getFlashMessages } from "express-flash-message";
 import csrf from "csurf";
-import homeRouter from "./routers/home";
-import authRouter from "./routers/auth";
 import { renderWithLocals } from "./utils/templates";
 import templateError from "./templates/error";
 import { App } from "../app";
 import { BaseAppWithServices } from "../app/types";
+
+import homeRouter from "./routers/home";
+import authRouter from "./routers/auth";
+import profileRouter from "./routers/profile"
+import { Boom } from "@hapi/boom";
 
 export const configSchema = {
   host: {
@@ -210,31 +213,42 @@ export default class Server extends CliAppModule {
   }
 
   async setupAuth(app: Express) {
-    const { passwords } = this.app.services;
+    const { log } = this;
+    const { passwords, profiles } = this.app.services;
 
     passport.use(
-      new LocalStrategy(function verify(username, password, cb) {
-        passwords
-          .verify(username, password)
-          .then((userId: string | undefined) =>
-            cb(null, userId ? { id: userId, username } : false)
-          )
-          .catch((err: Error) => cb(err));
+      new LocalStrategy(async function verify(username, password, cb) {
+        try {
+          // First, verify the username and password
+          const passwordId = await passwords.verify(username, password);
+          if (!passwordId) return cb(null, false);
+
+          // Then, get the profile associated with the username
+          const profile = await profiles.getByUsername(username);
+          if (!profile?.id) return cb(null, false);
+
+          return cb(null, { id: profile.id, username });
+        } catch (err) {
+          return cb(err);
+        }
       })
     );
 
-    // TODO: rework this stuff not to hit the DB? maybe lazy load?
+    // TODO: rework this not to hit the DB? maybe lazy load?
+    passport.deserializeUser(async function (id: string, cb) {
+      try {
+        const profile = await profiles.get(id);
+        if (!profile?.username) return cb(null, null);
+        return cb(null, { id, username: profile.username });
+      } catch (err) {
+        cb(err);
+      }
+    });
+
     passport.serializeUser(function (user, cb) {
       process.nextTick(function () {
         cb(null, user.id);
       });
-    });
-
-    passport.deserializeUser(function (id: string, cb) {
-      passwords.getUsernameById(id).then(username => {
-        if (!username) return cb(null, null);
-        return cb(null, { id, username });
-      }).catch(err => cb(err, null));
     });
 
     app.use(passport.authenticate("session"));
@@ -249,13 +263,22 @@ export default class Server extends CliAppModule {
     const { config } = this.app;
 
     app.use(express.static(config.get("publicPath")));
-    app.use("/", homeRouter(this, app));
     app.use("/auth", authRouter(this, app));
+    app.use("/u", profileRouter(this, app));
+    app.use("/", homeRouter(this, app));
   }
 
   async setupErrorHandler(app: Express) {
     const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
       res.locals.error = error;
+      if (error instanceof Error) {
+        if (error instanceof Boom) {
+          if (error.output.statusCode === 404) {
+            // TODO: need a specific 404 page template
+            return res.status(404).send("Not found");
+          }
+        }
+      }
       renderWithLocals(templateError)(req, res, next);
     };
     app.use(errorHandler);

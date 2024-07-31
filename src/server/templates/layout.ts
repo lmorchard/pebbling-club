@@ -32,6 +32,7 @@ export const layout = ({
         )}
         ${user
           ? html`
+              <h1>Welcome <a href="/u/${user.username}">${user.username}</a></h1>
               <form action="/auth/logout" method="post">
                 <button type="submit">
                   Logout (${user.username} (${user.id}))

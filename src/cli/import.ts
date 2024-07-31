@@ -35,12 +35,13 @@ export default class CliImport extends CliAppModule {
     options: { batch: string }
   ) {
     const { log } = this;
-    const { passwords, imports } = this.app.services;
+    const { profiles, imports } = this.app.services;
     const batchSize = parseInt(options.batch, 10) || 100;
 
-    const ownerId = await passwords.getIdByUsername(username);
-    if (!ownerId) throw new Error("user not found");
+    const ownerProfile = await profiles.getByUsername(username);
+    if (!ownerProfile?.id) throw new Error("user not found");
 
+    const ownerId = ownerProfile.id;
     log.debug({ msg: "loading exported bookmarks", ownerId });
     const importData = await fs.readFile(filename, "utf-8");
     const importRecords: PinboardImportRecord[] = JSON.parse(importData);

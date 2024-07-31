@@ -14,24 +14,24 @@ export default class CliUsers extends CliAppModule {
   async initCli(cli: Cli) {
     const { program } = cli;
 
-    const usersProgram = program.command("users").description("manage users");
+    const profilesProgram = program.command("profiles").description("manage profiles");
 
-    usersProgram
+    profilesProgram
       .command("list")
-      .description("list all users")
+      .description("list all profiles")
       .action(this.commandList.bind(this));
 
-    usersProgram
+    profilesProgram
       .command("delete <username>")
-      .description("delete a user")
+      .description("delete a profile")
       .action(this.commandDelete.bind(this));
 
-    usersProgram
+    profilesProgram
       .command("create <username> <password>")
-      .description("create a user")
+      .description("create a profile")
       .action(this.commandCreate.bind(this));
 
-    usersProgram
+    profilesProgram
       .command("change-password <username> <password>")
       .description("change a user's password")
       .action(this.commandChangePassword.bind(this));
@@ -53,27 +53,29 @@ export default class CliUsers extends CliAppModule {
 
   async commandDelete(username: string) {
     const { log } = this;
-    const { passwords } = this.app.services;
+    const { profiles, passwords } = this.app.services;
 
-    const result = await passwords.delete(username);
-    console.log(result);
-    if (result) {
-      log.info({ msg: "deleted user", username, result });
-    } else {
-      log.warn({ msg: "failed to delete user", username });
+    const existingProfile = await profiles.getByUsername(username);
+    if (!existingProfile?.id) {
+      log.error({ msg: "profile does not exist", username });
+      return;
     }
+
+    await profiles.delete(existingProfile.id);
+
+    log.info({ msg: "deleted profile", username });
   }
 
   async commandCreate(username: string, password: string) {
     const { log } = this;
-    const { passwords } = this.app.services;
+    const { profiles } = this.app.services;
 
-    if (await passwords.usernameExists(username)) {
+    if (await profiles.usernameExists(username)) {
       log.error({ msg: "username already exists", username });
       return;
     }
 
-    const result = await passwords.create(username, password);
+    const result = await profiles.create({ username }, { password });
     if (result) {
       log.info({ msg: "created user", username });
     } else {

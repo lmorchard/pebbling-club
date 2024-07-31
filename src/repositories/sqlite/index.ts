@@ -3,7 +3,8 @@ import Knex from "knex";
 import { v4 as uuid } from "uuid";
 import { App } from "../../app";
 import { BaseKnexRepository } from "../knex";
-import { BookmarkEditable } from "../base";
+import { BookmarkEditable } from "../../services/bookmarks";
+import { Profile, ProfileEditable } from "../../services/profiles";
 import { CliAppModule } from "../../app/modules";
 
 export const configSchema = {
@@ -77,7 +78,7 @@ export class SqliteRepository
       salt: string;
     }[]
   > {
-    return this.connection("users").select(
+    return this.connection("passwords").select(
       "id",
       "username",
       "passwordHashed",
@@ -91,7 +92,7 @@ export class SqliteRepository
     salt: string
   ): Promise<string> {
     const id = uuid();
-    await this.connection("users").insert({
+    await this.connection("passwords").insert({
       id,
       username,
       passwordHashed,
@@ -105,7 +106,7 @@ export class SqliteRepository
     passwordHashed: string,
     salt: string
   ) {
-    return await this.connection("users").where("username", username).update({
+    return await this.connection("passwords").where("username", username).update({
       username,
       passwordHashed,
       salt,
@@ -115,7 +116,7 @@ export class SqliteRepository
   async getHashedPasswordAndSaltForUsername(
     username: string
   ): Promise<undefined | { id: string; hashedPassword: string; salt: string }> {
-    const result = await this.connection("users")
+    const result = await this.connection("passwords")
       .select("id", "passwordHashed", "salt")
       .where("username", username)
       .first();
@@ -128,8 +129,8 @@ export class SqliteRepository
     };
   }
 
-  async checkIfUsernameExists(username: string): Promise<boolean> {
-    const result = await this.connection("users")
+  async checkIfPasswordExistsForUsername(username: string): Promise<boolean> {
+    const result = await this.connection("passwords")
       .select("id")
       .where({ username })
       .first();
@@ -137,7 +138,7 @@ export class SqliteRepository
   }
 
   async getUsernameById(id: string): Promise<undefined | string> {
-    const result = await this.connection("users")
+    const result = await this.connection("passwords")
       .select("username")
       .where({ id })
       .first();
@@ -146,7 +147,7 @@ export class SqliteRepository
   }
 
   async getIdByUsername(username: string): Promise<undefined | string> {
-    const result = await this.connection("users")
+    const result = await this.connection("passwords")
       .select("id")
       .where({ username })
       .first();
@@ -154,10 +155,8 @@ export class SqliteRepository
     return result.id;
   }
 
-  async deleteHashedPasswordAndSaltForUsername(
-    username: string
-  ): Promise<string> {
-    return this.connection("users").where("username", username).del();
+  async deleteHashedPasswordAndSaltForId(id: string): Promise<string> {
+    return this.connection("passwords").where("id", id).del();
   }
 
   async deleteSession(id: string) {
@@ -212,5 +211,53 @@ export class SqliteRepository
         await this._upsertOneBookmark(bookmark, now, trx);
       }
     });
+  }
+
+  async listBookmarksForOwner(ownerId: string, limit: number): Promise<any> {
+    return this.connection("bookmarks")
+      .where({ ownerId })
+      .limit(limit)
+      .orderBy("created", "desc");
+  }
+
+  async checkIfProfileExistsForUsername(username: string): Promise<boolean> {
+    const result = await this.connection("profiles")
+      .select("id")
+      .where({ username })
+      .first();
+    return !!result;
+  }
+
+  async createProfile(profile: Profile): Promise<string> {
+    const id = uuid();
+    const now = Date.now();
+    await this.connection("profiles").insert({
+      ...profile,
+      id,
+      created: profile.created?.getTime() || now,
+      modified: profile.modified?.getTime() || now,
+    });
+    return id;
+  }
+
+  async updateProfile(id: string, profile: ProfileEditable): Promise<void> {
+    await this.connection("profiles")
+      .where({ id })
+      .update({
+        ...profile,
+        modified: Date.now(),
+      });
+  }
+
+  async getProfile(id: string): Promise<Profile> {
+    return this.connection("profiles").where({ id }).first();
+  }
+
+  async getProfileByUsername(username: string): Promise<Profile> {
+    return this.connection("profiles").where({ username }).first();
+  }
+
+  async deleteProfile(id: string): Promise<void> {
+    return await this.connection("profiles").where({ id }).del();
   }
 }

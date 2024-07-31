@@ -1,12 +1,16 @@
 import { CliAppModule } from "../app/modules";
+import { Bookmark, BookmarkEditable } from "../services/bookmarks";
+import { Profile, ProfileEditable } from "../services/profiles";
 
 export interface BaseRepository extends CliAppModule {
-  listAllUsers(): Promise<{
-    id: string;
-    username: string;
-    passwordHashed: string;
-    salt: string;
-  }[]>;
+  listAllUsers(): Promise<
+    {
+      id: string;
+      username: string;
+      passwordHashed: string;
+      salt: string;
+    }[]
+  >;
 
   createHashedPasswordAndSaltForUsername(
     username: string,
@@ -24,15 +28,13 @@ export interface BaseRepository extends CliAppModule {
     username: string
   ): Promise<undefined | { id: string; hashedPassword: string; salt: string }>;
 
-  checkIfUsernameExists(username: string): Promise<boolean>;
+  checkIfPasswordExistsForUsername(username: string): Promise<boolean>;
 
   getUsernameById(id: string): Promise<undefined | string>;
 
   getIdByUsername(username: string): Promise<undefined | string>;
 
-  deleteHashedPasswordAndSaltForUsername(
-    username: string
-  ): Promise<string>;
+  deleteHashedPasswordAndSaltForId(username: string): Promise<string>;
 
   deleteSession(sid: string): void;
 
@@ -45,19 +47,18 @@ export interface BaseRepository extends CliAppModule {
   upsertBookmark(bookmark: BookmarkEditable): Promise<void>;
 
   upsertBookmarksBatch(bookmarks: BookmarkEditable[]): Promise<void>;
+
+  listBookmarksForOwner(ownerId: string, limit: number): Promise<Bookmark[]>;
+
+  checkIfProfileExistsForUsername(username: string): Promise<boolean>;
+
+  createProfile(profile: Profile): Promise<string>;
+
+  updateProfile(id: string, profile: ProfileEditable): Promise<void>;
+
+  getProfile(id: string): Promise<Profile>;
+
+  getProfileByUsername(username: string): Promise<Profile>;
+
+  deleteProfile(id: string): Promise<void>;
 }
-
-export type Bookmark = {
-  id: string;
-  ownerId: string;
-  href: string;
-  title?: string;
-  extended?: string;
-  tags?: string;
-  visibility?: string;
-  meta?: string;
-  created?: Date;
-  modified?: Date;
-};
-
-export type BookmarkEditable = Omit<Bookmark, "id">;
