@@ -8,7 +8,7 @@
     "serve": "npm run build && node ./build/index.js serve",
     "test": "glob -c \"node --import tsx --no-warnings --test\" \"./src/**/*.test.ts\"",
     "test:watch": "glob -c \"node --import tsx --no-warnings --watch --test\" \"./src/**/*.test.ts\"",
-    "dev": "tsx ./src/index.ts",
+    "manage": "tsx ./src/index.ts",
     "dev:serve": "nodemon --watch src --ext 'js,ts' --exec 'tsx ./src/index.ts --force-pretty-logs serve'",
     "db": "npx knex --knexfile ./src/repositories/sqlite/knexfile.ts",
     "db:migrate": "npm run db migrate:latest"

@@ -3,9 +3,18 @@ import { CliAppModule } from "../app/modules";
 export class BaseRepositoryMethodUnimplementedError extends Error {}
 
 export class BaseRepository extends CliAppModule {
+  async listAllUsers(): Promise<{
+    id: string;
+    username: string;
+    passwordHashed: string;
+    salt: string;
+  }[]> {
+    throw new BaseRepositoryMethodUnimplementedError();
+  }
+
   async createHashedPasswordAndSaltForUsername(
     username: string,
-    hashed_password: string,
+    passwordHashed: string,
     salt: string
   ): Promise<string> {
     throw new BaseRepositoryMethodUnimplementedError();
@@ -13,9 +22,9 @@ export class BaseRepository extends CliAppModule {
 
   async updateHashedPasswordAndSaltForUsername(
     username: string,
-    hashed_password: string,
+    passwordHashed: string,
     salt: string
-  ) {
+  ): Promise<number> {
     throw new BaseRepositoryMethodUnimplementedError();
   }
 

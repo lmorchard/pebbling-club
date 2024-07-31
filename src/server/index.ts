@@ -98,7 +98,7 @@ declare global {
   }
 }
 
-export class Server extends CliAppModule {
+export default class Server extends CliAppModule {
   async initCli(cli: Cli) {
     const { program } = cli;
     program

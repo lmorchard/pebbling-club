@@ -1,4 +1,4 @@
-import { Server } from "../index";
+import Server from "../index";
 import { Router, Express } from "express";
 import asyncHandler from "express-async-handler";
 import passport from "passport";

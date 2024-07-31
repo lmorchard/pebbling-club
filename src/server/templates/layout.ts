@@ -7,7 +7,6 @@ export const layout = ({
   user,
   csrfToken,
   getFlashMessages,
-  messages,
 }: { content: TemplateContent } & LayoutProps) => {
   const flashMessages = (["info", "warn", "error"] as const).map(
     (type) => [type, getFlashMessages(type)] as const

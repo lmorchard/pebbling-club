@@ -1,7 +1,7 @@
 import { Express } from "express";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Server } from "../index";
+import Server from "../index";
 
 declare global {
   namespace Express {

@@ -13,7 +13,7 @@ export class Cli {
 
   async init() {
     await this.app.init();
-    await this.callModules((m) => m.initCli(this));
+    await this.callModules(async (m) => m.initCli(this));
     this.program
       .version(process.env.npm_package_version || "0.0")
       .hook("postAction", () => void this.app.deinit());

@@ -64,16 +64,25 @@ export class SqliteRepository extends BaseKnexRepository {
     return { filename: databasePath };
   }
 
+  async listAllUsers(): Promise<{
+    id: string;
+    username: string;
+    passwordHashed: string;
+    salt: string;
+  }[]> {
+    return this.connection("users").select("id", "username", "passwordHashed", "salt");
+  }
+
   async createHashedPasswordAndSaltForUsername(
     username: string,
-    hashed_password: string,
+    passwordHashed: string,
     salt: string
   ): Promise<string> {
     const id = uuid();
     await this.connection("users").insert({
       id,
       username,
-      hashed_password,
+      passwordHashed,
       salt,
     });
     return id;
@@ -81,12 +90,12 @@ export class SqliteRepository extends BaseKnexRepository {
 
   async updateHashedPasswordAndSaltForUsername(
     username: string,
-    hashed_password: string,
+    passwordHashed: string,
     salt: string
   ) {
-    await this.connection("users").where("username", username).update({
+    return await this.connection("users").where("username", username).update({
       username,
-      hashed_password,
+      passwordHashed,
       salt,
     });
   }
@@ -95,15 +104,15 @@ export class SqliteRepository extends BaseKnexRepository {
     username: string
   ): Promise<undefined | { id: string; hashedPassword: string; salt: string }> {
     const result = await this.connection("users")
-      .select("id", "hashed_password", "salt")
+      .select("id", "passwordHashed", "salt")
       .where("username", username)
       .first();
     if (!result) return;
-    const { id, salt, hashed_password } = result;
+    const { id, salt, passwordHashed } = result;
     return {
       id,
       salt,
-      hashedPassword: hashed_password,
+      hashedPassword: passwordHashed,
     };
   }
 

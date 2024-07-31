@@ -5,7 +5,6 @@ import { Events } from "./events";
 import { BaseRepository } from "../repositories/base";
 import { SqliteRepository } from "../repositories/sqlite/index";
 import { Services } from "../services";
-import { Server } from "../server/index";
 
 export class App {
   modules: AppModule[];
@@ -14,17 +13,24 @@ export class App {
   logging: Logging;
   repository: BaseRepository;
   services: Services;
-  server: Server;
+  registered: Record<string, AppModule>;
 
   constructor() {
     this.modules = [
-      this.config = new Config(this),
-      this.events = new Events(this),
-      this.logging = new Logging(this),
-      this.repository = new SqliteRepository(this), // TODO make switchable later
-      this.services = new Services(this),
-      this.server = new Server(this),
+      (this.config = new Config(this)),
+      (this.events = new Events(this)),
+      (this.logging = new Logging(this)),
+      (this.repository = new SqliteRepository(this)), // TODO make switchable later
+      (this.services = new Services(this)),
     ];
+    this.registered = {};
+  }
+
+  registerModule(name: string, moduleConstructor: new (app: App) => AppModule) {
+    const module = new moduleConstructor(this);
+    this.modules.push(module);
+    this.registered[name] = module;
+    return this;
   }
 
   async callModules(mapfn: (m: AppModule) => Promise<any>) {
@@ -33,10 +39,10 @@ export class App {
   }
 
   async init() {
-    return await this.callModules(m => m.init());
+    return await this.callModules((m) => m.init());
   }
 
   async deinit() {
-    return await this.callModules(m => m.deinit());
+    return await this.callModules((m) => m.deinit());
   }
 }

@@ -16,6 +16,10 @@ export class PasswordService extends BaseService {
     this.hashAlgo = "sha256";
   }
 
+  async list() {
+    return await this.repository.listAllUsers();
+  }
+
   async create(username: string, password: string, originalSalt?: string) {
     const { hashedPassword, salt } = await this.hashPassword(
       password,
@@ -31,7 +35,7 @@ export class PasswordService extends BaseService {
 
   async update(username: string, password: string) {
     const { hashedPassword, salt } = await this.hashPassword(password);
-    await this.repository.updateHashedPasswordAndSaltForUsername(
+    return await this.repository.updateHashedPasswordAndSaltForUsername(
       username,
       hashedPassword,
       salt
@@ -68,7 +72,7 @@ export class PasswordService extends BaseService {
   }
 
   async delete(username: string) {
-    await this.repository.deleteHashedPasswordAndSaltForUsername(username);
+    return await this.repository.deleteHashedPasswordAndSaltForUsername(username);
   }
 
   hexToArray(input: string) {
