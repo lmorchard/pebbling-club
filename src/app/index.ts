@@ -1,13 +1,13 @@
 import { Config } from "./config";
 import { Logging } from "./logging";
 import { AppModule } from "./modules";
-import { BaseAppModule, BaseEvents, BaseLogger, BaseConfig, BaseApp } from "./types";
+import { BaseAppModule, BaseAppWithServices } from "./types";
 import { Events } from "./events";
 import { BaseRepository } from "../repositories/base";
 import { SqliteRepository } from "../repositories/sqlite/index";
 import { Services } from "../services";
 
-export class App implements BaseApp {
+export class App implements BaseAppWithServices {
   config: Config;
   logging: Logging;
   events: Events;

@@ -7,9 +7,10 @@ import templateSignup from "../templates/auth/signup";
 import templateLogin from "../templates/auth/login";
 import { withValidation, ifNotValid } from "../utils/forms";
 import { renderWithLocals } from "../utils/templates";
+import { App } from "../../app";
 
 export default function init(server: Server, app: Express) {
-  const { services } = server.app;
+  const { services } = server.app as App;
   const router = Router();
 
   router.get("/", (req, res, next) => {

@@ -1,7 +1,16 @@
+import { App } from "../app";
 import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
+import { BaseAppWithServices } from "../app/types";
 
 export default class CliUsers extends CliAppModule {
+  app: BaseAppWithServices;
+
+  constructor(app: BaseAppWithServices) {
+    super(app);
+    this.app = app;
+  }
+
   async initCli(cli: Cli) {
     const { program } = cli;
 
@@ -32,7 +41,7 @@ export default class CliUsers extends CliAppModule {
 
   async commandList() {
     const { log } = this;
-    const { services } = this.app;
+    const { services } = this.app as App;
     const { passwords } = services;
 
     const users = await passwords.list();

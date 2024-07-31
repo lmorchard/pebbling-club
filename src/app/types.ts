@@ -1,11 +1,16 @@
 import { App } from ".";
 import { BaseRepository } from "../repositories/base";
+import { Services } from "../services";
 
 export interface BaseApp {
   config: BaseConfig;
   logging: BaseLogger;
   events: BaseEvents;
   repository: BaseRepository;
+}
+
+export interface BaseAppWithServices extends BaseApp {
+  services: Services;
 }
 
 export interface BaseAppModule {
@@ -29,9 +34,9 @@ export interface BaseEvents {
 
 export interface BaseLogger {
   child: (bindings: Record<string, any>) => BaseLogger;
-  trace: (data: Record<string, any>) => void;
-  debug: (data: Record<string, any>) => void;
-  info: (data: Record<string, any>) => void;
-  warn: (data: Record<string, any>) => void;
-  error: (data: Record<string, any>) => void;
+  trace: (data: string | Record<string, any>) => void;
+  debug: (data: string | Record<string, any>) => void;
+  info: (data: string | Record<string, any>) => void;
+  warn: (data: string | Record<string, any>) => void;
+  error: (data: string | Record<string, any>) => void;
 }

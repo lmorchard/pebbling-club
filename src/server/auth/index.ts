@@ -22,8 +22,10 @@ export default async function init(server: Server, app: Express) {
     new LocalStrategy(function verify(username, password, cb) {
       passwords
         .verify(username, password)
-        .then((userId) => cb(null, userId ? { id: userId, username } : false))
-        .catch((err) => cb(err));
+        .then((userId: string | undefined) =>
+          cb(null, userId ? { id: userId, username } : false)
+        )
+        .catch((err: Error) => cb(err));
     })
   );
 

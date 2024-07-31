@@ -6,9 +6,11 @@ import { BaseKnexRepository } from "../knex";
 const connection = async () => {
   // Get an instance of App to access config
   const app = await new App().init();
+  /*
   if (! (app.repository instanceof BaseKnexRepository)) {
     throw new Error("Invalid repository type");
   }
+  */
 
   // HACK: knex changes working directory, so adjust accordingly
   const { config } = app;
@@ -21,7 +23,7 @@ const connection = async () => {
   // HACK: should this go elsewhere?
   mkdirp.sync(dataPath);
 
-  return app.repository.knexConnectionOptions();
+  return (app.repository as BaseKnexRepository).knexConnectionOptions();
 };
 
 // HACK: squelch a buggy warning from sqlite3 dialect - it seems to check

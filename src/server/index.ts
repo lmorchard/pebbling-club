@@ -15,6 +15,8 @@ import authRouter from "./auth/router";
 import { renderWithLocals } from "./utils/templates";
 import templateError from "./templates/error";
 import { format } from "path";
+import { App } from "../app";
+import { BaseAppWithServices } from "../app/types";
 
 export const configSchema = {
   host: {
@@ -105,6 +107,13 @@ declare global {
 }
 
 export default class Server extends CliAppModule {
+  app: BaseAppWithServices;
+
+  constructor(app: BaseAppWithServices) {
+    super(app);
+    this.app = app;
+  }
+
   async initCli(cli: Cli) {
     const { program } = cli;
     program
@@ -129,7 +138,7 @@ export default class Server extends CliAppModule {
 
   async buildServer() {
     const { log } = this;
-    const { config, services } = this.app;
+    const { config, services } = this.app as App;
 
     // TODO: this seems hacky? maybe should live in services.sessions?
     setInterval(
@@ -138,7 +147,7 @@ export default class Server extends CliAppModule {
     );
 
     const app = express();
-    app.use(pinoHttp({ logger: log }));
+    app.use(pinoHttp({ logger: log as App["logging"]["logger"] }));
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
     app.use(cookieParser());
@@ -153,7 +162,7 @@ export default class Server extends CliAppModule {
   }
 
   async setupSessions(app: Express) {
-    const { config, services } = this.app;
+    const { config, services } = this.app as App;
     const sessionSecret = config.get("sessionSecret");
 
     app.use(

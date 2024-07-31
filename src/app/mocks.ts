@@ -17,19 +17,19 @@ export class MockLogging implements BaseLogger {
   child (bindings: Record<string, any>): BaseLogger {
     return this;
   }
-  trace (data: Record<string, any>): void {
+  trace (data: string | Record<string, any>): void {
     return;
   }
-  debug (data: Record<string, any>): void {
+  debug (data: string | Record<string, any>): void {
     return;
   }
-  info (data: Record<string, any>): void {
+  info (data: string | Record<string, any>): void {
     return;
   }
-  warn (data: Record<string, any>): void {
+  warn (data: string | Record<string, any>): void {
     return;
   }
-  error (data: Record<string, any>): void {
+  error (data: string | Record<string, any>): void {
     return;
   }
 }

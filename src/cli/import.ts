@@ -2,8 +2,16 @@ import fs from "fs/promises";
 import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
 import { PinboardImportRecord } from "../services/imports";
+import { BaseAppWithServices } from "../app/types";
 
 export default class CliImport extends CliAppModule {
+  app: BaseAppWithServices;
+
+  constructor(app: BaseAppWithServices) {
+    super(app);
+    this.app = app;
+  }
+
   async initCli(cli: Cli) {
     const { program } = cli;
 

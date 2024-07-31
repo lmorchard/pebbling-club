@@ -7,6 +7,7 @@ import { CliAppModule } from "./modules";
 import { Events } from "./events";
 import { Cli } from "./cli";
 import { Command } from "commander";
+import { BaseEvents } from "./types";
 
 export const configSchema = {
   logLevel: {
@@ -84,14 +85,14 @@ export class Logging extends CliAppModule {
 
   buildLogger() {
     const { usePrettyLogs } = this;
-    const { config } = this.app;
+    const { config, events } = this.app as App;
     const options = {
       level: config.get("logLevel"),
     };
     const destinations = pino.multistream([
       {
         level: "trace",
-        stream: new LogEventStream(this.app.events, Logging.EVENT_LOG),
+        stream: new LogEventStream(events, Logging.EVENT_LOG),
       },
       {
         level: "trace",

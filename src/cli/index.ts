@@ -2,10 +2,11 @@ import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
 import CliUsers from "./users";
 import CliImport from "./import";
+import { App } from "../app";
 
 export default class CliIndex extends CliAppModule {
   async init() {
-    const { app } = this;
+    const app = this.app as App;
 
     app.registerModule("users", CliUsers);
     app.registerModule("import", CliImport);

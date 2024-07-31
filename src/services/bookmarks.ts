@@ -1,9 +1,8 @@
-import crypto from "crypto";
-import { BaseRepository } from "../repositories/base";
 import { BaseService } from "./base";
 
 export class BookmarksService extends BaseService {
   async create(bookmark: BookmarkEditable) {
+    await this.app.repository.upsertBookmark(bookmark);
   }
 
   async createBatch(bookmarks: BookmarkEditable[]) {
