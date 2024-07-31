@@ -6,9 +6,9 @@ import { App } from "../app";
 export class SessionsService extends BaseService {
   sessionsMaxAge: number;
 
-  constructor(app: App) {
-    super(app);
-    this.sessionsMaxAge = app.config.get("sessionMaxAge");
+  constructor(repository: BaseRepository) {
+    super(repository);
+    this.sessionsMaxAge = 10000; //this.app.config.get("sessionMaxAge");
   }
 
   async buildStore() {

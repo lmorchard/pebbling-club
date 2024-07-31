@@ -1,14 +1,14 @@
 import crypto from "crypto";
 import { BaseService } from "./base";
-import { App } from "../app";
+import { BaseRepository } from "../repositories/base";
 
 export class PasswordService extends BaseService {
   hashIterations: number;
   hashLength: number;
   hashAlgo: string;
 
-  constructor(app: App) {
-    super(app);
+  constructor(repository: BaseRepository) {
+    super(repository);
 
     // TODO: make these configurable
     this.hashIterations = 310000;

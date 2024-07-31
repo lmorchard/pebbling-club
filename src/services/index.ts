@@ -13,9 +13,15 @@ export class Services extends AppModule {
 
   constructor(app: App) {
     super(app);
-    this.passwords = new PasswordService(app);
-    this.bookmarks = new BookmarksService(app);
-    this.sessions = new SessionsService(app);
-    this.imports = new ImportService(app);
+    const { repository } = app;
+    
+    this.passwords = new PasswordService(repository);
+    this.bookmarks = new BookmarksService(repository);
+    this.sessions = new SessionsService(repository);
+    this.imports = new ImportService(
+      repository,
+      this.bookmarks,
+      app.logging.child({ module: "ImportsService" })
+    );
   }
 }

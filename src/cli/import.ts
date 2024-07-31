@@ -4,12 +4,6 @@ import { CliAppModule } from "../app/modules";
 import { PinboardImportRecord } from "../services/imports";
 
 export default class CliImport extends CliAppModule {
-  async init() {
-    const { app } = this;
-
-    return this;
-  }
-
   async initCli(cli: Cli) {
     const { program } = cli;
 
@@ -34,7 +28,6 @@ export default class CliImport extends CliAppModule {
   ) {
     const { log } = this;
     const { passwords, imports } = this.app.services;
-
     const batchSize = parseInt(options.batch, 10) || 100;
 
     const ownerId = await passwords.getIdByUsername(username);
@@ -47,7 +40,7 @@ export default class CliImport extends CliAppModule {
     const recordCount = importRecords.length;
     log.info({ msg: "loaded exported bookmarks", ownerId, recordCount });
 
-    log.info({ msg: "importing bookmarks", ownerId, batchSize });
+    log.debug({ msg: "importing bookmarks", ownerId, batchSize });
     const importedCount = await imports.importPinboard(
       ownerId,
       batchSize,

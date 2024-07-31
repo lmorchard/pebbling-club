@@ -1,14 +1,28 @@
-import { BaseService } from "./base";
-import { BookmarkEditable } from "./bookmarks";
+import { BaseRepository } from "../repositories/base";
+import { BaseService, MinimalLogger } from "./base";
+import { BookmarkEditable, BookmarksService } from "./bookmarks";
 
 export class ImportService extends BaseService {
+  bookmarks: BookmarksService;
+  log: MinimalLogger;
+
+  constructor(
+    repository: BaseRepository,
+    bookmarks: BookmarksService,
+    log: MinimalLogger
+  ) {
+    super(repository);
+    this.bookmarks = bookmarks;
+    this.log = log;
+  }
+
   async importPinboard(
     ownerId: string,
     batchSize: number,
     importRecords: PinboardImportRecord[]
   ) {
     const { log } = this;
-    const { bookmarks } = this.app.services;
+    const { bookmarks } = this;
     const now = new Date();
     const recordCount = importRecords.length;
 
