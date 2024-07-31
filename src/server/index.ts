@@ -4,17 +4,15 @@ import { CliAppModule } from "../app/modules";
 import express, { Express, ErrorRequestHandler } from "express";
 import pinoHttp from "pino-http";
 import cookieParser from "cookie-parser";
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
 import session from "express-session";
 import flash, { getFlashMessages } from "express-flash-message";
 import csrf from "csurf";
-
-import setupAuth from "./auth";
-
-import homeRouter from "./home/router";
-import authRouter from "./auth/router";
+import homeRouter from "./routers/home";
+import authRouter from "./routers/auth";
 import { renderWithLocals } from "./utils/templates";
 import templateError from "./templates/error";
-import { format } from "path";
 import { App } from "../app";
 import { BaseAppWithServices } from "../app/types";
 
@@ -92,7 +90,12 @@ declare global {
     interface Request {
       flash: Express.Response["flash"];
     }
+    interface User {
+      id: string;
+      username: string;
+    }
     interface Locals {
+      user?: Express.User;
       csrfToken: string;
       messages?: string[];
       getFlashMessages: GetFlashMessages;
@@ -154,7 +157,7 @@ export default class Server extends CliAppModule {
     await this.setupSessions(app);
     await this.setupFlashMessages(app);
     await this.setupCSRFTokens(app);
-    await setupAuth(this, app);
+    await this.setupAuth(app);
     await this.setupRouters(app);
     await this.setupErrorHandler(app);
 
@@ -202,6 +205,42 @@ export default class Server extends CliAppModule {
     app.use(csrf());
     app.use(function (req, res, next) {
       res.locals.csrfToken = req.csrfToken();
+      next();
+    });
+  }
+
+  async setupAuth(app: Express) {
+    const { passwords } = this.app.services;
+
+    passport.use(
+      new LocalStrategy(function verify(username, password, cb) {
+        passwords
+          .verify(username, password)
+          .then((userId: string | undefined) =>
+            cb(null, userId ? { id: userId, username } : false)
+          )
+          .catch((err: Error) => cb(err));
+      })
+    );
+
+    // TODO: rework this stuff not to hit the DB? maybe lazy load?
+    passport.serializeUser(function (user, cb) {
+      process.nextTick(function () {
+        cb(null, user.id);
+      });
+    });
+
+    passport.deserializeUser(function (id: string, cb) {
+      passwords.getUsernameById(id).then(username => {
+        if (!username) return cb(null, null);
+        return cb(null, { id, username });
+      }).catch(err => cb(err, null));
+    });
+
+    app.use(passport.authenticate("session"));
+
+    app.use(function (req, res, next) {
+      res.locals.user = req.user;
       next();
     });
   }

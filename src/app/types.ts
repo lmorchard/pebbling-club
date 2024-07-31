@@ -9,6 +9,7 @@ export interface BaseApp {
   repository: BaseRepository;
 }
 
+// TODO: rather tied to the specific set of services, find a way to make more generic?
 export interface BaseAppWithServices extends BaseApp {
   services: Services;
 }
