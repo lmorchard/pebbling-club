@@ -1,5 +1,6 @@
 import { BaseRepository } from "../repositories/base";
-import { BaseService, MinimalLogger } from "./base";
+import { BaseService } from "./base";
+import { MinimalLogBuilder, MinimalLogger } from "../utils/types";
 import { BookmarkEditable, BookmarksService } from "./bookmarks";
 
 export class ImportService extends BaseService {
@@ -8,12 +9,12 @@ export class ImportService extends BaseService {
 
   constructor(
     repository: BaseRepository,
+    logging: MinimalLogBuilder,
     bookmarks: BookmarksService,
-    log: MinimalLogger
   ) {
     super(repository);
     this.bookmarks = bookmarks;
-    this.log = log;
+    this.log = logging.child({ module: this.constructor.name });
   }
 
   async importPinboard(
