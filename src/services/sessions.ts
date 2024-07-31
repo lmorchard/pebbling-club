@@ -1,16 +1,14 @@
 import { Store, SessionData } from "express-session";
 import { BaseRepository } from "../repositories/base";
 import { BaseService } from "./base";
+import { App } from "../app";
 
 export class SessionsService extends BaseService {
   sessionsMaxAge: number;
 
-  constructor(
-    repository: BaseRepository,
-    options: { sessionsMaxAge?: number }
-  ) {
-    super(repository);
-    this.sessionsMaxAge = options.sessionsMaxAge || 1000 * 60 * 60 * 24 * 7;
+  constructor(app: App) {
+    super(app);
+    this.sessionsMaxAge = app.config.get("sessionMaxAge");
   }
 
   async buildStore() {

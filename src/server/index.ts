@@ -35,6 +35,12 @@ export const configSchema = {
     format: String,
     default: "trustno1-8675309",
   },
+  sessionMaxAge: {
+    doc: "Maximum age for sessions",
+    env: "SESSION_MAX_AGE",
+    format: Number,
+    default:  1000 * 60 * 60 * 24 * 7,
+  },
   sessionExpirationInterval: {
     doc: "Web session expiration interval",
     env: "SESSION_EXPIRATION_INTERVAL",

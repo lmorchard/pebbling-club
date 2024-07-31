@@ -38,7 +38,11 @@ export class BaseRepository extends CliAppModule {
     throw new BaseRepositoryMethodUnimplementedError();
   }
 
-  async getUsernameForId(id: string): Promise<undefined | string> {
+  async getUsernameById(id: string): Promise<undefined | string> {
+    throw new BaseRepositoryMethodUnimplementedError();
+  }
+
+  async getIdByUsername(username: string): Promise<undefined | string> {
     throw new BaseRepositoryMethodUnimplementedError();
   }
 
@@ -63,4 +67,27 @@ export class BaseRepository extends CliAppModule {
   async putSession(sid: string, sess: string, expiredDate: Date) {
     throw new BaseRepositoryMethodUnimplementedError();
   }
+
+  async upsertBookmark(bookmark: BookmarkEditable) {
+    throw new BaseRepositoryMethodUnimplementedError();
+  }
+
+  async upsertBookmarksBatch(bookmarks: BookmarkEditable[]) {
+    throw new BaseRepositoryMethodUnimplementedError();
+  }
 }
+
+export type Bookmark = {
+  id: string;
+  ownerId: string;
+  href: string;
+  title?: string;
+  extended?: string;
+  tags?: string;
+  visibility?: string;
+  meta?: string;
+  created?: Date;
+  modified?: Date;
+};
+
+export type BookmarkEditable = Omit<Bookmark, "id">;

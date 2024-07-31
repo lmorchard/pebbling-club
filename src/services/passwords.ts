@@ -1,14 +1,14 @@
 import crypto from "crypto";
-import { BaseRepository } from "../repositories/base";
 import { BaseService } from "./base";
+import { App } from "../app";
 
 export class PasswordService extends BaseService {
   hashIterations: number;
   hashLength: number;
   hashAlgo: string;
 
-  constructor(repository: BaseRepository) {
-    super(repository);
+  constructor(app: App) {
+    super(app);
 
     // TODO: make these configurable
     this.hashIterations = 310000;
@@ -64,7 +64,11 @@ export class PasswordService extends BaseService {
   }
 
   async getUsernameById(id: string) {
-    return await this.repository.getUsernameForId(id);
+    return await this.repository.getUsernameById(id);
+  }
+
+  async getIdByUsername(username: string) {
+    return await this.repository.getIdByUsername(username);
   }
 
   async usernameExists(username: string) {

@@ -3,6 +3,7 @@ import Knex from "knex";
 import { v4 as uuid } from "uuid";
 import { App } from "../../app";
 import { BaseKnexRepository } from "../knex";
+import { BookmarkEditable } from "../base";
 
 export const configSchema = {
   sqliteDatabaseName: {
@@ -64,13 +65,20 @@ export class SqliteRepository extends BaseKnexRepository {
     return { filename: databasePath };
   }
 
-  async listAllUsers(): Promise<{
-    id: string;
-    username: string;
-    passwordHashed: string;
-    salt: string;
-  }[]> {
-    return this.connection("users").select("id", "username", "passwordHashed", "salt");
+  async listAllUsers(): Promise<
+    {
+      id: string;
+      username: string;
+      passwordHashed: string;
+      salt: string;
+    }[]
+  > {
+    return this.connection("users").select(
+      "id",
+      "username",
+      "passwordHashed",
+      "salt"
+    );
   }
 
   async createHashedPasswordAndSaltForUsername(
@@ -124,13 +132,22 @@ export class SqliteRepository extends BaseKnexRepository {
     return !!result;
   }
 
-  async getUsernameForId(id: string): Promise<undefined | string> {
+  async getUsernameById(id: string): Promise<undefined | string> {
     const result = await this.connection("users")
       .select("username")
       .where({ id })
       .first();
     if (!result) return;
     return result.username;
+  }
+
+  async getIdByUsername(username: string): Promise<undefined | string> {
+    const result = await this.connection("users")
+      .select("id")
+      .where({ username })
+      .first();
+    if (!result) return;
+    return result.id;
   }
 
   async deleteHashedPasswordAndSaltForUsername(
@@ -157,5 +174,35 @@ export class SqliteRepository extends BaseKnexRepository {
       .insert({ id, session, modified: modified.getTime() })
       .onConflict("id")
       .merge();
+  }
+
+  async _upsertOneBookmark(bookmark: BookmarkEditable, now: number, connection: Knex.Knex) {
+    const created = bookmark.created || now;
+    const modified = bookmark.modified || now;
+    return await connection("bookmarks")
+      .insert({
+        ...bookmark,
+        id: uuid(),
+        created,
+        modified,
+      })
+      .onConflict(["ownerId", "href"])
+      .merge();
+  }
+
+  async upsertBookmark(bookmark: BookmarkEditable) {
+    const now = Date.now();
+    await this._upsertOneBookmark(bookmark, now, this.connection);
+  }
+
+  async upsertBookmarksBatch(bookmarks: BookmarkEditable[]) {
+    const now = Date.now();
+    await this.connection.transaction(async (trx) => {
+      for (const bookmark of bookmarks) {
+        const created = bookmark.created || now;
+        const modified = bookmark.modified || now;
+        await this._upsertOneBookmark(bookmark, now, trx);
+      }
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { Server } from "../index";
+import Server from "../index";
 import { Router, Express } from "express";
 import templateHome from "../templates";
 import { renderWithLocals } from "../utils/templates";
