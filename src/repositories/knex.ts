@@ -1,8 +1,6 @@
 import Knex from "knex";
-import { BaseRepository, BaseRepositoryMethodUnimplementedError } from "./base";
+import { BaseRepository } from "./base";
 
-export class BaseKnexRepository extends BaseRepository {
-  knexConnectionOptions(): Knex.Knex.Config["connection"] {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+export interface BaseKnexRepository extends BaseRepository {
+  knexConnectionOptions(): Knex.Knex.Config["connection"];
 }

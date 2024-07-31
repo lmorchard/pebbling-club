@@ -1,12 +1,12 @@
 import { BaseRepository } from "../repositories/base";
-import { App } from "../app";
+import { BaseApp, BaseLogger } from "../app/types";
 
 export class BaseService {
-  repository: BaseRepository;
+  app: BaseApp;
+  log: BaseLogger;
 
-  constructor(repository: BaseRepository) {
-    this.repository = repository;
+  constructor(app: BaseApp) {
+    this.app = app;
+    this.log = app.logging.child({ module: this.constructor.name });
   }
 }
-
-

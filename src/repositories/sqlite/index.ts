@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 import { App } from "../../app";
 import { BaseKnexRepository } from "../knex";
 import { BookmarkEditable } from "../base";
+import { CliAppModule } from "../../app/modules";
 
 export const configSchema = {
   sqliteDatabaseName: {
@@ -26,7 +27,10 @@ export const configSchema = {
   },
 } as const;
 
-export class SqliteRepository extends BaseKnexRepository {
+export class SqliteRepository
+  extends CliAppModule
+  implements BaseKnexRepository
+{
   _connection?: Knex.Knex<any, unknown[]>;
 
   async deinit() {
@@ -176,7 +180,11 @@ export class SqliteRepository extends BaseKnexRepository {
       .merge();
   }
 
-  async _upsertOneBookmark(bookmark: BookmarkEditable, now: number, connection: Knex.Knex) {
+  async _upsertOneBookmark(
+    bookmark: BookmarkEditable,
+    now: number,
+    connection: Knex.Knex
+  ) {
     const created = bookmark.created || now;
     const modified = bookmark.modified || now;
     return await connection("bookmarks")

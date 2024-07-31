@@ -1,80 +1,50 @@
 import { CliAppModule } from "../app/modules";
 
-export class BaseRepositoryMethodUnimplementedError extends Error {}
-
-export class BaseRepository extends CliAppModule {
-  async listAllUsers(): Promise<{
+export interface BaseRepository extends CliAppModule {
+  listAllUsers(): Promise<{
     id: string;
     username: string;
     passwordHashed: string;
     salt: string;
-  }[]> {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  }[]>;
 
-  async createHashedPasswordAndSaltForUsername(
+  createHashedPasswordAndSaltForUsername(
     username: string,
     passwordHashed: string,
     salt: string
-  ): Promise<string> {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  ): Promise<string>;
 
-  async updateHashedPasswordAndSaltForUsername(
+  updateHashedPasswordAndSaltForUsername(
     username: string,
     passwordHashed: string,
     salt: string
-  ): Promise<number> {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  ): Promise<number>;
 
-  async getHashedPasswordAndSaltForUsername(
+  getHashedPasswordAndSaltForUsername(
     username: string
-  ): Promise<undefined | { id: string; hashedPassword: string; salt: string }> {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
-  
-  async checkIfUsernameExists(username: string): Promise<boolean> {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  ): Promise<undefined | { id: string; hashedPassword: string; salt: string }>;
 
-  async getUsernameById(id: string): Promise<undefined | string> {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  checkIfUsernameExists(username: string): Promise<boolean>;
 
-  async getIdByUsername(username: string): Promise<undefined | string> {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  getUsernameById(id: string): Promise<undefined | string>;
 
-  async deleteHashedPasswordAndSaltForUsername(
+  getIdByUsername(username: string): Promise<undefined | string>;
+
+  deleteHashedPasswordAndSaltForUsername(
     username: string
-  ): Promise<string> {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  ): Promise<string>;
 
-  async deleteSession(sid: string) {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  deleteSession(sid: string): void;
 
-  async deleteExpiredSessions(maxAge: number) {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  deleteExpiredSessions(maxAge: number): void;
 
-  async getSession(sid: string): Promise<undefined | { session: string }> {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  getSession(sid: string): Promise<undefined | { session: string }>;
 
-  async putSession(sid: string, sess: string, expiredDate: Date) {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  putSession(sid: string, sess: string, expiredDate: Date): Promise<void>;
 
-  async upsertBookmark(bookmark: BookmarkEditable) {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  upsertBookmark(bookmark: BookmarkEditable): Promise<void>;
 
-  async upsertBookmarksBatch(bookmarks: BookmarkEditable[]) {
-    throw new BaseRepositoryMethodUnimplementedError();
-  }
+  upsertBookmarksBatch(bookmarks: BookmarkEditable[]): Promise<void>;
 }
 
 export type Bookmark = {

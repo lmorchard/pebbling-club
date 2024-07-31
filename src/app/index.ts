@@ -1,19 +1,22 @@
 import { Config } from "./config";
 import { Logging } from "./logging";
 import { AppModule } from "./modules";
+import { BaseAppModule, BaseEvents, BaseLogger, BaseConfig, BaseApp } from "./types";
 import { Events } from "./events";
 import { BaseRepository } from "../repositories/base";
 import { SqliteRepository } from "../repositories/sqlite/index";
 import { Services } from "../services";
 
-export class App {
-  modules: AppModule[];
-  events: Events;
+export class App implements BaseApp {
   config: Config;
   logging: Logging;
+  events: Events;
   repository: BaseRepository;
-  services: Services;
+
+  modules: AppModule[];
   registered: Record<string, AppModule>;
+
+  services: Services;
 
   constructor() {
     this.modules = [
@@ -33,16 +36,16 @@ export class App {
     return this;
   }
 
-  async callModules(mapfn: (m: AppModule) => Promise<any>) {
+  async _callModules(mapfn: (m: BaseAppModule) => Promise<any>) {
     await Promise.all(this.modules.map(mapfn));
     return this;
   }
 
   async init() {
-    return await this.callModules((m) => m.init());
+    return await this._callModules((m) => m.init());
   }
 
   async deinit() {
-    return await this.callModules((m) => m.deinit());
+    return await this._callModules((m) => m.deinit());
   }
 }

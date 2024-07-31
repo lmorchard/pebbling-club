@@ -1,26 +1,32 @@
 import assert from "node:assert";
-import { describe, it, before, after, mock } from "node:test";
+import { describe, it, before, after, mock, Mock } from "node:test";
 import { PasswordService } from "./passwords";
-import { MockRepository } from "../utils/mocks";
+import { MockApp, MockRepository } from "../app/mocks";
+import { BaseRepository } from "../repositories/base";
 
 describe("services.passwords", () => {
-  let repository: MockRepository;
-  let passwords: PasswordService;
-
   const username = "johndoe";
   const password = "hunter23";
   const passwordIncorrect = "trustno1";
   const id = "8675309";
   const salt = "343cd9bd7aa6bbbdc775bc154994f273";
 
+  let app: MockApp;
+  let passwords: PasswordService;
+
   before(() => {
-    repository = new MockRepository();
-    passwords = new PasswordService(repository);
+    app = new MockApp();
+    // @ts-ignore
+    app.repository.createHashedPasswordAndSaltForUsername = () => {};
+    // @ts-ignore
+    app.repository.getHashedPasswordAndSaltForUsername = () => {};
+
+    passwords = new PasswordService(app);
   });
 
   it("should create with a random salt each time", async () => {
     const mockCreate = mock.method(
-      repository,
+      app.repository,
       "createHashedPasswordAndSaltForUsername",
       (username: string, password: string) => id
     );
@@ -44,7 +50,7 @@ describe("services.passwords", () => {
 
   it("should create the same hashed password given the same salt", async () => {
     const mockCreate = mock.method(
-      repository,
+      app.repository,
       "createHashedPasswordAndSaltForUsername",
       (username: string, password: string) => id
     );
@@ -75,18 +81,18 @@ describe("services.passwords", () => {
   it("should be able to verify a password", async () => {
     const { hashedPassword } = await passwords.hashPassword(password, salt);
 
-    const mockCreate = mock.method(
-      repository,
+    const mockGet = mock.method(
+      app.repository,
       "getHashedPasswordAndSaltForUsername",
       (username: string) => ({ id, hashedPassword, salt })
     );
 
     const result0 = await passwords.verify(username, password);
-    assert.equal(mockCreate.mock.callCount(), 1);
+    assert.equal(mockGet.mock.callCount(), 1);
     assert.ok(typeof result0 !== "undefined");
 
     const result1 = await passwords.verify(username, passwordIncorrect);
-    assert.equal(mockCreate.mock.callCount(), 2);
+    assert.equal(mockGet.mock.callCount(), 2);
     assert.ok(typeof result1 === "undefined");
   });
 

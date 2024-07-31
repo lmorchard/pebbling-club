@@ -2,13 +2,15 @@ import { Store, SessionData } from "express-session";
 import { BaseRepository } from "../repositories/base";
 import { BaseService } from "./base";
 import { App } from "../app";
+import { BaseApp, BaseLogger } from "../app/types";
 
 export class SessionsService extends BaseService {
   sessionsMaxAge: number;
 
-  constructor(repository: BaseRepository) {
-    super(repository);
-    this.sessionsMaxAge = 10000; //this.app.config.get("sessionMaxAge");
+  constructor(app: BaseApp) {
+    super(app);
+
+    this.sessionsMaxAge = this.app.config.get("sessionMaxAge");
   }
 
   async buildStore() {
@@ -16,7 +18,7 @@ export class SessionsService extends BaseService {
   }
 
   async expireSessions() {
-    await this.repository.deleteExpiredSessions(this.sessionsMaxAge);
+    await this.app.repository.deleteExpiredSessions(this.sessionsMaxAge);
   }
 }
 
@@ -33,7 +35,7 @@ export class ServiceStore extends Store {
     callback: (err: any, session?: SessionData | null) => void
   ) {
     try {
-      const result = await this.parent.repository.getSession(sid);
+      const result = await this.parent.app.repository.getSession(sid);
       if (result?.session) {
         const sessionObject = JSON.parse(result.session);
         return callback(null, sessionObject);
@@ -52,7 +54,7 @@ export class ServiceStore extends Store {
     try {
       const modified = new Date();
       const sessionData = JSON.stringify(session);
-      await this.parent.repository.putSession(sid, sessionData, modified);
+      await this.parent.app.repository.putSession(sid, sessionData, modified);
       return callback?.(null);
     } catch (err) {
       return callback?.(err);
@@ -69,7 +71,7 @@ export class ServiceStore extends Store {
 
   async destroy(sid: string, callback?: (err?: any) => void) {
     try {
-      await this.parent.repository.deleteSession(sid);
+      await this.parent.app.repository.deleteSession(sid);
       return callback?.(null);
     } catch (err) {
       return callback?.(err);

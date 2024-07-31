@@ -1,12 +1,13 @@
 import { App } from ".";
 import { AppModule } from "./modules";
+import { BaseEvents } from "./types";
 
 type EventName = string | Symbol
 type EventHandler = (...args: any[]) => any;
 type EventSubscriptionId = number;
 type SubscriptionsForEvent = Map<number, EventHandler>;
 
-export class Events extends AppModule {
+export class Events extends AppModule implements BaseEvents {
   lastId: number;
   subscriptions: Map<EventName, SubscriptionsForEvent>;
 

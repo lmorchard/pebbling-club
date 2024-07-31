@@ -1,14 +1,15 @@
 import crypto from "crypto";
 import { BaseService } from "./base";
 import { BaseRepository } from "../repositories/base";
+import { BaseApp, BaseLogger } from "../app/types";
 
 export class PasswordService extends BaseService {
   hashIterations: number;
   hashLength: number;
   hashAlgo: string;
 
-  constructor(repository: BaseRepository) {
-    super(repository);
+  constructor(app: BaseApp) {
+    super(app);
 
     // TODO: make these configurable
     this.hashIterations = 310000;
@@ -17,7 +18,7 @@ export class PasswordService extends BaseService {
   }
 
   async list() {
-    return await this.repository.listAllUsers();
+    return await this.app.repository.listAllUsers();
   }
 
   async create(username: string, password: string, originalSalt?: string) {
@@ -25,7 +26,7 @@ export class PasswordService extends BaseService {
       password,
       originalSalt
     );
-    const userId = await this.repository.createHashedPasswordAndSaltForUsername(
+    const userId = await this.app.repository.createHashedPasswordAndSaltForUsername(
       username,
       hashedPassword,
       salt
@@ -35,7 +36,7 @@ export class PasswordService extends BaseService {
 
   async update(username: string, password: string) {
     const { hashedPassword, salt } = await this.hashPassword(password);
-    return await this.repository.updateHashedPasswordAndSaltForUsername(
+    return await this.app.repository.updateHashedPasswordAndSaltForUsername(
       username,
       hashedPassword,
       salt
@@ -43,7 +44,7 @@ export class PasswordService extends BaseService {
   }
 
   async verify(username: string, password: string) {
-    const result = await this.repository.getHashedPasswordAndSaltForUsername(
+    const result = await this.app.repository.getHashedPasswordAndSaltForUsername(
       username
     );
     if (!result) return;
@@ -64,19 +65,19 @@ export class PasswordService extends BaseService {
   }
 
   async getUsernameById(id: string) {
-    return await this.repository.getUsernameById(id);
+    return await this.app.repository.getUsernameById(id);
   }
 
   async getIdByUsername(username: string) {
-    return await this.repository.getIdByUsername(username);
+    return await this.app.repository.getIdByUsername(username);
   }
 
   async usernameExists(username: string) {
-    return await this.repository.checkIfUsernameExists(username);
+    return await this.app.repository.checkIfUsernameExists(username);
   }
 
   async delete(username: string) {
-    return await this.repository.deleteHashedPasswordAndSaltForUsername(username);
+    return await this.app.repository.deleteHashedPasswordAndSaltForUsername(username);
   }
 
   hexToArray(input: string) {

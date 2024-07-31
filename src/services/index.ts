@@ -13,11 +13,10 @@ export class Services extends AppModule {
 
   constructor(app: App) {
     super(app);
-    const { repository } = app;
 
-    this.passwords = new PasswordService(repository);
-    this.bookmarks = new BookmarksService(repository);
-    this.sessions = new SessionsService(repository);
-    this.imports = new ImportService(repository, app.logging, this.bookmarks);
+    this.passwords = new PasswordService(app);
+    this.bookmarks = new BookmarksService(app);
+    this.sessions = new SessionsService(app);
+    this.imports = new ImportService(app, this.bookmarks);
   }
 }

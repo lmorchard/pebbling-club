@@ -3,13 +3,11 @@ import { BaseRepository } from "../repositories/base";
 import { BaseService } from "./base";
 
 export class BookmarksService extends BaseService {
-
   async create(bookmark: BookmarkEditable) {
-
   }
 
   async createBatch(bookmarks: BookmarkEditable[]) {
-    await this.repository.upsertBookmarksBatch(bookmarks);
+    await this.app.repository.upsertBookmarksBatch(bookmarks);
   }
 }
 
