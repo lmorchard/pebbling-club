@@ -42,6 +42,7 @@ type FieldOptions = {
   id?: string;
   type?: string | FieldTemplate;
   required?: boolean;
+  autofocus?: boolean;
 };
 
 export const field = (
@@ -65,6 +66,7 @@ export const field = (
                 value="${value}"
                 type="${options.type || "text"}"
                 ${options.required ? "required" : ""}
+                ${options.autofocus ? "autofocus" : ""}
               />
             `}
         ${error && html`<span class="error">${error.msg}</span>`}

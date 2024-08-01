@@ -1,5 +1,8 @@
 body {
-  font-size: 16px;
+  font-size: 14px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 2em;
+  padding: 0;
 }
 
 form {
@@ -40,3 +43,48 @@ section.flash .message.warn {
 section.flash .message.info {
 
 }
+
+.bookmarks.h-feed {
+  width: 75vw;
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  row-gap: 2em;
+  margin: 0;
+  padding: 0;
+}
+
+.bookmark.h-entry {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25em;
+}
+
+.bookmark.h-entry .p-name {
+  font-size: 1.2em
+}
+
+.bookmark.h-entry .href {
+  font-size: 0.85em;
+  opacity: 0.5;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
+.bookmark.h-entry .p-summary {
+  margin: 0.5em 0 0.2em 0;
+  padding: 0.5em 0 0.5em 1em;
+  border-left: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.bookmark.h-entry .p-category {
+  font-size: 0.9em;
+  margin: 0.25em 0;
+}
+
+.bookmark.h-entry time {
+  font-size: 0.7em;
+  opacity: 0.5;
+}
+

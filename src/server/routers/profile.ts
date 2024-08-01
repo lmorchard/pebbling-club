@@ -24,8 +24,7 @@ export default function init(server: Server, app: Express) {
       if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
       res.locals.profile = profile;
 
-      const bookmarkList = await bookmarks.listForOwner(profile.id, 1000);
-      log.debug({ msg: "bookmarks", bookmarkList });
+      const bookmarkList = await bookmarks.listForOwner(profile.id, 100);
 
       res.send(
         render(

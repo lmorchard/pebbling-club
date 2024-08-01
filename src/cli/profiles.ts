@@ -3,7 +3,7 @@ import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
 import { BaseAppWithServices } from "../app/types";
 
-export default class CliUsers extends CliAppModule {
+export default class CliProfiles extends CliAppModule {
   app: BaseAppWithServices;
 
   constructor(app: BaseAppWithServices) {

@@ -16,7 +16,7 @@ export default ({ ...locals }: Props) => {
       <section>
         <form action="/auth/login" method="post">
           <input type="hidden" name="_csrf" value="${locals.csrfToken}" />
-          ${f("Username", "username", { required: false })}
+          ${f("Username", "username", { required: true, autofocus: true })}
           ${f("Password", "password", { required: true, type: "password" })}
           <button type="submit">Sign in</button>
         </form>

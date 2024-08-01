@@ -5,6 +5,7 @@ import { Bookmark } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
 
 import partialBookmark from "../partials/bookmark";
+import partialBookmarkList from "../partials/bookmarkList";
 
 export interface Props extends LayoutProps {
   profile: Profile;
@@ -19,7 +20,7 @@ export default ({ profile, bookmarks, ...locals }: Props) => {
 
       <section class="bookmarks">
         <h2>Bookmarks</h2>
-        ${bookmarks.map((bookmark) => partialBookmark({ bookmark }))}
+        ${partialBookmarkList({ bookmarks })}
       </section>
     `,
   });
