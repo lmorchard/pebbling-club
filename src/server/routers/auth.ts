@@ -53,6 +53,8 @@ export default function init(server: Server, app: Express) {
           throw new Error("Username already exists");
         return true;
       }),
+    // TODO: reject some characters from usernames (e.g. URL reserved characters)
+    // TODO: move validation into the profiles service?
     body("password").trim().isString().notEmpty(),
     body("password-confirm")
       .trim()
