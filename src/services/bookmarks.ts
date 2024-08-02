@@ -9,17 +9,20 @@ export class BookmarksService extends BaseService {
     this.repository = repository;
   }
 
-  async create(bookmark: BookmarkEditable) {
+  async create(bookmark: BookmarkEditable): Promise<void> {
     await this.repository.upsertBookmark(bookmark);
   }
 
-  async createBatch(bookmarks: BookmarkEditable[]) {
+  async createBatch(bookmarks: BookmarkEditable[]): Promise<void> {
     await this.repository.upsertBookmarksBatch(bookmarks);
   }
 
-  async listForOwner(ownerId: string, limit: number) {
-    this.log.debug({ msg: "listForOwner", ownerId, limit });
-    return await this.repository.listBookmarksForOwner(ownerId, limit);
+  async listForOwner(
+    ownerId: string,
+    limit: number,
+    offset: number
+  ): Promise<{ total: number; items: Bookmark[] }> {
+    return await this.repository.listBookmarksForOwner(ownerId, limit, offset);
   }
 }
 
@@ -41,5 +44,9 @@ export type BookmarkEditable = Omit<Bookmark, "id">;
 export interface IBookmarksRepository {
   upsertBookmark(bookmark: BookmarkEditable): Promise<void>;
   upsertBookmarksBatch(bookmarks: BookmarkEditable[]): Promise<void>;
-  listBookmarksForOwner(ownerId: string, limit: number): Promise<Bookmark[]>;
+  listBookmarksForOwner(
+    ownerId: string,
+    limit: number,
+    offset: number
+  ): Promise<{ total: number; items: Bookmark[] }>;
 }

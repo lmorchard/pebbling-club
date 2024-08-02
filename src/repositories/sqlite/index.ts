@@ -3,8 +3,16 @@ import Knex from "knex";
 import { v4 as uuid } from "uuid";
 import { App } from "../../app";
 import { IKnexConnectionOptions } from "../knex";
-import { BookmarkEditable, IBookmarksRepository } from "../../services/bookmarks";
-import { Profile, ProfileEditable, IProfilesRepository } from "../../services/profiles";
+import {
+  Bookmark,
+  BookmarkEditable,
+  IBookmarksRepository,
+} from "../../services/bookmarks";
+import {
+  Profile,
+  ProfileEditable,
+  IProfilesRepository,
+} from "../../services/profiles";
 import { CliAppModule } from "../../app/modules";
 import { IPasswordsRepository } from "../../services/passwords";
 import { ISessionsRepository } from "../../services/sessions";
@@ -222,11 +230,26 @@ export class SqliteRepository
     });
   }
 
-  async listBookmarksForOwner(ownerId: string, limit: number): Promise<any> {
-    return this.connection("bookmarks")
-      .where({ ownerId })
-      .limit(limit)
-      .orderBy("created", "desc");
+  async listBookmarksForOwner(
+    ownerId: string,
+    limit: number,
+    offset: number
+  ): Promise<{ total: number; items: Bookmark[] }> {
+    const baseQuery = this.connection("bookmarks").where({ ownerId });
+
+    const [countResult, items] = await Promise.all([
+      baseQuery.clone().count<Record<string, number>>({ count: "*" }).first(),
+      await baseQuery
+        .clone()
+        .orderBy("created", "desc")
+        .limit(limit)
+        .offset(offset),
+    ]);
+
+    const total = countResult?.count;
+    if (!total) throw new Error("total query failed");
+
+    return { total, items };
   }
 
   async checkIfProfileExistsForUsername(username: string): Promise<boolean> {
