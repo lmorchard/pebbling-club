@@ -10,6 +10,7 @@ export class App implements IApp, IWithServices {
   config: Config;
   logging: Logging;
   events: Events;
+  
   repository: SqliteRepository;
 
   modules: AppModule[];

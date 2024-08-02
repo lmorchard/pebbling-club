@@ -6,6 +6,9 @@ a club for [pebbling][] enthusiasts on the web
 
 ## TODO
 
+- code golfing
+  - [ ] extract minimal interfaces out of concrete services?
+
 - basic UX
   - [ ] view bookmarks by profile
   - [ ] create bookmark
