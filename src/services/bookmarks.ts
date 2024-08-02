@@ -1,17 +1,25 @@
+import { IApp } from "../app/types";
 import { BaseService } from "./base";
 
 export class BookmarksService extends BaseService {
+  repository: IBookmarksRepository;
+
+  constructor(app: IApp, repository: IBookmarksRepository) {
+    super(app);
+    this.repository = repository;
+  }
+
   async create(bookmark: BookmarkEditable) {
-    await this.app.repository.upsertBookmark(bookmark);
+    await this.repository.upsertBookmark(bookmark);
   }
 
   async createBatch(bookmarks: BookmarkEditable[]) {
-    await this.app.repository.upsertBookmarksBatch(bookmarks);
+    await this.repository.upsertBookmarksBatch(bookmarks);
   }
 
   async listForOwner(ownerId: string, limit: number) {
     this.log.debug({ msg: "listForOwner", ownerId, limit });
-    return await this.app.repository.listBookmarksForOwner(ownerId, limit);
+    return await this.repository.listBookmarksForOwner(ownerId, limit);
   }
 }
 
@@ -29,3 +37,9 @@ export type Bookmark = {
 };
 
 export type BookmarkEditable = Omit<Bookmark, "id">;
+
+export interface IBookmarksRepository {
+  upsertBookmark(bookmark: BookmarkEditable): Promise<void>;
+  upsertBookmarksBatch(bookmarks: BookmarkEditable[]): Promise<void>;
+  listBookmarksForOwner(ownerId: string, limit: number): Promise<Bookmark[]>;
+}

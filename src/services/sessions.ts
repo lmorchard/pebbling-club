@@ -1,14 +1,14 @@
 import { Store, SessionData } from "express-session";
-import { BaseRepository } from "../repositories/base";
 import { BaseService } from "./base";
-import { App } from "../app";
-import { BaseApp, BaseLogger } from "../app/types";
+import { IApp } from "../app/types";
 
 export class SessionsService extends BaseService {
+  repository: ISessionsRepository;
   sessionsMaxAge: number;
 
-  constructor(app: BaseApp) {
+  constructor(app: IApp, repository: ISessionsRepository) {
     super(app);
+    this.repository = repository;
 
     this.sessionsMaxAge = this.app.config.get("sessionMaxAge");
   }
@@ -18,7 +18,7 @@ export class SessionsService extends BaseService {
   }
 
   async expireSessions() {
-    await this.app.repository.deleteExpiredSessions(this.sessionsMaxAge);
+    await this.repository.deleteExpiredSessions(this.sessionsMaxAge);
   }
 }
 
@@ -35,7 +35,7 @@ export class ServiceStore extends Store {
     callback: (err: any, session?: SessionData | null) => void
   ) {
     try {
-      const result = await this.parent.app.repository.getSession(sid);
+      const result = await this.parent.repository.getSession(sid);
       if (result?.session) {
         const sessionObject = JSON.parse(result.session);
         return callback(null, sessionObject);
@@ -54,7 +54,7 @@ export class ServiceStore extends Store {
     try {
       const modified = new Date();
       const sessionData = JSON.stringify(session);
-      await this.parent.app.repository.putSession(sid, sessionData, modified);
+      await this.parent.repository.putSession(sid, sessionData, modified);
       return callback?.(null);
     } catch (err) {
       return callback?.(err);
@@ -71,10 +71,17 @@ export class ServiceStore extends Store {
 
   async destroy(sid: string, callback?: (err?: any) => void) {
     try {
-      await this.parent.app.repository.deleteSession(sid);
+      await this.parent.repository.deleteSession(sid);
       return callback?.(null);
     } catch (err) {
       return callback?.(err);
     }
   }
+}
+
+export interface ISessionsRepository {
+  deleteSession(sid: string): void;
+  deleteExpiredSessions(maxAge: number): void;
+  getSession(sid: string): Promise<undefined | { session: string }>;
+  putSession(sid: string, sess: string, expiredDate: Date): Promise<void>;
 }

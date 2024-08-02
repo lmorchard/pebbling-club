@@ -1,10 +1,9 @@
-import { BaseRepository } from "../repositories/base";
-import { BaseApp, BaseLogger } from "../app/types";
+import { IApp } from "../app/types";
 
 export class BaseService {
-  app: BaseApp;
+  app: IApp;
 
-  constructor(app: BaseApp) {
+  constructor(app: IApp) {
     this.app = app;
   }
 

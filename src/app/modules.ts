@@ -1,12 +1,12 @@
 import { Cli } from "./cli";
-import { BaseAppModule, BaseApp } from "./types";
+import { IAppModule, IApp } from "./types";
 
-export class AppModule implements BaseAppModule {
-  app: BaseApp;
+export class AppModule implements IAppModule {
+  app: IApp;
 
   static configSchema = {};
 
-  constructor(app: BaseApp) {
+  constructor(app: IApp) {
     this.app = app;
   }
 

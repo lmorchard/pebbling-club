@@ -1,12 +1,11 @@
-import { BaseRepository } from "../repositories/base";
 import { BaseService } from "./base";
 import { BookmarkEditable, BookmarksService } from "./bookmarks";
-import { BaseApp, BaseLogger } from "../app/types";
+import { IApp } from "../app/types";
 
 export class ImportService extends BaseService {
   bookmarks: BookmarksService;
 
-  constructor(app: BaseApp, bookmarks: BookmarksService) {
+  constructor(app: IApp, bookmarks: BookmarksService) {
     super(app);
     this.bookmarks = bookmarks;
   }

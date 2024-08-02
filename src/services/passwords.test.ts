@@ -1,8 +1,7 @@
 import assert from "node:assert";
-import { describe, it, before, after, mock, Mock } from "node:test";
-import { PasswordService } from "./passwords";
-import { MockApp, MockRepository } from "../app/mocks";
-import { BaseRepository } from "../repositories/base";
+import { describe, it, before, mock } from "node:test";
+import { Password, PasswordService, IPasswordsRepository } from "./passwords";
+import { MockApp } from "../app/mocks";
 
 describe("services.passwords", () => {
   const username = "johndoe";
@@ -12,21 +11,18 @@ describe("services.passwords", () => {
   const salt = "343cd9bd7aa6bbbdc775bc154994f273";
 
   let app: MockApp;
+  let repository: IPasswordsRepository;
   let passwords: PasswordService;
 
   before(() => {
     app = new MockApp();
-    // @ts-ignore
-    app.repository.createHashedPasswordAndSaltForUsername = () => {};
-    // @ts-ignore
-    app.repository.getHashedPasswordAndSaltForUsername = () => {};
-
-    passwords = new PasswordService(app);
+    repository = new MockPasswordsRepository();
+    passwords = new PasswordService(app, repository);
   });
 
   it("should create with a random salt each time", async () => {
     const mockCreate = mock.method(
-      app.repository,
+      repository,
       "createHashedPasswordAndSaltForUsername",
       (username: string, password: string) => id
     );
@@ -50,7 +46,7 @@ describe("services.passwords", () => {
 
   it("should create the same hashed password given the same salt", async () => {
     const mockCreate = mock.method(
-      app.repository,
+      repository,
       "createHashedPasswordAndSaltForUsername",
       (username: string, password: string) => id
     );
@@ -82,7 +78,7 @@ describe("services.passwords", () => {
     const { hashedPassword } = await passwords.hashPassword(password, salt);
 
     const mockGet = mock.method(
-      app.repository,
+      repository,
       "getHashedPasswordAndSaltForUsername",
       (username: string) => ({ id, hashedPassword, salt })
     );
@@ -95,5 +91,41 @@ describe("services.passwords", () => {
     assert.equal(mockGet.mock.callCount(), 2);
     assert.ok(typeof result1 === "undefined");
   });
-
 });
+
+class MockPasswordsRepository implements IPasswordsRepository {
+  listAllUsers(): Promise<Password[]> {
+    throw new Error("Method not implemented.");
+  }
+  createHashedPasswordAndSaltForUsername(
+    username: string,
+    passwordHashed: string,
+    salt: string
+  ): Promise<string> {
+    throw new Error("Method not implemented.");
+  }
+  updateHashedPasswordAndSaltForUsername(
+    username: string,
+    passwordHashed: string,
+    salt: string
+  ): Promise<number> {
+    throw new Error("Method not implemented.");
+  }
+  getHashedPasswordAndSaltForUsername(
+    username: string
+  ): Promise<undefined | { id: string; hashedPassword: string; salt: string }> {
+    throw new Error("Method not implemented.");
+  }
+  checkIfPasswordExistsForUsername(username: string): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
+  getUsernameById(id: string): Promise<undefined | string> {
+    throw new Error("Method not implemented.");
+  }
+  getIdByUsername(username: string): Promise<undefined | string> {
+    throw new Error("Method not implemented.");
+  }
+  deleteHashedPasswordAndSaltForId(username: string): Promise<string> {
+    throw new Error("Method not implemented.");
+  }
+}

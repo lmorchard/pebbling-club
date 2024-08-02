@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 import Convict from "convict";
 import { App } from ".";
 import { CliAppModule } from "./modules";
-import { BaseConfig } from "./types";
+import { IConfig } from "./types";
 import { Command } from "commander";
 import { Cli } from "./cli";
 
@@ -28,7 +28,7 @@ export const configSchema = {
 dotenv.config();
 export const config = Convict(configSchema);
 
-export class Config extends CliAppModule implements BaseConfig {
+export class Config extends CliAppModule implements IConfig {
   config: typeof config;
 
   constructor(app: App) {

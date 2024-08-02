@@ -1,12 +1,12 @@
 import { App } from "../app";
 import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
-import { BaseAppWithServices } from "../app/types";
+import { IApp, IWithServices } from "../app/types";
 
 export default class CliProfiles extends CliAppModule {
-  app: BaseAppWithServices;
+  app: IApp & IWithServices;
 
-  constructor(app: BaseAppWithServices) {
+  constructor(app: IApp & IWithServices) {
     super(app);
     this.app = app;
   }

@@ -12,7 +12,7 @@ import csrf from "csurf";
 import { renderWithLocals } from "./utils/templates";
 import templateError from "./templates/error";
 import { App } from "../app";
-import { BaseAppWithServices } from "../app/types";
+import { IApp, IWithServices } from "../app/types";
 
 import homeRouter from "./routers/home";
 import authRouter from "./routers/auth";
@@ -113,9 +113,9 @@ declare global {
 }
 
 export default class Server extends CliAppModule {
-  app: BaseAppWithServices;
+  app: IApp & IWithServices;
 
-  constructor(app: BaseAppWithServices) {
+  constructor(app: IApp & IWithServices) {
     super(app);
     this.app = app;
   }

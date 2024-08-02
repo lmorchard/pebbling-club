@@ -2,12 +2,12 @@ import fs from "fs/promises";
 import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
 import { PinboardImportRecord } from "../services/imports";
-import { BaseAppWithServices } from "../app/types";
+import { IApp, IWithServices } from "../app/types";
 
 export default class CliImport extends CliAppModule {
-  app: BaseAppWithServices;
+  app: IApp & IWithServices;
 
-  constructor(app: BaseAppWithServices) {
+  constructor(app: IApp & IWithServices) {
     super(app);
     this.app = app;
   }

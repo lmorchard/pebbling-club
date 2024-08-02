@@ -1,21 +1,27 @@
-import { BaseApp } from "../app/types";
+import { IApp } from "../app/types";
 import { BaseService } from "./base";
 import { PasswordService } from "./passwords";
 
 export class ProfileService extends BaseService {
+  repository: IProfilesRepository;
   passwords: PasswordService;
 
-  constructor(app: BaseApp, passwords: PasswordService) {
+  constructor(
+    app: IApp,
+    repository: IProfilesRepository,
+    passwords: PasswordService
+  ) {
     super(app);
+    this.repository = repository;
     this.passwords = passwords;
   }
 
   async usernameExists(username: string) {
-    return await this.app.repository.checkIfProfileExistsForUsername(username);
+    return await this.repository.checkIfProfileExistsForUsername(username);
   }
 
   async create(profile: Profile, options: { password?: string } = {}) {
-    const newProfile = await this.app.repository.createProfile(profile);
+    const newProfile = await this.repository.createProfile(profile);
     if (options.password) {
       await this.passwords.create(profile.username, options.password);
     }
@@ -23,15 +29,15 @@ export class ProfileService extends BaseService {
   }
 
   async update(id: string, profile: ProfileEditable) {
-    return await this.app.repository.updateProfile(id, profile);
+    return await this.repository.updateProfile(id, profile);
   }
 
   async get(id: string) {
-    return await this.app.repository.getProfile(id);
+    return await this.repository.getProfile(id);
   }
 
   async getByUsername(username: string) {
-    return await this.app.repository.getProfileByUsername(username);
+    return await this.repository.getProfileByUsername(username);
   }
 
   async delete(id: string) {
@@ -45,7 +51,7 @@ export class ProfileService extends BaseService {
       await this.passwords.delete(passwordId);
     }
 
-    return await this.app.repository.deleteProfile(id);
+    return await this.repository.deleteProfile(id);
   }
 }
 
@@ -59,5 +65,15 @@ export type Profile = {
 };
 
 export type ProfileEditable = Omit<
-  Profile, "id" | "username" | "created" | "modified"
+  Profile,
+  "id" | "username" | "created" | "modified"
 >;
+
+export interface IProfilesRepository {
+  checkIfProfileExistsForUsername(username: string): Promise<boolean>;
+  createProfile(profile: Profile): Promise<string>;
+  updateProfile(id: string, profile: ProfileEditable): Promise<void>;
+  getProfile(id: string): Promise<Profile>;
+  getProfileByUsername(username: string): Promise<Profile>;
+  deleteProfile(id: string): Promise<void>;
+}

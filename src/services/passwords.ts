@@ -1,15 +1,16 @@
 import crypto from "crypto";
 import { BaseService } from "./base";
-import { BaseRepository } from "../repositories/base";
-import { BaseApp, BaseLogger } from "../app/types";
+import { IApp } from "../app/types";
 
 export class PasswordService extends BaseService {
+  repository: IPasswordsRepository;
   hashIterations: number;
   hashLength: number;
   hashAlgo: string;
 
-  constructor(app: BaseApp) {
+  constructor(app: IApp, repository: IPasswordsRepository) {
     super(app);
+    this.repository = repository;
 
     // TODO: make these configurable
     this.hashIterations = 310000;
@@ -18,7 +19,7 @@ export class PasswordService extends BaseService {
   }
 
   async list() {
-    return await this.app.repository.listAllUsers();
+    return await this.repository.listAllUsers();
   }
 
   async create(username: string, password: string, originalSalt?: string) {
@@ -26,7 +27,7 @@ export class PasswordService extends BaseService {
       password,
       originalSalt
     );
-    const userId = await this.app.repository.createHashedPasswordAndSaltForUsername(
+    const userId = await this.repository.createHashedPasswordAndSaltForUsername(
       username,
       hashedPassword,
       salt
@@ -36,7 +37,7 @@ export class PasswordService extends BaseService {
 
   async update(username: string, password: string) {
     const { hashedPassword, salt } = await this.hashPassword(password);
-    return await this.app.repository.updateHashedPasswordAndSaltForUsername(
+    return await this.repository.updateHashedPasswordAndSaltForUsername(
       username,
       hashedPassword,
       salt
@@ -44,7 +45,7 @@ export class PasswordService extends BaseService {
   }
 
   async verify(username: string, password: string) {
-    const result = await this.app.repository.getHashedPasswordAndSaltForUsername(
+    const result = await this.repository.getHashedPasswordAndSaltForUsername(
       username
     );
     if (!result) return;
@@ -65,19 +66,19 @@ export class PasswordService extends BaseService {
   }
 
   async getUsernameById(id: string) {
-    return await this.app.repository.getUsernameById(id);
+    return await this.repository.getUsernameById(id);
   }
 
   async getIdByUsername(username: string) {
-    return await this.app.repository.getIdByUsername(username);
+    return await this.repository.getIdByUsername(username);
   }
 
   async usernameExists(username: string) {
-    return await this.app.repository.checkIfPasswordExistsForUsername(username);
+    return await this.repository.checkIfPasswordExistsForUsername(username);
   }
 
   async delete(id: string) {
-    return await this.app.repository.deleteHashedPasswordAndSaltForId(id);
+    return await this.repository.deleteHashedPasswordAndSaltForId(id);
   }
 
   hexToArray(input: string) {
@@ -107,4 +108,32 @@ export class PasswordService extends BaseService {
       );
     });
   }
+}
+
+export type Password = {
+  id: string;
+  username: string;
+  passwordHashed: string;
+  salt: string;
+};
+
+export interface IPasswordsRepository {
+  listAllUsers(): Promise<Password[]>;
+  createHashedPasswordAndSaltForUsername(
+    username: string,
+    passwordHashed: string,
+    salt: string
+  ): Promise<string>;
+  updateHashedPasswordAndSaltForUsername(
+    username: string,
+    passwordHashed: string,
+    salt: string
+  ): Promise<number>;
+  getHashedPasswordAndSaltForUsername(
+    username: string
+  ): Promise<undefined | { id: string; hashedPassword: string; salt: string }>;
+  checkIfPasswordExistsForUsername(username: string): Promise<boolean>;
+  getUsernameById(id: string): Promise<undefined | string>;
+  getIdByUsername(username: string): Promise<undefined | string>;
+  deleteHashedPasswordAndSaltForId(username: string): Promise<string>;
 }

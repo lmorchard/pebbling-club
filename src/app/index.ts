@@ -1,17 +1,16 @@
 import { Config } from "./config";
 import { Logging } from "./logging";
 import { AppModule } from "./modules";
-import { BaseAppModule, BaseAppWithServices } from "./types";
+import { IApp, IAppModule, IWithServices } from "./types";
 import { Events } from "./events";
-import { BaseRepository } from "../repositories/base";
 import { SqliteRepository } from "../repositories/sqlite/index";
 import { Services } from "../services";
 
-export class App implements BaseAppWithServices {
+export class App implements IApp, IWithServices {
   config: Config;
   logging: Logging;
   events: Events;
-  repository: BaseRepository;
+  repository: SqliteRepository;
 
   modules: AppModule[];
   registered: Record<string, AppModule>;
@@ -36,7 +35,7 @@ export class App implements BaseAppWithServices {
     return this;
   }
 
-  async _callModules(mapfn: (m: BaseAppModule) => Promise<any>) {
+  async _callModules(mapfn: (m: IAppModule) => Promise<any>) {
     await Promise.all(this.modules.map(mapfn));
     return this;
   }

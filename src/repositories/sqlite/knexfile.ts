@@ -1,16 +1,11 @@
 import path from "path";
 import { mkdirp } from "mkdirp";
 import { App } from "../../app/index";
-import { BaseKnexRepository } from "../knex";
+import { IKnexConnectionOptions } from "../knex";
 
 const connection = async () => {
   // Get an instance of App to access config
   const app = await new App().init();
-  /*
-  if (! (app.repository instanceof BaseKnexRepository)) {
-    throw new Error("Invalid repository type");
-  }
-  */
 
   // HACK: knex changes working directory, so adjust accordingly
   const { config } = app;
@@ -23,7 +18,10 @@ const connection = async () => {
   // HACK: should this go elsewhere?
   mkdirp.sync(dataPath);
 
-  return (app.repository as BaseKnexRepository).knexConnectionOptions();
+  // HACK: need a better way to express this in types
+  const repository = app.repository;
+
+  return repository.knexConnectionOptions();
 };
 
 // HACK: squelch a buggy warning from sqlite3 dialect - it seems to check

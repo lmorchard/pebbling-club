@@ -2,10 +2,12 @@ import path from "path";
 import Knex from "knex";
 import { v4 as uuid } from "uuid";
 import { App } from "../../app";
-import { BaseKnexRepository } from "../knex";
-import { BookmarkEditable } from "../../services/bookmarks";
-import { Profile, ProfileEditable } from "../../services/profiles";
+import { IKnexConnectionOptions } from "../knex";
+import { BookmarkEditable, IBookmarksRepository } from "../../services/bookmarks";
+import { Profile, ProfileEditable, IProfilesRepository } from "../../services/profiles";
 import { CliAppModule } from "../../app/modules";
+import { IPasswordsRepository } from "../../services/passwords";
+import { ISessionsRepository } from "../../services/sessions";
 
 export const configSchema = {
   sqliteDatabaseName: {
@@ -30,7 +32,12 @@ export const configSchema = {
 
 export class SqliteRepository
   extends CliAppModule
-  implements BaseKnexRepository
+  implements
+    IBookmarksRepository,
+    IPasswordsRepository,
+    ISessionsRepository,
+    IProfilesRepository,
+    IKnexConnectionOptions
 {
   _connection?: Knex.Knex<any, unknown[]>;
 
@@ -106,11 +113,13 @@ export class SqliteRepository
     passwordHashed: string,
     salt: string
   ) {
-    return await this.connection("passwords").where("username", username).update({
-      username,
-      passwordHashed,
-      salt,
-    });
+    return await this.connection("passwords")
+      .where("username", username)
+      .update({
+        username,
+        passwordHashed,
+        salt,
+      });
   }
 
   async getHashedPasswordAndSaltForUsername(
