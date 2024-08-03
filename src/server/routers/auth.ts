@@ -1,34 +1,99 @@
 import { FastifyPluginAsync } from "fastify";
 import FastifyPassport from "@fastify/passport";
-import templateLogin from "../templates/auth/login";
 import { IBaseRouterOptions } from "./types";
+import templateLogin from "../templates/auth/login";
+import templateSignup from "../templates/auth/signup";
+import validator from "validator";
+import {
+  FormErrors,
+  invalidMessage,
+  validateFormData,
+  validatorNot,
+} from "../utils/forms";
 
 export interface IRouterOptions extends IBaseRouterOptions {}
 
 const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
   const { server } = options;
+  const { log, app } = server;
+  const { services } = app;
+  const { passwords } = services;
 
   fastify.get("/login", async (request, reply) => {
     return reply.renderTemplate(templateLogin);
   });
 
-  fastify.post(
+  fastify.post<{
+    Body: {
+      username?: string;
+      password?: string;
+    };
+  }>(
     "/login",
     {
       preValidation: FastifyPassport.authenticate("local", {
-        failureMessage: "Username or password incorrect",
-        failureRedirect: "/auth/login",
         successRedirect: "/",
       }),
     },
     async (request, reply) => {
-      return reply.code(200).send("Logged in!");
+      return reply.code(200).send("SUBMITTED");
     }
   );
 
   fastify.post("/logout", async (request, reply) => {
     request.logOut();
     return reply.redirect("/");
+  });
+
+  fastify.get("/signup", async (request, reply) => {
+    return reply.renderTemplate(templateSignup);
+  });
+
+  fastify.post<{
+    Body: {
+      username?: string;
+      password?: string;
+      "password-confirm"?: string;
+    };
+  }>("/signup", async (request, reply) => {
+    const { formData, formErrors } = await validateFormData(request.body, {
+      validators: {
+        username: [
+          invalidMessage(
+            validatorNot(validator.isEmpty),
+            "Username cannot be empty"
+          ),
+          async (value) => {
+            if (await passwords.usernameExists(value))
+              throw new Error("Username already exists");
+            return true;
+          },
+        ],
+        password: [
+          invalidMessage(
+            validatorNot(validator.isEmpty),
+            "Password cannot be empty"
+          ),
+        ],
+        "password-confirm": [
+          validatorNot(validator.isEmpty),
+          async (value: string) => {
+            if (request.body.password !== value)
+              throw new Error("Passwords do not match");
+            return true;
+          },
+        ],
+      },
+    });
+
+    if (formErrors) {
+      return reply.renderTemplate(templateSignup, { formData, formErrors });
+    }
+
+    const { username, password } = formData;
+    const id = await services.profiles.create({ username }, { password });
+    await request.logIn({ id, username });
+    reply.redirect("/");
   });
 };
 
@@ -59,44 +124,5 @@ export default function init(server: Server, app: Express) {
     }),
   );
 
-  router.get("/signup", renderWithLocals(templateSignup));
 
-  router.post(
-    "/signup",
-    body("username")
-      .trim()
-      .isString()
-      .notEmpty()
-      .custom(async (value) => {
-        if (await services.profiles.usernameExists(value))
-          throw new Error("Username already exists");
-        return true;
-      }),
-    // TODO: reject some characters from usernames (e.g. URL reserved characters)
-    // TODO: move validation into the profiles service?
-    body("password").trim().isString().notEmpty(),
-    body("password-confirm")
-      .trim()
-      .isString()
-      .notEmpty()
-      .custom((value, { req }) => {
-        if (req.body.password !== value)
-          throw new Error("Passwords do not match");
-        return true;
-      }),
-    withValidation(),
-    ifNotValid(renderWithLocals(templateSignup)),
-    asyncHandler(async (req, res, next) => {
-      const { username, password } = res.locals.formData!;
-      const id = await services.profiles.create({ username }, { password });
-      const user = { id, username };
-      req.login(user, function (err) {
-        if (err) return next(err);
-        res.redirect("/");
-      });
-    })
-  );
-
-  return router;
-}
 */

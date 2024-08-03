@@ -14,11 +14,11 @@ import FastifyStatic from "@fastify/static";
 import FastifyAccepts from "@fastify/accepts";
 import FastifyCompress from "@fastify/compress";
 import FastifyFormbody from "@fastify/formbody";
-// import FastifyWebsocket from "@fastify/websocket";
 import FastifySecureSession from "@fastify/secure-session";
 import FastifyPassport from "@fastify/passport";
-// import FastifyFlash from "@fastify/flash";
+import FastifyFlash from "@fastify/flash";
 import FastifyCsrfProtection from "@fastify/csrf-protection";
+// import FastifyWebsocket from "@fastify/websocket";
 
 import { Strategy as LocalStrategy } from "passport-local";
 
@@ -44,11 +44,11 @@ export const configSchema = {
     format: Number,
     default: 8089,
   },
-  sessionSecret: {
-    doc: "Web session secret",
-    env: "SESSION_SECRET",
+  sessionKey: {
+    doc: "Web session key (in hex)",
+    env: "SESSION_KEY_HEX",
     format: String,
-    default: "a".repeat(32),
+    default: "4ee2ebdc267f8f637999489a5fbbfbc2ea448353c30928b29019e209aa796f9b",
   },
   sessionMaxAge: {
     doc: "Maximum age for sessions",
@@ -146,23 +146,16 @@ export default class Server extends CliAppModule {
     fastify.register(FastifyCompress);
     fastify.register(FastifyAccepts);
     fastify.register(FastifyFormbody);
-
     await this.setupSessions(fastify);
-
+    // fastify.register(FastifyFlash);
     fastify.register(FastifyCsrfProtection, {
       sessionPlugin: "@fastify/secure-session",
     });
-
     await this.setupAuth(fastify);
-
     fastify.register(TemplateRenderer);
-
-    //server.register(FastifyFlash);
-    //server.register(FastifyWebsocket)
-    //server.register(async (server) => websockets.extendServer(server))
-
+    //fastify.register(FastifyWebsocket)
+    //fastify.register(async (server) => websockets.extendServer(server))
     await this.setupRouters(fastify);
-    //server.register(async (server) => routes.extendServer(server));
 
     return fastify;
   }
@@ -171,8 +164,7 @@ export default class Server extends CliAppModule {
     const { config } = this.app;
     server.register(FastifySecureSession, {
       // TODO: get from config!
-      key: await fs.readFile("secret-key"),
-      // key: 'averylogphrasebiggerthanthirtytw',
+      key: Buffer.from(config.get("sessionKey"), "hex"),
       expiry: config.get("sessionMaxAge"),
       cookie: { path: "/" },
     });

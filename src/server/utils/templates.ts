@@ -21,10 +21,17 @@ export const TemplateRenderer = fp(async (fastify, options) => {
   fastify.decorateReply("renderTemplate", function (template, props = {}) {
     const reply = this;
     const request = this.request;
+
     const layoutProps: LayoutProps = {
       user: request.user,
       csrfToken: reply.generateCsrf(),
+      flash: {
+        info: reply.flash("info") as string[],
+        warn: reply.flash("warn") as string[],
+        error: reply.flash("error") as string[],
+      },
     };
+
     return reply
       .code(200)
       .headers({

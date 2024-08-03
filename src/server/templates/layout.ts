@@ -5,20 +5,15 @@ import { ITemplateProps } from "../utils/templates";
 export interface LayoutProps extends ITemplateProps {
   user?: Profile;
   csrfToken?: string;
-  getFlashMessages?: (type: "info" | "warn" | "error") => string[];
+  flash?: Record<"info" | "warn" | "error", string[]>;
 }
 
 export const layout = ({
   content,
   user,
   csrfToken,
-  getFlashMessages,
+  flash,
 }: { content: TemplateContent } & LayoutProps) => {
-  const flashMessages = getFlashMessages
-    ? (["info", "warn", "error"] as const).map(
-        (type) => [type, getFlashMessages(type)] as const
-      )
-    : [];
   return html`
     <html>
       <head>
@@ -26,7 +21,7 @@ export const layout = ({
         <script type="module" src="/index.js"></script>
       </head>
       <body>
-        ${flashMessages.map(
+        ${Object.entries(flash || {}).forEach(
           ([type, messages]) =>
             messages?.length &&
             html`
