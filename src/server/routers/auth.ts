@@ -28,17 +28,44 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
       username?: string;
       password?: string;
     };
-  }>(
-    "/login",
-    {
-      preValidation: FastifyPassport.authenticate("local", {
-        successRedirect: "/",
-      }),
-    },
-    async (request, reply) => {
-      return reply.code(200).send("SUBMITTED");
+  }>("/login", async (request, reply) => {
+    const { formData, formErrors } = await validateFormData(request.body, {
+      validators: {
+        username: [
+          invalidMessage(
+            validatorNot(validator.isEmpty),
+            "Username required"
+          ),
+        ],
+        password: [
+          invalidMessage(
+            validatorNot(validator.isEmpty),
+            "Password required"
+          ),
+        ],
+      },
+    });
+
+    if (formErrors) {
+      return reply.renderTemplate(templateLogin, { formData, formErrors });
     }
-  );
+
+    await FastifyPassport.authenticate(
+      "local",
+      async (request, reply, err, user, info) => {
+        if (user) {
+          await request.logIn(user);
+          reply.redirect("/");
+        } else {
+          log.error({ msg: "Authentication error", err });
+          return reply.renderTemplate(templateLogin, {
+            formData,
+            formErrors: { password: [{ message: "Username or password invalid" }] },
+          });
+        } 
+      }
+    ).call(fastify, request, reply);
+  });
 
   fastify.post("/logout", async (request, reply) => {
     request.logOut();
@@ -61,7 +88,7 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
         username: [
           invalidMessage(
             validatorNot(validator.isEmpty),
-            "Username cannot be empty"
+            "Username required"
           ),
           async (value) => {
             if (await passwords.usernameExists(value))
@@ -72,7 +99,7 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
         password: [
           invalidMessage(
             validatorNot(validator.isEmpty),
-            "Password cannot be empty"
+            "Password required"
           ),
         ],
         "password-confirm": [
@@ -98,31 +125,3 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
 };
 
 export default Router;
-
-/*
-export default function init(server: Server, app: Express) {
-  const { services } = server.app;
-  const router = Router();
-
-  router.get("/", (req, res, next) => {
-    // TODO: redirect to profile?
-    res.redirect("/");
-  });
-
-  router.get("/login", renderWithLocals(templateLogin));
-
-  router.post(
-    "/login",
-    body("username").trim().isString().notEmpty(),
-    body("password").trim().isString().notEmpty(),
-    withValidation(),
-    ifNotValid(renderWithLocals(templateLogin)),
-    passport.authenticate("local", {
-      failureMessage: "Username or password incorrect",
-      failureRedirect: "/auth/login",
-      successRedirect: "/",
-    }),
-  );
-
-
-*/
