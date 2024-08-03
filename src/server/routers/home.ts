@@ -1,12 +1,17 @@
-import Server from "../index";
-import { Router, Express } from "express";
+import { FastifyPluginAsync } from "fastify";
 import templateHome from "../templates";
-import { renderWithLocals } from "../utils/templates";
+import { render } from "../utils/html";
+import { IBaseRouterOptions } from "./types";
 
-export default function init(server: Server, app: Express) {
-  const router = Router();
-  
-  router.get("/", renderWithLocals(templateHome));
+export interface IRouterOptions extends IBaseRouterOptions {}
 
-  return router;
-}
+const Router: FastifyPluginAsync<IRouterOptions> = async (
+  fastify,
+  options
+) => {
+  fastify.get("/", async (request, reply) => {
+    return reply.renderTemplate(templateHome);
+  });
+};
+
+export default Router;

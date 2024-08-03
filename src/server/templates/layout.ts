@@ -1,6 +1,12 @@
+import { Profile } from "../../services/profiles";
 import { html, TemplateContent } from "../utils/html";
+import { ITemplateProps } from "../utils/templates";
 
-export interface LayoutProps extends Express.Locals {}
+export interface LayoutProps extends ITemplateProps {
+  user?: Profile;
+  csrfToken?: string;
+  getFlashMessages?: (type: "info" | "warn" | "error") => string[];
+}
 
 export const layout = ({
   content,
@@ -8,9 +14,11 @@ export const layout = ({
   csrfToken,
   getFlashMessages,
 }: { content: TemplateContent } & LayoutProps) => {
-  const flashMessages = (["info", "warn", "error"] as const).map(
-    (type) => [type, getFlashMessages(type)] as const
-  );
+  const flashMessages = getFlashMessages
+    ? (["info", "warn", "error"] as const).map(
+        (type) => [type, getFlashMessages(type)] as const
+      )
+    : [];
   return html`
     <html>
       <head>
@@ -32,7 +40,9 @@ export const layout = ({
         )}
         ${user
           ? html`
-              <h1>Welcome <a href="/u/${user.username}">${user.username}</a></h1>
+              <h1>
+                Welcome <a href="/u/${user.username}">${user.username}</a>
+              </h1>
               <form action="/auth/logout" method="post">
                 <button type="submit">
                   Logout (${user.username} (${user.id}))

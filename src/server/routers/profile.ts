@@ -1,55 +1,43 @@
 import Server from "..";
-import { Router, Express } from "express";
-import asyncHandler from "express-async-handler";
 import Boom from "@hapi/boom";
 import { render } from "../utils/html";
 import templateProfileIndex from "../templates/profile/index";
-import { totalmem } from "os";
+import { IBaseRouterOptions } from "./types";
+import { FastifyPluginAsync } from "fastify";
 
-export default function init(server: Server, app: Express) {
-  const { log } = server;
-  const { services } = server.app;
-  const router = Router();
+export interface IRouterOptions extends IBaseRouterOptions {}
 
-  router.get("/", (req, res, next) => {
-    res.redirect("/");
+const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
+  fastify.get<{
+    Params: { username: string };
+    Querystring: { limit?: string; offset?: string };
+  }>("/:username", async (request, reply) => {
+    const { app } = options.server;
+    const { profiles, bookmarks } = app.services;
+
+    const { username } = request.params;
+    const limit = parseInt((request.query.limit as string) || "10", 10);
+    const offset = parseInt((request.query.offset as string) || "0", 10);
+
+    const profile = await profiles.getByUsername(username);
+    if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
+
+    const { total: bookmarksTotal, items: bookmarksItems } =
+      await bookmarks.listForOwner(profile.id, limit, offset);
+
+    const pages = [];
+    for (let pageOffset = 0; pageOffset < bookmarksTotal; pageOffset += limit) {
+      pages.push({ offset: pageOffset });
+    }
+
+    return reply.renderTemplate(templateProfileIndex, {
+      profile,
+      bookmarks: bookmarksItems,
+      pages,
+      limit,
+      total: bookmarksTotal,
+    });
   });
+};
 
-  router.get(
-    "/:username",
-    asyncHandler(async (req, res, next) => {
-      const { profiles, bookmarks } = services;
-
-      const { username } = req.params;
-      const limit = parseInt((req.query.limit as string) || "10", 10);
-      const offset = parseInt((req.query.offset as string) || "0", 10);
-
-      const profile = await profiles.getByUsername(username);
-      if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
-      res.locals.profile = profile;
-
-      const { total: bookmarksTotal, items: bookmarksItems } =
-        await bookmarks.listForOwner(profile.id, limit, offset);
-
-      const pages = [];
-      for (let pageOffset = 0; pageOffset < bookmarksTotal; pageOffset += limit) {
-        pages.push({ offset: pageOffset });
-      }
-
-      res.send(
-        render(
-          templateProfileIndex({
-            ...res.locals,
-            profile,
-            bookmarks: bookmarksItems,
-            pages,
-            limit,
-            total: bookmarksTotal,
-          })
-        )
-      );
-    })
-  );
-
-  return router;
-}
+export default Router;

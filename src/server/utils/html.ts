@@ -2,10 +2,6 @@ import escapeHtml from "escape-html";
 
 export type TemplateContent = string | (() => string);
 
-export type RenderableTemplate = (
-  props?: Record<string, any>
-) => TemplateContent;
-
 export const html =
   (strings: TemplateStringsArray, ...values: any[]) =>
   () =>

@@ -4,7 +4,6 @@ import { layout, LayoutProps } from "../layout";
 import { Bookmark } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
 
-import partialBookmark from "../partials/bookmark";
 import partialBookmarkList from "../partials/bookmarkList";
 
 export interface Props extends LayoutProps {

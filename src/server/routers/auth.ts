@@ -1,13 +1,40 @@
-import Server from "../index";
-import { Router, Express } from "express";
-import asyncHandler from "express-async-handler";
-import passport from "passport";
-import { body } from "express-validator";
-import templateSignup from "../templates/auth/signup";
+import { FastifyPluginAsync } from "fastify";
+import FastifyPassport from "@fastify/passport";
 import templateLogin from "../templates/auth/login";
-import { withValidation, ifNotValid } from "../utils/forms";
-import { renderWithLocals } from "../utils/templates";
+import { IBaseRouterOptions } from "./types";
 
+export interface IRouterOptions extends IBaseRouterOptions {}
+
+const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
+  const { server } = options;
+
+  fastify.get("/login", async (request, reply) => {
+    return reply.renderTemplate(templateLogin);
+  });
+
+  fastify.post(
+    "/login",
+    {
+      preValidation: FastifyPassport.authenticate("local", {
+        failureMessage: "Username or password incorrect",
+        failureRedirect: "/auth/login",
+        successRedirect: "/",
+      }),
+    },
+    async (request, reply) => {
+      return reply.code(200).send("Logged in!");
+    }
+  );
+
+  fastify.post("/logout", async (request, reply) => {
+    request.logOut();
+    return reply.redirect("/");
+  });
+};
+
+export default Router;
+
+/*
 export default function init(server: Server, app: Express) {
   const { services } = server.app;
   const router = Router();
@@ -31,13 +58,6 @@ export default function init(server: Server, app: Express) {
       successRedirect: "/",
     }),
   );
-
-  router.post("/logout", function (req, res, next) {
-    req.logout(function (err) {
-      if (err) return next(err);
-      res.redirect("/");
-    });
-  });
 
   router.get("/signup", renderWithLocals(templateSignup));
 
@@ -79,3 +99,4 @@ export default function init(server: Server, app: Express) {
 
   return router;
 }
+*/

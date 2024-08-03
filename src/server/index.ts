@@ -1,23 +1,35 @@
+import path from "path";
+import fs from "fs/promises";
+import { URL } from "url";
+
 import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
 
-import express, { Express, ErrorRequestHandler } from "express";
-import pinoHttp from "pino-http";
-import cookieParser from "cookie-parser";
-import passport from "passport";
+import Fastify, {
+  FastifyBaseLogger,
+  FastifyInstance,
+  FastifyPluginAsync,
+} from "fastify";
+import FastifyStatic from "@fastify/static";
+import FastifyAccepts from "@fastify/accepts";
+import FastifyCompress from "@fastify/compress";
+import FastifyFormbody from "@fastify/formbody";
+// import FastifyWebsocket from "@fastify/websocket";
+import FastifySecureSession from "@fastify/secure-session";
+import FastifyPassport from "@fastify/passport";
+// import FastifyFlash from "@fastify/flash";
+import FastifyCsrfProtection from "@fastify/csrf-protection";
+
 import { Strategy as LocalStrategy } from "passport-local";
-import session from "express-session";
-import flash, { getFlashMessages } from "express-flash-message";
-import csrf from "csurf";
-import { renderWithLocals } from "./utils/templates";
-import templateError from "./templates/error";
-import { App } from "../app";
+
 import { IApp, IWithServices } from "../app/types";
 
-import homeRouter from "./routers/home";
-import authRouter from "./routers/auth";
-import profileRouter from "./routers/profile"
-import { Boom } from "@hapi/boom";
+import HomeRouter from "./routers/home";
+import AuthRouter from "./routers/auth";
+import ProfileRouter from "./routers/profile";
+
+import { Profile } from "../services/profiles";
+import { TemplateRenderer } from "./utils/templates";
 
 export const configSchema = {
   host: {
@@ -36,25 +48,19 @@ export const configSchema = {
     doc: "Web session secret",
     env: "SESSION_SECRET",
     format: String,
-    default: "trustno1-8675309",
+    default: "a".repeat(32),
   },
   sessionMaxAge: {
     doc: "Maximum age for sessions",
     env: "SESSION_MAX_AGE",
     format: Number,
-    default:  1000 * 60 * 60 * 24 * 7,
+    default: 1000 * 60 * 60 * 24 * 7,
   },
   sessionExpirationInterval: {
     doc: "Web session expiration interval",
     env: "SESSION_EXPIRATION_INTERVAL",
     format: Number,
     default: 1000 * 60 * 10,
-  },
-  sessionKeyFlashMessages: {
-    doc: "Session key for flash messages",
-    env: "SESSION_KEY_FLASH_MESSAGES",
-    format: String,
-    default: "express-flash-message",
   },
   publicPath: {
     doc: "Public web static resources path",
@@ -68,7 +74,6 @@ export const configSchema = {
     nullable: true,
     default: null,
   },
-  /*
   projectDomain: {
     doc: "Glitch.com project domain",
     env: "PROJECT_DOMAIN",
@@ -81,35 +86,10 @@ export const configSchema = {
     nullable: true,
     default: null,
   },
-  */
 } as const;
 
-type GetFlashMessages = (
-  type: "error" | "info" | "warn"
-) => string[] | undefined;
-
-declare global {
-  namespace Express {
-    interface Request {
-      flash: Express.Response["flash"];
-    }
-    interface User {
-      id: string;
-      username: string;
-    }
-    interface Locals {
-      user?: Express.User;
-      csrfToken: string;
-      messages?: string[];
-      getFlashMessages: GetFlashMessages;
-      error?: any;
-    }
-    namespace session {
-      interface SessionData {
-        messages?: string[];
-      }
-    }
-  }
+declare module "fastify" {
+  interface PassportUser extends Profile {}
 }
 
 export default class Server extends CliAppModule {
@@ -133,90 +113,79 @@ export default class Server extends CliAppModule {
     const { log } = this;
     const { config } = this.app;
 
-    const host = config.get("host");
-    const port = config.get("port");
+    this.setDefaultSiteUrl();
 
-    const app = await this.buildServer();
-    app.listen(port, () => {
-      log.info(`Server listening on port ${port}`);
+    const server = await this.buildServer();
+
+    // Defer resolution of this method until the server closes, which
+    // defers postAction cleanup like closing database connections
+    const closePromise = new Promise<void>((resolve, reject) => {
+      server.addHook("onClose", (instance, done) => {
+        resolve();
+        done();
+      });
     });
+
+    await server.listen({
+      host: config.get("host"),
+      port: config.get("port"),
+    });
+
+    return closePromise;
   }
 
   async buildServer() {
-    const { log } = this;
-    const { config, services } = this.app as App;
-
-    // TODO: this seems hacky? maybe should live in services.sessions?
-    setInterval(
-      () => services.sessions.expireSessions(),
-      config.get("sessionExpirationInterval")
-    );
-
-    const app = express();
-    app.use(pinoHttp({ logger: log as App["logging"]["logger"] }));
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: false }));
-    app.use(cookieParser());
-    await this.setupSessions(app);
-    await this.setupFlashMessages(app);
-    await this.setupCSRFTokens(app);
-    await this.setupAuth(app);
-    await this.setupRouters(app);
-    await this.setupErrorHandler(app);
-
-    return app;
-  }
-
-  async setupSessions(app: Express) {
-    const { config, services } = this.app as App;
-    const sessionSecret = config.get("sessionSecret");
-
-    app.use(
-      session({
-        secret: sessionSecret,
-        resave: false,
-        saveUninitialized: false,
-        cookie: { secure: false }, // TODO: need option to enable https in prod
-        store: await services.sessions.buildStore(),
-      })
-    );
-    app.use(function (req, res, next) {
-      if (req.session.messages?.length) {
-        res.locals.messages = req.session.messages;
-        req.session.messages = [];
-      }
-      next();
-    });
-  }
-
-  async setupFlashMessages(app: Express) {
     const { config } = this.app;
-    const sessionKeytFlashMessages = config.get("sessionKeyFlashMessages");
+    // const { routes, websockets } = this;
 
-    app.use(flash({ sessionKeyName: sessionKeytFlashMessages }));
-    app.use(function (req, res, next) {
-      // HACK: copy flash method for compat with Passport
-      req.flash = res.flash;
-      const localsGetFlashMessages: GetFlashMessages = (type) =>
-        getFlashMessages(req, sessionKeytFlashMessages, type);
-      res.locals.getFlashMessages = localsGetFlashMessages;
-      next();
+    const fastify: FastifyInstance = Fastify({
+      // HACK: ILogger is not compatible with FastifyBaseLogger, though really it is - fix this
+      logger: this.log as FastifyBaseLogger,
+    });
+
+    fastify.register(FastifyCompress);
+    fastify.register(FastifyAccepts);
+    fastify.register(FastifyFormbody);
+
+    await this.setupSessions(fastify);
+
+    fastify.register(FastifyCsrfProtection, {
+      sessionPlugin: "@fastify/secure-session",
+    });
+
+    await this.setupAuth(fastify);
+
+    fastify.register(TemplateRenderer);
+
+    //server.register(FastifyFlash);
+    //server.register(FastifyWebsocket)
+    //server.register(async (server) => websockets.extendServer(server))
+
+    await this.setupRouters(fastify);
+    //server.register(async (server) => routes.extendServer(server));
+
+    return fastify;
+  }
+
+  async setupSessions(server: FastifyInstance) {
+    const { config } = this.app;
+    server.register(FastifySecureSession, {
+      // TODO: get from config!
+      key: await fs.readFile("secret-key"),
+      // key: 'averylogphrasebiggerthanthirtytw',
+      expiry: config.get("sessionMaxAge"),
+      cookie: { path: "/" },
     });
   }
 
-  async setupCSRFTokens(app: Express) {
-    app.use(csrf());
-    app.use(function (req, res, next) {
-      res.locals.csrfToken = req.csrfToken();
-      next();
-    });
-  }
-
-  async setupAuth(app: Express) {
-    const { log } = this;
+  async setupAuth(server: FastifyInstance) {
     const { passwords, profiles } = this.app.services;
 
-    passport.use(
+    server.register(FastifyPassport.initialize());
+    server.register(FastifyPassport.secureSession());
+
+    FastifyPassport.use(
+      "local",
       new LocalStrategy(async function verify(username, password, cb) {
         try {
           // First, verify the username and password
@@ -234,53 +203,49 @@ export default class Server extends CliAppModule {
       })
     );
 
-    // TODO: rework this not to hit the DB? maybe lazy load?
-    passport.deserializeUser(async function (id: string, cb) {
-      try {
-        const profile = await profiles.get(id);
-        if (!profile?.username) return cb(null, null);
-        return cb(null, { id, username: profile.username });
-      } catch (err) {
-        cb(err);
-      }
-    });
+    FastifyPassport.registerUserSerializer(
+      async (user: Profile, request) => user.id
+    );
 
-    passport.serializeUser(function (user, cb) {
-      process.nextTick(function () {
-        cb(null, user.id);
-      });
-    });
-
-    app.use(passport.authenticate("session"));
-
-    app.use(function (req, res, next) {
-      res.locals.user = req.user;
-      next();
+    FastifyPassport.registerUserDeserializer(async (id: string, request) => {
+      const profile = await profiles.get(id);
+      if (!profile?.username) return null;
+      return profile;
     });
   }
 
-  async setupRouters(app: Express) {
+  async setupRouters(server: FastifyInstance) {
     const { config } = this.app;
 
-    app.use(express.static(config.get("publicPath")));
-    app.use("/auth", authRouter(this, app));
-    app.use("/u", profileRouter(this, app));
-    app.use("/", homeRouter(this, app));
+    server.register(FastifyStatic, {
+      root: path.resolve(config.get("publicPath")),
+      prefix: "/",
+    });
+    server.register(HomeRouter, { server: this, prefix: "/" });
+    server.register(ProfileRouter, { server: this, prefix: "/u/" });
+    server.register(AuthRouter, { server: this, prefix: "/auth/" });
   }
 
-  async setupErrorHandler(app: Express) {
-    const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
-      res.locals.error = error;
-      if (error instanceof Error) {
-        if (error instanceof Boom) {
-          if (error.output.statusCode === 404) {
-            // TODO: need a specific 404 page template
-            return res.status(404).send("Not found");
-          }
-        }
-      }
-      renderWithLocals(templateError)(req, res, next);
-    };
-    app.use(errorHandler);
+  setDefaultSiteUrl() {
+    const { log } = this;
+    const { config } = this.app;
+
+    if (config.get("siteUrl")) return;
+
+    const projectId = config.get("projectId");
+    const projectDomain = config.get("projectDomain");
+    if (projectDomain && projectId) {
+      // HACK: Having PROJECT_DOMAIN and PROJECT_ID set are a good indication
+      // to try auto-configuring the siteUrl for a Glitch project
+      const siteUrl = `https://${projectDomain}.glitch.me`;
+      log.trace({ msg: "Using Glitch site URL", siteUrl });
+      return config.set("siteUrl", siteUrl);
+    }
+
+    const host = config.get("host");
+    const port = config.get("port");
+    const siteUrl = new URL(`http://${host}:${port}`).toString();
+    log.trace({ msg: "Using default site URL", siteUrl });
+    config.set("siteUrl", siteUrl);
   }
 }

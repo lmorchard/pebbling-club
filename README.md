@@ -4,9 +4,17 @@ a club for [pebbling][] enthusiasts on the web
 
 [pebbling]: https://en.wikipedia.org/wiki/Pebbling
 
+## Misc dev notions
+
+- separate concerns of data and logic into repository and service layers
+- start each feature as a CLI command first, wherever possible
+- write tests mainly for tricky bits of logic, don't need 100% coverage
+- think about per-user sqlite databases for profile data?
+
 ## TODO
 
 - code golfing
+  - [ ] switch from express to fastify?
   - [ ] extract minimal interfaces out of concrete services?
 
 - basic UX
@@ -30,6 +38,9 @@ a club for [pebbling][] enthusiasts on the web
   - [ ] rss / atom / json feeds?
   - [ ] fetch URL thumbnails based on metadata?
   - [ ] browser web extensions?
+
+- tagging
+  - [ ] maintain per-user tags?
 
 - admin
   - [ ] okay to stick with CLI for admin tasks initially?
@@ -56,9 +67,10 @@ a club for [pebbling][] enthusiasts on the web
   - [ ] tag search
   - [ ] user search
   - [ ] federated search with authorized fetch for followers only?
+  - [ ] use sqlite fulltext search? or something else? make it pluggable?
 
 - hosting / deployment
   - [ ] try deploying to glitch
-  - [ ] pick some other deployment targets
-  - [ ] dockerfile
-  - [ ] decompose into lambda functions?
+  - [ ] pick some other deployment targets - fastly? netlify? digitalocean? azure? gcp? aws?
+  - [ ] dockerfile, pm2, nginx, etc. for self-hosting
+  - [ ] decompose into serverless functions?
