@@ -1,14 +1,14 @@
 import { html } from "../../utils/html";
-import { field, FormData, FormErrors } from "../../utils/forms";
+import { field, FormData, FormErrors, FormValidationError } from "../../utils/forms";
 import { layout, LayoutProps } from "../layout";
 
 export interface Props extends LayoutProps {
   formData?: FormData,
-  formErrors?: FormErrors,
+  validationError?: FormValidationError,
 }
 
-export default ({ formData, formErrors, ...locals }: Props) => {
-  const f = field({ formData, formErrors });
+export default ({ formData, validationError, ...locals }: Props) => {
+  const f = field({ formData, validationError });
   return layout({
     ...locals,
     content: html`

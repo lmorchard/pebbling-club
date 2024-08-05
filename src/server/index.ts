@@ -19,6 +19,7 @@ import FastifyPassport from "@fastify/passport";
 import FastifyFlash from "@fastify/flash";
 import FastifyCsrfProtection from "@fastify/csrf-protection";
 // import FastifyWebsocket from "@fastify/websocket";
+import AjvErrors from "ajv-errors";
 
 import { Strategy as LocalStrategy } from "passport-local";
 
@@ -141,6 +142,7 @@ export default class Server extends CliAppModule {
     const fastify: FastifyInstance = Fastify({
       // HACK: ILogger is not compatible with FastifyBaseLogger, though really it is - fix this
       logger: this.log as FastifyBaseLogger,
+      ajv: { customOptions: { allErrors: true }, plugins: [AjvErrors] },
     });
 
     fastify.register(FastifyCompress);
