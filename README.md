@@ -14,8 +14,8 @@ a club for [pebbling][] enthusiasts on the web
 ## TODO
 
 - code golfing
-  - [ ] switch from express to fastify?
-  - [ ] extract minimal interfaces out of concrete services?
+  - [x] switch from express to fastify?
+  - [x] extract minimal interfaces out of concrete services?
 
 - basic UX
   - [ ] view bookmarks by profile

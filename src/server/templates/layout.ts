@@ -38,14 +38,14 @@ export const layout = ({
               <h1>
                 Welcome <a href="/u/${user.username}">${user.username}</a>
               </h1>
-              <form action="/auth/logout" method="post">
+              <form action="/logout" method="post">
                 <button type="submit">
                   Logout (${user.username} (${user.id}))
                 </button>
                 <input type="hidden" name="_csrf" value="${csrfToken}" />
               </form>
             `
-          : html`<a href="/auth/login">login</a>`}
+          : html`<a href="/login">login</a>`}
         ${content}
       </body>
     </html>

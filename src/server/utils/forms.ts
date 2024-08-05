@@ -108,7 +108,7 @@ export const field = ({
                 name="${name}"
                 value="${value}"
                 type="${options.type || "text"}"
-                ${options.required ? "required-no" : ""}
+                ${options.required ? "required" : ""}
                 ${options.autofocus ? "autofocus" : ""}
               />
             `}

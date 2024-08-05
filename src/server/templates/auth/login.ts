@@ -15,7 +15,7 @@ export default ({ formData, formErrors, ...locals }: Props) => {
       <h1>Login</h1>
       ${locals.messages}
       <section>
-        <form action="/auth/login" method="post">
+        <form action="" method="post">
           <input type="hidden" name="_csrf" value="${locals.csrfToken}" />
           ${f("Username", "username", { required: true, autofocus: true })}
           ${f("Password", "password", { required: true, type: "password" })}
@@ -23,7 +23,7 @@ export default ({ formData, formErrors, ...locals }: Props) => {
         </form>
         <hr />
         <p class="help">
-          Don't have an account? <a href="/auth/signup">Sign up</a>
+          Don't have an account? <a href="/signup">Sign up</a>
         </p>
       </section>
     `,

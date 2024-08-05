@@ -213,9 +213,9 @@ export default class Server extends CliAppModule {
       root: path.resolve(config.get("publicPath")),
       prefix: "/",
     });
-    server.register(HomeRouter, { server: this, prefix: "/" });
     server.register(ProfileRouter, { server: this, prefix: "/u/" });
-    server.register(AuthRouter, { server: this, prefix: "/auth/" });
+    server.register(AuthRouter, { server: this, prefix: "/" });
+    server.register(HomeRouter, { server: this, prefix: "/" });
   }
 
   setDefaultSiteUrl() {
