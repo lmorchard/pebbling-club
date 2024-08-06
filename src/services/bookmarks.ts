@@ -38,6 +38,59 @@ export class BookmarksService extends BaseService {
   }
 }
 
+export const NewBookmarkQuerystringSchema = {
+  type: "object",
+  properties: {
+    href: {
+      type: "string",
+    },
+    title: {
+      type: "string",
+    },
+    extended: {
+      type: "string",
+    },
+    tags: {
+      type: "string",
+    },
+  },
+} as const;
+
+export const NewBookmarkSchema = {
+  type: "object",
+  properties: {
+    href: {
+      type: "string",
+      minLength: 1,
+      errorMessage: {
+        type: "URL required",
+        minLength: "URL required",
+      },
+    },
+    title: {
+      type: "string",
+      minLength: 1,
+      errorMessage: {
+        type: "Title required",
+        minLength: "Title required",
+      },
+    },
+    extended: {
+      type: "string",
+    },
+    tags: {
+      type: "string",
+    },
+    visibility: {
+      type: "string",
+      enum: ["public", "private"],
+      errorMessage: {
+        enum: "Invalid visibility",
+      },
+    },
+  },
+} as const;
+
 export type Bookmark = {
   id: string;
   ownerId: string;

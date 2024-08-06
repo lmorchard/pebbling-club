@@ -15,13 +15,16 @@ export default ({ bookmark }: Props) => {
       ${bookmark.extended &&
       html`<div class="p-summary">${bookmark.extended}</div>`}
       <div class="p-category">${bookmark.tags}</div>
-      <time
-        class="dt-published"
-        title="${created.toISOString()}"
-        datetime="${created.toISOString()}"
-      >
-        ${created.toISOString()}
-      </time>
+      <div>
+        <time
+          class="dt-published"
+          title="${created.toISOString()}"
+          datetime="${created.toISOString()}"
+        >
+          ${created.toISOString()}
+        </time>
+        <a href="/bookmarks/${bookmark.id}/edit">Edit</a>
+      </div>
     </div>
   `;
 };

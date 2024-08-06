@@ -167,7 +167,13 @@ export default class Server extends CliAppModule {
       prefix: "/",
     });
     server.register(ProfilesRouter, { server: this, prefix: "/u/" });
-    server.register(BookmarksRouter, { server: this, prefix: "/" });
+    server.register(BookmarksRouter, {
+      server: this,
+      prefix: "/",
+      services: {
+        bookmarks: this.app.services.bookmarks,
+      },
+    });
     server.register(AuthRouter, { server: this, prefix: "/" });
     server.register(HomeRouter, { server: this, prefix: "/" });
   }

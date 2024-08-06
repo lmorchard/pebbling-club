@@ -1,97 +1,66 @@
+import Boom from "@hapi/boom";
 import { FastifyPluginAsync } from "fastify";
-import { IBaseRouterOptions } from "./types";
-import templateBookmarksNew from "./templates/bookmarks/new";
 import { FromSchema } from "json-schema-to-ts";
-import { addValidationError, FormValidationError } from "./utils/forms";
 import validator from "validator";
+import {
+  BookmarkEditable,
+  BookmarksService,
+  NewBookmarkQuerystringSchema,
+  NewBookmarkSchema,
+} from "../services/bookmarks";
 import { RequirePasswordAuth } from "./auth";
+import templateBookmarksEdit from "./templates/bookmarks/edit";
+import templateBookmarksNew from "./templates/bookmarks/new";
+import templateBookmarksView from "./templates/bookmarks/view";
+import { IBaseRouterOptions } from "./types";
+import { addValidationError, FormValidationError } from "./utils/forms";
 
-export interface IBookmarksRouterOptions extends IBaseRouterOptions {}
+export interface IBookmarksRouterOptions extends IBaseRouterOptions {
+  services: {
+    bookmarks: BookmarksService;
+  };
+}
+
+const BookmarkUrlParamsSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+  },
+  required: ["id"],
+} as const;
 
 export const BookmarksRouter: FastifyPluginAsync<
   IBookmarksRouterOptions
-> = async (fastify, options) => {
-  const newBookmarkQuerystringSchema = {
-    type: "object",
-    properties: {
-      href: {
-        type: "string",
-      },
-      title: {
-        type: "string",
-      },
-      extended: {
-        type: "string",
-      },
-      tags: {
-        type: "string",
-      },
-    },
-  } as const;
+> = async (server, options) => {
+  const { bookmarks } = options.services;
 
-  fastify.get<{
-    Querystring: FromSchema<typeof newBookmarkQuerystringSchema>;
+  server.get<{
+    Querystring: FromSchema<typeof NewBookmarkQuerystringSchema>;
   }>(
     "/new",
     {
       schema: {
-        querystring: newBookmarkQuerystringSchema,
+        querystring: NewBookmarkQuerystringSchema,
       },
       attachValidation: true,
       preHandler: RequirePasswordAuth,
     },
     async (request, reply) => {
-      const csrfToken = await reply.generateCsrf();
       return reply.renderTemplate(templateBookmarksNew, {
-        csrfToken,
+        csrfToken: reply.generateCsrf(),
         formData: request.query,
       });
     }
   );
 
-  const newBookmarkSchema = {
-    type: "object",
-    properties: {
-      href: {
-        type: "string",
-        minLength: 1,
-        errorMessage: {
-          type: "URL required",
-          minLength: "URL required",
-        },
-      },
-      title: {
-        type: "string",
-        minLength: 1,
-        errorMessage: {
-          type: "Title required",
-          minLength: "Title required",
-        },
-      },
-      extended: {
-        type: "string",
-      },
-      tags: {
-        type: "string",
-      },
-      visibility: {
-        type: "string",
-        enum: ["public", "private"],
-        errorMessage: {
-          enum: "Invalid visibility",
-        },
-      },
-    },
-  } as const;
-
-  fastify.post<{ Body: FromSchema<typeof newBookmarkSchema> }>(
+  server.post<{ Body: FromSchema<typeof NewBookmarkSchema> }>(
     "/new",
     {
       schema: {
-        body: newBookmarkSchema,
+        body: NewBookmarkSchema,
       },
       attachValidation: true,
-      preValidation: fastify.csrfProtection,
+      preValidation: server.csrfProtection,
       preHandler: RequirePasswordAuth,
     },
     async (request, reply) => {
@@ -107,16 +76,83 @@ export const BookmarksRouter: FastifyPluginAsync<
       }
 
       if (validationError) {
-        const csrfToken = await reply.generateCsrf();
         return reply.renderTemplate(templateBookmarksNew, {
-          csrfToken,
+          csrfToken: reply.generateCsrf(),
           formData,
           validationError,
         });
       }
 
-      reply.send(`OK ${JSON.stringify(formData, null, "  ")}`).status(200);
-      //reply.redirect(`/bookmarks/${result.id}`);
+      const newBookmark: BookmarkEditable = {
+        href: formData.href!,
+        title: formData.title,
+        extended: formData.extended,
+        tags: formData.tags,
+        ownerId: request.user!.id!,
+      };
+      const result = await bookmarks.create(newBookmark);
+      reply.redirect(`/bookmarks/${result.id}`);
     }
   );
+
+  server.get<{
+    Params: FromSchema<typeof BookmarkUrlParamsSchema>;
+  }>(
+    "/bookmarks/:id/edit",
+    {
+      schema: {
+        params: BookmarkUrlParamsSchema,
+      },
+      attachValidation: true,
+      preValidation: server.csrfProtection,
+      preHandler: RequirePasswordAuth,
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const bookmark = await bookmarks.get(id);
+      if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
+
+      return reply.renderTemplate(templateBookmarksEdit, {
+        csrfToken: reply.generateCsrf(),
+        formData: bookmark,
+      });
+    }
+  );
+
+  server.post<{
+    Params: FromSchema<typeof BookmarkUrlParamsSchema>;
+    Body: FromSchema<typeof NewBookmarkSchema>;
+  }>(
+    "/bookmarks/:id/edit",
+    {
+      schema: {
+        body: NewBookmarkSchema,
+      },
+      attachValidation: true,
+      preValidation: server.csrfProtection,
+      preHandler: RequirePasswordAuth,
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const bookmark = await bookmarks.get(id);
+      if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
+
+      return reply.renderTemplate(templateBookmarksEdit, {
+        csrfToken: reply.generateCsrf(),
+        formData: bookmark,
+      });
+    }
+  );
+
+  server.get<{
+    Params: FromSchema<typeof BookmarkUrlParamsSchema>;
+  }>("/bookmarks/:id", async (request, reply) => {
+    const { id } = request.params;
+    const bookmark = await bookmarks.get(id);
+    if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
+
+    return reply.renderTemplate(templateBookmarksView, {
+      bookmark,
+    });
+  });
 };

@@ -30,6 +30,8 @@ export default ({
       <section class="bookmarks">
         <h2>Bookmarks (${total})</h2>
 
+        ${partialBookmarkList({ bookmarks })}
+
         <div>
           ${pages.map(
             (page, idx) => html`
@@ -38,7 +40,6 @@ export default ({
           )}
         </div>
 
-        ${partialBookmarkList({ bookmarks })}
       </section>
     `,
   });

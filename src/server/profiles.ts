@@ -16,7 +16,7 @@ export const ProfilesRouter: FastifyPluginAsync<
     const { profiles, bookmarks } = app.services;
 
     const { username } = request.params;
-    const limit = parseInt((request.query.limit as string) || "10", 10);
+    const limit = parseInt((request.query.limit as string) || "50", 10);
     const offset = parseInt((request.query.offset as string) || "0", 10);
 
     const profile = await profiles.getByUsername(username);

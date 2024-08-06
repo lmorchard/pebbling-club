@@ -15,7 +15,12 @@ export default ({ formData, validationError, ...locals }: Props) => {
     ...locals,
     content: html`
       <section>
-        ${partialBookmarkForm({ csrfToken, formData, validationError })}
+        ${partialBookmarkForm({
+          csrfToken,
+          formData,
+          validationError,
+          actionButtonTitle: "Save bookmark",
+        })}
       </section>
     `,
   });
