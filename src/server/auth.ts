@@ -2,13 +2,67 @@ import { FastifyPluginAsync } from "fastify";
 import { FromSchema } from "json-schema-to-ts";
 import FastifyPassport from "@fastify/passport";
 import { IBaseRouterOptions } from "./types";
-import templateLogin from "../templates/auth/login";
-import templateSignup from "../templates/auth/signup";
-import { addValidationError, FormValidationError } from "../utils/forms";
+import templateLogin from "./templates/auth/login";
+import templateSignup from "./templates/auth/signup";
+import { addValidationError, FormValidationError } from "./utils/forms";
+import fp from "fastify-plugin";
+import { PasswordService } from "../services/passwords";
+import { ProfileService, Profile } from "../services/profiles";
 
-export interface IRouterOptions extends IBaseRouterOptions {}
+import { Strategy as LocalStrategy } from "passport-local";
 
-const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
+export interface IAuthRouterOptions extends IBaseRouterOptions {}
+
+export const PassportAuth = fp(
+  async (
+    server,
+    options: {
+      services: {
+        passwords: PasswordService;
+        profiles: ProfileService;
+      };
+    }
+  ) => {
+    const { passwords, profiles } = options.services;
+
+    server.register(FastifyPassport.initialize());
+    server.register(FastifyPassport.secureSession());
+
+    FastifyPassport.use(
+      "local",
+      new LocalStrategy(async function verify(username, password, cb) {
+        try {
+          // First, verify the username and password
+          const passwordId = await passwords.verify(username, password);
+          if (!passwordId) return cb(null, false);
+
+          // Then, get the profile associated with the username
+          const profile = await profiles.getByUsername(username);
+          if (!profile?.id) return cb(null, false);
+
+          return cb(null, { id: profile.id, username });
+        } catch (err) {
+          return cb(err);
+        }
+      })
+    );
+
+    FastifyPassport.registerUserSerializer(
+      async (user: Profile, request) => user.id
+    );
+
+    FastifyPassport.registerUserDeserializer(async (id: string, request) => {
+      const profile = await profiles.get(id);
+      if (!profile?.username) return null;
+      return profile;
+    });
+  }
+);
+
+export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
+  fastify,
+  options
+) => {
   const { server } = options;
   const { log, app } = server;
   const { services } = app;
@@ -217,5 +271,3 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
     }
   );
 };
-
-export default Router;

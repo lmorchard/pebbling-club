@@ -1,34 +1,26 @@
 import path from "path";
-import fs from "fs/promises";
 import { URL } from "url";
 
 import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
 
-import Fastify, {
-  FastifyBaseLogger,
-  FastifyInstance,
-  FastifyPluginAsync,
-} from "fastify";
+import Fastify, { FastifyBaseLogger, FastifyInstance } from "fastify";
 import FastifyStatic from "@fastify/static";
 import FastifyAccepts from "@fastify/accepts";
 import FastifyCompress from "@fastify/compress";
 import FastifyFormbody from "@fastify/formbody";
 import FastifySecureSession from "@fastify/secure-session";
-import FastifyPassport from "@fastify/passport";
-import FastifyFlash from "@fastify/flash";
 import FastifyCsrfProtection from "@fastify/csrf-protection";
-// import FastifyWebsocket from "@fastify/websocket";
 import AjvErrors from "ajv-errors";
 
 import { Strategy as LocalStrategy } from "passport-local";
 
 import { IApp, IWithServices } from "../app/types";
 
-import HomeRouter from "./routers/home";
-import AuthRouter from "./routers/auth";
-import ProfileRouter from "./routers/profile";
-import BookmarksRouter from "./routers/bookmarks";
+import { HomeRouter } from "./home";
+import { ProfilesRouter } from "./profiles";
+import { BookmarksRouter } from "./bookmarks";
+import { PassportAuth, AuthRouter } from "./auth";
 
 import { Profile } from "../services/profiles";
 import { TemplateRenderer } from "./utils/templates";
@@ -138,7 +130,6 @@ export default class Server extends CliAppModule {
 
   async buildServer() {
     const { config } = this.app;
-    // const { routes, websockets } = this;
 
     const fastify: FastifyInstance = Fastify({
       // HACK: ILogger is not compatible with FastifyBaseLogger, though really it is - fix this
@@ -150,14 +141,11 @@ export default class Server extends CliAppModule {
     fastify.register(FastifyAccepts);
     fastify.register(FastifyFormbody);
     await this.setupSessions(fastify);
-    // fastify.register(FastifyFlash);
     fastify.register(FastifyCsrfProtection, {
       sessionPlugin: "@fastify/secure-session",
     });
-    await this.setupAuth(fastify);
+    fastify.register(PassportAuth, { services: this.app.services });
     fastify.register(TemplateRenderer);
-    //fastify.register(FastifyWebsocket)
-    //fastify.register(async (server) => websockets.extendServer(server))
     await this.setupRouters(fastify);
 
     return fastify;
@@ -173,42 +161,6 @@ export default class Server extends CliAppModule {
     });
   }
 
-  async setupAuth(server: FastifyInstance) {
-    const { passwords, profiles } = this.app.services;
-
-    server.register(FastifyPassport.initialize());
-    server.register(FastifyPassport.secureSession());
-
-    FastifyPassport.use(
-      "local",
-      new LocalStrategy(async function verify(username, password, cb) {
-        try {
-          // First, verify the username and password
-          const passwordId = await passwords.verify(username, password);
-          if (!passwordId) return cb(null, false);
-
-          // Then, get the profile associated with the username
-          const profile = await profiles.getByUsername(username);
-          if (!profile?.id) return cb(null, false);
-
-          return cb(null, { id: profile.id, username });
-        } catch (err) {
-          return cb(err);
-        }
-      })
-    );
-
-    FastifyPassport.registerUserSerializer(
-      async (user: Profile, request) => user.id
-    );
-
-    FastifyPassport.registerUserDeserializer(async (id: string, request) => {
-      const profile = await profiles.get(id);
-      if (!profile?.username) return null;
-      return profile;
-    });
-  }
-
   async setupRouters(server: FastifyInstance) {
     const { config } = this.app;
 
@@ -216,7 +168,7 @@ export default class Server extends CliAppModule {
       root: path.resolve(config.get("publicPath")),
       prefix: "/",
     });
-    server.register(ProfileRouter, { server: this, prefix: "/u/" });
+    server.register(ProfilesRouter, { server: this, prefix: "/u/" });
     server.register(BookmarksRouter, { server: this, prefix: "/" });
     server.register(AuthRouter, { server: this, prefix: "/" });
     server.register(HomeRouter, { server: this, prefix: "/" });

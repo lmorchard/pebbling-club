@@ -1,13 +1,13 @@
 import { FastifyPluginAsync } from "fastify";
 import { IBaseRouterOptions } from "./types";
-import templateBookmarksNew from "../templates/bookmarks/new";
+import templateBookmarksNew from "./templates/bookmarks/new";
 import { FromSchema } from "json-schema-to-ts";
-import { addValidationError, FormValidationError } from "../utils/forms";
+import { addValidationError, FormValidationError } from "./utils/forms";
 import validator from "validator";
 
-export interface IRouterOptions extends IBaseRouterOptions {}
+export interface IBookmarksRouterOptions extends IBaseRouterOptions {}
 
-const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
+export const BookmarksRouter: FastifyPluginAsync<IBookmarksRouterOptions> = async (fastify, options) => {
   const { server } = options;
   const { log, app } = server;
   const { services } = app;
@@ -127,5 +127,3 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
     }
   );
 };
-
-export default Router;

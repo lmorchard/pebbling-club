@@ -1,13 +1,15 @@
-import Server from "..";
+import Server from ".";
 import Boom from "@hapi/boom";
-import { render } from "../utils/html";
-import templateProfileIndex from "../templates/profile/index";
+import { render } from "./utils/html";
+import templateProfileIndex from "./templates/profile/index";
 import { IBaseRouterOptions } from "./types";
 import { FastifyPluginAsync } from "fastify";
 
-export interface IRouterOptions extends IBaseRouterOptions {}
+export interface IProfilesRouterOptions extends IBaseRouterOptions {}
 
-const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
+export const ProfilesRouter: FastifyPluginAsync<
+  IProfilesRouterOptions
+> = async (fastify, options) => {
   fastify.get<{
     Params: { username: string };
     Querystring: { limit?: string; offset?: string };
@@ -39,5 +41,3 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
     });
   });
 };
-
-export default Router;
