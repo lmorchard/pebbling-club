@@ -17,7 +17,7 @@ export default ({ formData, validationError, ...locals }: Props) => {
           <input type="hidden" name="_csrf" value="${locals.csrfToken}" />
           ${f("URL", "href", { required: true })}
           ${f("Title", "title", { required: true })}
-          ${f("Description", "description")}
+          ${f("Description", "extended")}
           ${f("Tags", "tags")}
           <section>
             <button type="submit">Add new bookmark</button>

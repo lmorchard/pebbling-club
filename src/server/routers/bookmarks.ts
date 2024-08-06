@@ -14,13 +14,38 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
   const { bookmarks, profiles } = services;
 
   fastify.addHook("preHandler", async (request, reply) => {
-    if (!request.isAuthenticated()) {
-      return reply.redirect("/login");
-    }
+    if (request.isAuthenticated()) return;
+
+    const { routeOptions: { url: nextPath }, query } = request;
+    const nextParams = new URLSearchParams();
+    nextParams.set("nextPath", nextPath || "/");
+    nextParams.set("nextParams", JSON.stringify(query));
+
+    return reply.redirect(`/login?${nextParams.toString()}`);
   });
 
-  fastify.get("/new", {}, async (request, reply) => {
-    return reply.renderTemplate(templateBookmarksNew);
+  const newBookmarkQuerystringSchema = {
+    type: "object",
+    properties: {
+      href: {
+        type: "string",
+      },
+      title: {
+        type: "string",
+      },
+      extended: {
+        type: "string",
+      },
+      tags: {
+        type: "string",
+      },  
+    }
+  } as const;
+
+  fastify.get<{
+    Querystring: FromSchema<typeof newBookmarkQuerystringSchema>;
+  }>("/new", {}, async (request, reply) => {
+    return reply.renderTemplate(templateBookmarksNew, { formData: request.query });
   });
 
   const newBookmarkSchema = {

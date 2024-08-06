@@ -41,17 +41,32 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
     required: ["username", "password"],
   } as const;
 
+  const loginNextQuerystringSchema = {
+    type: "object",
+    properties: {
+      nextPath: {
+        type: "string",
+      },
+      nextParams: {
+        type: "string",
+      },
+    },
+  } as const;
+
   fastify.post<{
     Body: FromSchema<typeof loginFormSchema>;
+    Querystring: FromSchema<typeof loginNextQuerystringSchema>;
   }>(
     "/login",
     {
       attachValidation: true,
       schema: {
         body: loginFormSchema,
+        querystring: loginNextQuerystringSchema,
       },
     },
     async (request, reply) => {
+      let { nextPath, nextParams } = request.query;
       let formData = request.body;
       let validationError = request.validationError as FormValidationError;
 
@@ -69,18 +84,37 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
         async (request, reply, err, user, info) => {
           if (user) {
             await request.logIn(user);
-            reply.redirect("/");
-          } else {
-            log.error({ msg: "Authentication error", err });
-            validationError = addValidationError(validationError, {
-              instancePath: "/password",
-              message: "Username or password invalid",
-            });
-            return reply.renderTemplate(templateLogin, {
-              formData,
-              validationError,
-            });
+
+            const redirectPath =
+              nextPath && nextPath.startsWith("/") ? nextPath : "/";
+            let redirectParams = {};
+            if (nextParams) {
+              try {
+                redirectParams = JSON.parse(nextParams);
+              } catch (err) {
+                /* no-op */
+              }
+            }
+            let redirect = redirectPath;
+            const redirectQueryString = new URLSearchParams(
+              redirectParams
+            ).toString();
+            if (redirectQueryString) {
+              redirect += `?${redirectQueryString}`;
+            }
+
+            return reply.redirect(redirect);
           }
+
+          log.error({ msg: "Authentication error", err });
+          validationError = addValidationError(validationError, {
+            instancePath: "/password",
+            message: "Username or password invalid",
+          });
+          return reply.renderTemplate(templateLogin, {
+            formData,
+            validationError,
+          });
         }
       ).call(fastify, request, reply);
     }
