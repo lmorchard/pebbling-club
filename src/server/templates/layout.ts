@@ -4,14 +4,12 @@ import { ITemplateProps } from "../utils/templates";
 
 export interface LayoutProps extends ITemplateProps {
   user?: Profile;
-  csrfToken?: string;
   flash?: Record<"info" | "warn" | "error", string[]>;
 }
 
 export const layout = ({
   content,
   user,
-  csrfToken,
   flash,
 }: { content: TemplateContent } & LayoutProps) => {
   return html`
@@ -42,7 +40,6 @@ export const layout = ({
                 <button type="submit">
                   Logout (${user.username} (${user.id}))
                 </button>
-                <input type="hidden" name="_csrf" value="${csrfToken}" />
               </form>
             `
           : html`<a href="/login">login</a>`}

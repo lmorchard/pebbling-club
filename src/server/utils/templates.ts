@@ -24,7 +24,6 @@ export const TemplateRenderer = fp(async (fastify, options) => {
 
     const layoutProps: LayoutProps = {
       user: request.user,
-      csrfToken: reply.generateCsrf(),
       flash: {
         info: reply.flash("info") as string[],
         warn: reply.flash("warn") as string[],

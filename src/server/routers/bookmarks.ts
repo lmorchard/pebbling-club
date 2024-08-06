@@ -16,7 +16,10 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
   fastify.addHook("preHandler", async (request, reply) => {
     if (request.isAuthenticated()) return;
 
-    const { routeOptions: { url: nextPath }, query } = request;
+    const {
+      routeOptions: { url: nextPath },
+      query,
+    } = request;
     const nextParams = new URLSearchParams();
     nextParams.set("nextPath", nextPath || "/");
     nextParams.set("nextParams", JSON.stringify(query));
@@ -31,21 +34,25 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
         type: "string",
       },
       title: {
-        type: "string",
+        type: "string", 
       },
       extended: {
         type: "string",
       },
       tags: {
         type: "string",
-      },  
-    }
+      },
+    },
   } as const;
 
   fastify.get<{
     Querystring: FromSchema<typeof newBookmarkQuerystringSchema>;
   }>("/new", {}, async (request, reply) => {
-    return reply.renderTemplate(templateBookmarksNew, { formData: request.query });
+    const csrfToken = await reply.generateCsrf();
+    return reply.renderTemplate(templateBookmarksNew, {
+      csrfToken,
+      formData: request.query,
+    });
   });
 
   const newBookmarkSchema = {
@@ -92,6 +99,7 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
       schema: {
         body: newBookmarkSchema,
       },
+      preValidation: fastify.csrfProtection,
     },
     async (request, reply) => {
       let validationError = request.validationError as FormValidationError;
@@ -106,7 +114,9 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
       }
 
       if (validationError) {
+        const csrfToken = await reply.generateCsrf();
         return reply.renderTemplate(templateBookmarksNew, {
+          csrfToken,
           formData,
           validationError,
         });

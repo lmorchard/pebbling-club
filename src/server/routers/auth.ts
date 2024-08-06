@@ -15,7 +15,8 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
   const { passwords } = services;
 
   fastify.get("/login", async (request, reply) => {
-    return reply.renderTemplate(templateLogin);
+    const csrfToken = await reply.generateCsrf();
+    return reply.renderTemplate(templateLogin, { csrfToken });
   });
 
   const loginFormSchema = {
@@ -64,14 +65,17 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
         body: loginFormSchema,
         querystring: loginNextQuerystringSchema,
       },
+      preValidation: fastify.csrfProtection,
     },
     async (request, reply) => {
       let { nextPath, nextParams } = request.query;
       let formData = request.body;
       let validationError = request.validationError as FormValidationError;
 
-      if (request.validationError) {
+      if (validationError) {
+        const csrfToken = await reply.generateCsrf();
         return reply.renderTemplate(templateLogin, {
+          csrfToken,
           formData,
           validationError,
         });
@@ -111,7 +115,9 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
             instancePath: "/password",
             message: "Username or password invalid",
           });
+          const csrfToken = await reply.generateCsrf();
           return reply.renderTemplate(templateLogin, {
+            csrfToken,
             formData,
             validationError,
           });
@@ -126,7 +132,8 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
   });
 
   fastify.get("/signup", async (request, reply) => {
-    return reply.renderTemplate(templateSignup);
+    const csrfToken = await reply.generateCsrf();
+    return reply.renderTemplate(templateSignup, { csrfToken });
   });
 
   const signupFormSchema = {
@@ -169,6 +176,7 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
       schema: {
         body: signupFormSchema,
       },
+      preValidation: fastify.csrfProtection,
     },
     async (request, reply) => {
       const {
@@ -195,7 +203,9 @@ const Router: FastifyPluginAsync<IRouterOptions> = async (fastify, options) => {
       }
 
       if (validationError) {
+        const csrfToken = await reply.generateCsrf();
         return reply.renderTemplate(templateSignup, {
+          csrfToken,
           formData: request.body,
           validationError,
         });
