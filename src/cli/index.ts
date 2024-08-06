@@ -1,8 +1,9 @@
-import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
+import { App } from "../app";
+
 import CliProfiles from "./profiles";
 import CliImport from "./import";
-import { App } from "../app";
+import CliBookmarks from "./bookmarks";
 
 export default class CliIndex extends CliAppModule {
   async init() {
@@ -10,18 +11,8 @@ export default class CliIndex extends CliAppModule {
 
     app.registerModule("profiles", CliProfiles);
     app.registerModule("import", CliImport);
+    app.registerModule("bookmarks", CliBookmarks);
 
-    return this;
-  }
-
-  async initCli(cli: Cli) {
-    const { program } = cli;
-    /*
-    program
-      .command("serve")
-      .description("start the web application server")
-      .action(this.commandServe.bind(this));
-    */
     return this;
   }
 }

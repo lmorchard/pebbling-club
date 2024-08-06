@@ -9,12 +9,24 @@ export class BookmarksService extends BaseService {
     this.repository = repository;
   }
 
-  async create(bookmark: BookmarkEditable): Promise<void> {
-    await this.repository.upsertBookmark(bookmark);
+  async get(bookmarkId: string): Promise<Bookmark | null> {
+    return await this.repository.fetchBookmark(bookmarkId);
   }
 
-  async createBatch(bookmarks: BookmarkEditable[]): Promise<void> {
-    await this.repository.upsertBookmarksBatch(bookmarks);
+  async create(bookmark: BookmarkEditable) {
+    return await this.repository.upsertBookmark(bookmark);
+  }
+
+  async createBatch(bookmarks: BookmarkEditable[]) {
+    return await this.repository.upsertBookmarksBatch(bookmarks);
+  }
+
+  async update(bookmarkId: string, bookmark: BookmarkEditable): Promise<Bookmark>{
+    return await this.repository.updateBookmark(bookmarkId, { ...bookmark });
+  }
+
+  async delete(bookmarkId: string): Promise<boolean> {
+    return await this.repository.deleteBookmark(bookmarkId);
   }
 
   async listForOwner(
@@ -42,8 +54,11 @@ export type Bookmark = {
 export type BookmarkEditable = Omit<Bookmark, "id">;
 
 export interface IBookmarksRepository {
-  upsertBookmark(bookmark: BookmarkEditable): Promise<void>;
-  upsertBookmarksBatch(bookmarks: BookmarkEditable[]): Promise<void>;
+  upsertBookmark(bookmark: BookmarkEditable): Promise<Bookmark>;
+  upsertBookmarksBatch(bookmarks: BookmarkEditable[]): Promise<Bookmark[]>;
+  updateBookmark(bookmarkId: string, bookmark: BookmarkEditable): Promise<Bookmark>;
+  fetchBookmark(bookmarkId: string): Promise<Bookmark | null>;
+  deleteBookmark(bookmarkId: string): Promise<boolean>;
   listBookmarksForOwner(
     ownerId: string,
     limit: number,

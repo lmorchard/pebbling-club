@@ -15,7 +15,6 @@ import {
 } from "../../services/profiles";
 import { CliAppModule } from "../../app/modules";
 import { IPasswordsRepository } from "../../services/passwords";
-import { ISessionsRepository } from "../../services/sessions";
 
 export const configSchema = {
   sqliteDatabaseName: {
@@ -43,7 +42,6 @@ export class SqliteRepository
   implements
     IBookmarksRepository,
     IPasswordsRepository,
-    ISessionsRepository,
     IProfilesRepository,
     IKnexConnectionOptions
 {
@@ -176,24 +174,11 @@ export class SqliteRepository
     return this.connection("passwords").where("id", id).del();
   }
 
-  async deleteSession(id: string) {
-    await this.connection("sessions").where({ id }).del();
-  }
-
-  async deleteExpiredSessions(maxAge: number) {
-    const minDate = Date.now() - maxAge;
-    await this.connection("sessions").where("modified", "<", minDate).del();
-  }
-
-  async getSession(id: string): Promise<undefined | { session: string }> {
-    return this.connection("sessions").select("session").where({ id }).first();
-  }
-
-  async putSession(id: string, session: string, modified: Date) {
-    await this.connection("sessions")
-      .insert({ id, session, modified: modified.getTime() })
-      .onConflict("id")
-      .merge();
+  async fetchBookmark(bookmarkId: string): Promise<Bookmark | null> {
+    return this.connection("bookmarks")
+      .select("*")
+      .where({ id: bookmarkId })
+      .first();
   }
 
   async _upsertOneBookmark(
@@ -203,31 +188,67 @@ export class SqliteRepository
   ) {
     const created = bookmark.created || now;
     const modified = bookmark.modified || now;
-    return await connection("bookmarks")
-      .insert({
-        ...bookmark,
-        id: uuid(),
-        created,
-        modified,
-      })
+    const toInsert = {
+      id: uuid(),
+      created,
+      modified,
+      ...bookmark,
+    };
+
+    const result = await connection("bookmarks")
+      .insert(toInsert)
       .onConflict(["ownerId", "href"])
       .merge();
+
+    // Hacky attempt at an optimistic update, will probably mismatch a
+    // few fields like created if they're not supplied in the original
+    const resultBookmark = {
+      ...bookmark,
+      id: toInsert.id,
+      created: new Date(toInsert.created),
+      modified: new Date(toInsert.modified),
+    };
+
+    return resultBookmark;
   }
 
   async upsertBookmark(bookmark: BookmarkEditable) {
     const now = Date.now();
-    await this._upsertOneBookmark(bookmark, now, this.connection);
+    const result = await this._upsertOneBookmark(
+      bookmark,
+      now,
+      this.connection
+    );
+    return result;
   }
 
   async upsertBookmarksBatch(bookmarks: BookmarkEditable[]) {
     const now = Date.now();
+    const results: Bookmark[] = [];
     await this.connection.transaction(async (trx) => {
       for (const bookmark of bookmarks) {
-        const created = bookmark.created || now;
-        const modified = bookmark.modified || now;
-        await this._upsertOneBookmark(bookmark, now, trx);
+        const result = await this._upsertOneBookmark(bookmark, now, trx);
+        results.push(result);
       }
     });
+    return results;
+  }
+
+  async updateBookmark(bookmarkId: string, bookmark: BookmarkEditable) {
+    const now = Date.now();
+    const result = await this.connection("bookmarks")
+      .where({ id: bookmarkId })
+      .update({
+        ...bookmark,
+        modified: now,
+      });
+    // Hacky attempt at an optimistic update
+    const resultBookmark = {
+      ...bookmark,
+      id: bookmarkId,
+      modified: new Date(now),
+    };
+    return resultBookmark;
   }
 
   async listBookmarksForOwner(
@@ -250,6 +271,13 @@ export class SqliteRepository
     if (!total) throw new Error("total query failed");
 
     return { total, items };
+  }
+
+  async deleteBookmark(bookmarkId: string) {
+    const result = await this.connection("bookmarks")
+      .where({ id: bookmarkId })
+      .del();
+    return result > 0;
   }
 
   async checkIfProfileExistsForUsername(username: string): Promise<boolean> {

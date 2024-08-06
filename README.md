@@ -13,12 +13,16 @@ a club for [pebbling][] enthusiasts on the web
 
 ## TODO
 
+- [ ] add email as requirement to passwords (e.g. for future recovery)
+- [ ] add profileId association to password table
+- [ ] drop sessions table since moving to fastify
+
 - code golfing
   - [x] switch from express to fastify?
   - [x] extract minimal interfaces out of concrete services?
 
 - basic UX
-  - [ ] view bookmarks by profile
+  - [x] view bookmarks by profile
   - [ ] create bookmark
   - [ ] fetch URL head / opengraph metadata to pre-fill form
   - [ ] bookmarklet-able posting form URL with params to pre-fill form

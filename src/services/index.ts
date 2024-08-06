@@ -4,13 +4,11 @@ import { BookmarksService } from "./bookmarks";
 import { ImportService } from "./imports";
 import { PasswordService } from "./passwords";
 import { ProfileService } from "./profiles";
-import { SessionsService } from "./sessions";
 
 export class Services extends AppModule {
   passwords: PasswordService;
   profiles: ProfileService;
   bookmarks: BookmarksService;
-  sessions: SessionsService;
   imports: ImportService;
 
   constructor(app: App) {
@@ -21,7 +19,6 @@ export class Services extends AppModule {
     this.passwords = new PasswordService(app, repository);
     this.profiles = new ProfileService(app, repository, this.passwords);
     this.bookmarks = new BookmarksService(app, repository);
-    this.sessions = new SessionsService(app, repository);
     this.imports = new ImportService(app, this.bookmarks);
   }
 }
