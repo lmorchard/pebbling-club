@@ -28,6 +28,7 @@ import { IApp, IWithServices } from "../app/types";
 import HomeRouter from "./routers/home";
 import AuthRouter from "./routers/auth";
 import ProfileRouter from "./routers/profile";
+import BookmarksRouter from "./routers/bookmarks";
 
 import { Profile } from "../services/profiles";
 import { TemplateRenderer } from "./utils/templates";
@@ -216,6 +217,7 @@ export default class Server extends CliAppModule {
       prefix: "/",
     });
     server.register(ProfileRouter, { server: this, prefix: "/u/" });
+    server.register(BookmarksRouter, { server: this, prefix: "/" });
     server.register(AuthRouter, { server: this, prefix: "/" });
     server.register(HomeRouter, { server: this, prefix: "/" });
   }
