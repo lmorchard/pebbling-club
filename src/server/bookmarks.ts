@@ -4,29 +4,13 @@ import templateBookmarksNew from "./templates/bookmarks/new";
 import { FromSchema } from "json-schema-to-ts";
 import { addValidationError, FormValidationError } from "./utils/forms";
 import validator from "validator";
+import { RequirePasswordAuth } from "./auth";
 
 export interface IBookmarksRouterOptions extends IBaseRouterOptions {}
 
-export const BookmarksRouter: FastifyPluginAsync<IBookmarksRouterOptions> = async (fastify, options) => {
-  const { server } = options;
-  const { log, app } = server;
-  const { services } = app;
-  const { bookmarks, profiles } = services;
-
-  fastify.addHook("preHandler", async (request, reply) => {
-    if (request.isAuthenticated()) return;
-
-    const {
-      routeOptions: { url: nextPath },
-      query,
-    } = request;
-    const nextParams = new URLSearchParams();
-    nextParams.set("nextPath", nextPath || "/");
-    nextParams.set("nextParams", JSON.stringify(query));
-
-    return reply.redirect(`/login?${nextParams.toString()}`);
-  });
-
+export const BookmarksRouter: FastifyPluginAsync<
+  IBookmarksRouterOptions
+> = async (fastify, options) => {
   const newBookmarkQuerystringSchema = {
     type: "object",
     properties: {
@@ -34,7 +18,7 @@ export const BookmarksRouter: FastifyPluginAsync<IBookmarksRouterOptions> = asyn
         type: "string",
       },
       title: {
-        type: "string", 
+        type: "string",
       },
       extended: {
         type: "string",
@@ -47,13 +31,23 @@ export const BookmarksRouter: FastifyPluginAsync<IBookmarksRouterOptions> = asyn
 
   fastify.get<{
     Querystring: FromSchema<typeof newBookmarkQuerystringSchema>;
-  }>("/new", {}, async (request, reply) => {
-    const csrfToken = await reply.generateCsrf();
-    return reply.renderTemplate(templateBookmarksNew, {
-      csrfToken,
-      formData: request.query,
-    });
-  });
+  }>(
+    "/new",
+    {
+      schema: {
+        querystring: newBookmarkQuerystringSchema,
+      },
+      attachValidation: true,
+      preHandler: RequirePasswordAuth,
+    },
+    async (request, reply) => {
+      const csrfToken = await reply.generateCsrf();
+      return reply.renderTemplate(templateBookmarksNew, {
+        csrfToken,
+        formData: request.query,
+      });
+    }
+  );
 
   const newBookmarkSchema = {
     type: "object",
@@ -80,7 +74,6 @@ export const BookmarksRouter: FastifyPluginAsync<IBookmarksRouterOptions> = asyn
       tags: {
         type: "string",
       },
-      /*
       visibility: {
         type: "string",
         enum: ["public", "private"],
@@ -88,18 +81,18 @@ export const BookmarksRouter: FastifyPluginAsync<IBookmarksRouterOptions> = asyn
           enum: "Invalid visibility",
         },
       },
-      */
     },
   } as const;
 
   fastify.post<{ Body: FromSchema<typeof newBookmarkSchema> }>(
     "/new",
     {
-      attachValidation: true,
       schema: {
         body: newBookmarkSchema,
       },
+      attachValidation: true,
       preValidation: fastify.csrfProtection,
+      preHandler: RequirePasswordAuth,
     },
     async (request, reply) => {
       let validationError = request.validationError as FormValidationError;

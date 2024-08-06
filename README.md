@@ -16,6 +16,7 @@ a club for [pebbling][] enthusiasts on the web
 - [ ] add email as requirement to passwords (e.g. for future recovery)
 - [ ] add profileId association to password table
 - [ ] drop sessions table since moving to fastify
+- [ ] switch from passport to [fastify-auth](https://github.com/fastify/fastify-auth)?
 
 - code golfing
   - [x] switch from express to fastify?

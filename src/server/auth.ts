@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { FromSchema } from "json-schema-to-ts";
 import FastifyPassport from "@fastify/passport";
 import { IBaseRouterOptions } from "./types";
@@ -36,6 +36,8 @@ export const PassportAuth = fp(
           const passwordId = await passwords.verify(username, password);
           if (!passwordId) return cb(null, false);
 
+          // TODO: associate the password with profileId rather than username
+
           // Then, get the profile associated with the username
           const profile = await profiles.getByUsername(username);
           if (!profile?.id) return cb(null, false);
@@ -59,6 +61,46 @@ export const PassportAuth = fp(
   }
 );
 
+export const RequirePasswordAuth = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+) => {
+  if (request.isAuthenticated()) return;
+
+  const {
+    routeOptions: { url: nextPath },
+    query,
+  } = request;
+
+  const nextParams = new URLSearchParams();
+  nextParams.set("nextPath", nextPath || "/");
+  nextParams.set("nextParams", JSON.stringify(query));
+
+  return reply.redirect(`/login?${nextParams.toString()}`);
+};
+
+export function buildPostLoginRedirect(query: {
+  nextPath?: string;
+  nextParams?: string;
+}) {
+  let { nextPath, nextParams } = query;
+  const redirectPath = nextPath && nextPath.startsWith("/") ? nextPath : "/";
+  let redirectParams = {};
+  if (nextParams) {
+    try {
+      redirectParams = JSON.parse(nextParams);
+    } catch (err) {
+      /* no-op */
+    }
+  }
+  let redirect = redirectPath;
+  const redirectQueryString = new URLSearchParams(redirectParams).toString();
+  if (redirectQueryString) {
+    redirect += `?${redirectQueryString}`;
+  }
+  return redirect;
+}
+
 export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
   fastify,
   options
@@ -69,8 +111,9 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
   const { passwords } = services;
 
   fastify.get("/login", async (request, reply) => {
-    const csrfToken = await reply.generateCsrf();
-    return reply.renderTemplate(templateLogin, { csrfToken });
+    return reply.renderTemplate(templateLogin, {
+      csrfToken: reply.generateCsrf(),
+    });
   });
 
   const loginFormSchema = {
@@ -114,69 +157,46 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
   }>(
     "/login",
     {
-      attachValidation: true,
       schema: {
         body: loginFormSchema,
         querystring: loginNextQuerystringSchema,
       },
+      attachValidation: true,
       preValidation: fastify.csrfProtection,
     },
     async (request, reply) => {
-      let { nextPath, nextParams } = request.query;
       let formData = request.body;
       let validationError = request.validationError as FormValidationError;
 
+      // HACK: seems an awkward way to call authenticate, but we want to do
+      // our own form validation first
+      if (!validationError) {
+        await FastifyPassport.authenticate(
+          "local",
+          async (request, _reply, err, user, _info) => {
+            if (user) {
+              await request.logIn(user);
+            } else {
+              log.error({ msg: "Authentication error", err });
+              validationError = addValidationError(validationError, {
+                instancePath: "/password",
+                message: "Username or password invalid",
+              });
+            }
+          }
+        ).call(fastify, request, reply);
+      }
+
       if (validationError) {
-        const csrfToken = await reply.generateCsrf();
         return reply.renderTemplate(templateLogin, {
-          csrfToken,
+          csrfToken: reply.generateCsrf(),
           formData,
           validationError,
         });
       }
 
-      // HACK: seems an awkward way to call authenticate, but we want to do
-      // our own form validation first
-      await FastifyPassport.authenticate(
-        "local",
-        async (request, reply, err, user, info) => {
-          if (user) {
-            await request.logIn(user);
-
-            const redirectPath =
-              nextPath && nextPath.startsWith("/") ? nextPath : "/";
-            let redirectParams = {};
-            if (nextParams) {
-              try {
-                redirectParams = JSON.parse(nextParams);
-              } catch (err) {
-                /* no-op */
-              }
-            }
-            let redirect = redirectPath;
-            const redirectQueryString = new URLSearchParams(
-              redirectParams
-            ).toString();
-            if (redirectQueryString) {
-              redirect += `?${redirectQueryString}`;
-            }
-
-            return reply.redirect(redirect);
-          }
-
-          log.error({ msg: "Authentication error", err });
-          validationError = addValidationError(validationError, {
-            instancePath: "/password",
-            message: "Username or password invalid",
-          });
-          const csrfToken = await reply.generateCsrf();
-          return reply.renderTemplate(templateLogin, {
-            csrfToken,
-            formData,
-            validationError,
-          });
-        }
-      ).call(fastify, request, reply);
+      let redirect = buildPostLoginRedirect(request.query);
+      return reply.redirect(redirect);
     }
   );
 
@@ -186,8 +206,9 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
   });
 
   fastify.get("/signup", async (request, reply) => {
-    const csrfToken = await reply.generateCsrf();
-    return reply.renderTemplate(templateSignup, { csrfToken });
+    return reply.renderTemplate(templateSignup, {
+      csrfToken: reply.generateCsrf(),
+    });
   });
 
   const signupFormSchema = {
@@ -226,10 +247,10 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
   }>(
     "/signup",
     {
-      attachValidation: true,
       schema: {
         body: signupFormSchema,
       },
+      attachValidation: true,
       preValidation: fastify.csrfProtection,
     },
     async (request, reply) => {
@@ -257,9 +278,8 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
       }
 
       if (validationError) {
-        const csrfToken = await reply.generateCsrf();
         return reply.renderTemplate(templateSignup, {
-          csrfToken,
+          csrfToken: reply.generateCsrf(),
           formData: request.body,
           validationError,
         });

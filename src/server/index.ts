@@ -13,8 +13,6 @@ import FastifySecureSession from "@fastify/secure-session";
 import FastifyCsrfProtection from "@fastify/csrf-protection";
 import AjvErrors from "ajv-errors";
 
-import { Strategy as LocalStrategy } from "passport-local";
-
 import { IApp, IWithServices } from "../app/types";
 
 import { HomeRouter } from "./home";

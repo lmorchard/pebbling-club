@@ -1,6 +1,4 @@
-import Server from ".";
 import Boom from "@hapi/boom";
-import { render } from "./utils/html";
 import templateProfileIndex from "./templates/profile/index";
 import { IBaseRouterOptions } from "./types";
 import { FastifyPluginAsync } from "fastify";
