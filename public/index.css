@@ -128,7 +128,7 @@ section.flash .message.info {
 .bookmark.h-entry .meta .actions {
   display: flex;
   flex-direction: row;
-  column-gap: 0.5em;
+  column-gap: 0.75em;
 }
 
 .bookmark.h-entry .meta .actions a {
@@ -141,4 +141,39 @@ section.flash .message.info {
 
 .bookmark.h-entry .meta .actions a:hover {
   background: rgba(0, 0, 0, 0.05);
+}
+
+.pagination {
+  display: flex;
+  flex-direction: row;
+  column-gap: 2em;
+  padding: 2em 0;
+}
+
+.pagination .directions {
+  display: flex;
+  flex-direction: row;
+  column-gap: 1em;  
+}
+
+.pagination .directions a {}
+.pagination .directions a.previous::before {
+  content: "\1F844";
+  padding-right: 0.25em;
+}
+
+.pagination .directions a.next::after {
+  content: "\1F846";
+  padding-left: 0.25em;
+}
+.pagination .limitChoices {
+  display: flex;
+  flex-direction: row;
+  column-gap: 0.75em;
+}
+.pagination .limitChoices span {}
+
+.pagination .limitChoices a:before  {
+  content: "\1F5D0";
+  padding-right: 0.125em;
 }

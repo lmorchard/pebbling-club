@@ -5,12 +5,13 @@ import { Bookmark } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
 
 import partialBookmarkList from "../partials/bookmarkList";
+import partialPaginator from "../partials/paginator";
 
 export interface Props extends LayoutProps {
   profile: Profile;
   bookmarks: Bookmark[];
-  pages: { offset: number }[];
   limit: number;
+  offset: number;
   total: number;
 }
 
@@ -19,7 +20,7 @@ export default ({
   bookmarks,
   total,
   limit,
-  pages,
+  offset,
   ...locals
 }: Props) => {
   return layout({
@@ -30,15 +31,9 @@ export default ({
       <section class="bookmarks">
         <h2>Bookmarks (${total})</h2>
 
+        ${partialPaginator({ total, limit, offset })}
         ${partialBookmarkList({ bookmarks })}
-
-        <div>
-          ${pages.map(
-            (page, idx) => html`
-              | <a href="?limit=${limit}&offset=${page.offset}">${idx + 1}</a> |
-            `
-          )}
-        </div>
+        ${partialPaginator({ total, limit, offset })}
 
       </section>
     `,

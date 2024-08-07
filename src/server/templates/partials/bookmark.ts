@@ -14,8 +14,13 @@ export default ({ bookmark }: Props) => {
         <a class="p-name u-url" href="${bookmark.href}">${bookmark.title}</a>
       </div>
       <div class="href"><a href="${bookmark.href}">${bookmark.href}</a></div>
-      ${bookmark.extended && html`<div class="p-summary">${bookmark.extended}</div>`}
+      ${bookmark.extended &&
+      html`<div class="p-summary">${bookmark.extended}</div>`}
       <div class="meta">
+        <div class="actions">
+          <a href="/bookmarks/${bookmark.id}/edit">Edit</a>
+          <a href="/bookmarks/${bookmark.id}/delete">Delete</a>
+        </div>
         <time
           class="dt-published"
           title="${created.toISOString()}"
@@ -23,15 +28,16 @@ export default ({ bookmark }: Props) => {
         >
           ${created.toISOString()}
         </time>
-        <div class="actions">
-          <a href="/bookmarks/${bookmark.id}/edit">Edit</a>
-          <a href="/bookmarks/${bookmark.id}/delete">Delete</a>
-        </div>
-        ${(bookmark.tags?.length) && html`
+        ${bookmark.tags?.length &&
+        html`
           <div class="tags">
-            ${bookmark.tags?.map((tag) => html`
-              <a href="/tags/${tag}" rel="category tag" class="p-category">${tag}</a>
-            `)}
+            ${bookmark.tags?.map(
+              (tag) => html`
+                <a href="/tags/${tag}" rel="category tag" class="p-category"
+                  >${tag}</a
+                >
+              `
+            )}
           </div>
         `}
       </div>

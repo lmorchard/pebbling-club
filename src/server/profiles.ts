@@ -25,16 +25,11 @@ export const ProfilesRouter: FastifyPluginAsync<
     const { total: bookmarksTotal, items: bookmarksItems } =
       await bookmarks.listForOwner(profile.id, limit, offset);
 
-    const pages = [];
-    for (let pageOffset = 0; pageOffset < bookmarksTotal; pageOffset += limit) {
-      pages.push({ offset: pageOffset });
-    }
-
     return reply.renderTemplate(templateProfileIndex, {
       profile,
       bookmarks: bookmarksItems,
-      pages,
       limit,
+      offset,
       total: bookmarksTotal,
     });
   });
