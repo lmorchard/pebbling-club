@@ -1,6 +1,34 @@
 import { IApp } from "../app/types";
 import { BaseService } from "./base";
 
+export type Bookmark = {
+  id: string;
+  ownerId: string;
+  href: string;
+  title: string;
+  extended?: string;
+  tags?: string[];
+  visibility?: string;
+  meta?: object;
+  created?: Date;
+  modified?: Date;
+};
+
+export type BookmarkEditable = Omit<Bookmark, "id">;
+
+export interface IBookmarksRepository {
+  upsertBookmark(bookmark: BookmarkEditable): Promise<Bookmark>;
+  upsertBookmarksBatch(bookmarks: BookmarkEditable[]): Promise<Bookmark[]>;
+  updateBookmark(bookmarkId: string, bookmark: BookmarkEditable): Promise<Bookmark>;
+  deleteBookmark(bookmarkId: string): Promise<boolean>;
+  fetchBookmark(bookmarkId: string): Promise<Bookmark | null>;
+  listBookmarksForOwner(
+    ownerId: string,
+    limit: number,
+    offset: number
+  ): Promise<{ total: number; items: Bookmark[] }>;
+}
+
 export class BookmarksService extends BaseService {
   repository: IBookmarksRepository;
 
@@ -35,6 +63,10 @@ export class BookmarksService extends BaseService {
     offset: number
   ): Promise<{ total: number; items: Bookmark[] }> {
     return await this.repository.listBookmarksForOwner(ownerId, limit, offset);
+  }
+
+  parseTagsField(tags: string = ""): string[] {
+    return tags.split(/ /);
   }
 }
 
@@ -90,31 +122,3 @@ export const NewBookmarkSchema = {
     },
   },
 } as const;
-
-export type Bookmark = {
-  id: string;
-  ownerId: string;
-  href: string;
-  title?: string;
-  extended?: string;
-  tags?: string;
-  visibility?: string;
-  meta?: string;
-  created?: Date;
-  modified?: Date;
-};
-
-export type BookmarkEditable = Omit<Bookmark, "id">;
-
-export interface IBookmarksRepository {
-  upsertBookmark(bookmark: BookmarkEditable): Promise<Bookmark>;
-  upsertBookmarksBatch(bookmarks: BookmarkEditable[]): Promise<Bookmark[]>;
-  updateBookmark(bookmarkId: string, bookmark: BookmarkEditable): Promise<Bookmark>;
-  fetchBookmark(bookmarkId: string): Promise<Bookmark | null>;
-  deleteBookmark(bookmarkId: string): Promise<boolean>;
-  listBookmarksForOwner(
-    ownerId: string,
-    limit: number,
-    offset: number
-  ): Promise<{ total: number; items: Bookmark[] }>;
-}

@@ -84,11 +84,11 @@ export const BookmarksRouter: FastifyPluginAsync<
       }
 
       const newBookmark: BookmarkEditable = {
-        href: formData.href!,
-        title: formData.title,
-        extended: formData.extended,
-        tags: formData.tags,
         ownerId: request.user!.id!,
+        href: formData.href!,
+        title: formData.title!,
+        extended: formData.extended,
+        tags: bookmarks.parseTagsField(formData.tags),
       };
       const result = await bookmarks.create(newBookmark);
       reply.redirect(`/bookmarks/${result.id}`);
@@ -104,7 +104,6 @@ export const BookmarksRouter: FastifyPluginAsync<
         params: BookmarkUrlParamsSchema,
       },
       attachValidation: true,
-      preValidation: server.csrfProtection,
       preHandler: RequirePasswordAuth,
     },
     async (request, reply) => {
