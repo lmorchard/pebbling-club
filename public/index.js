@@ -1,3 +1,5 @@
+import "./components/details-closer.js";
+
 async function init() {
   console.log("READY.");
 }

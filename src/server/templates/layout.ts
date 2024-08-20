@@ -24,31 +24,43 @@ export const layout = ({
         <script type="module" src="/index.js"></script>
       </head>
       <body>
-        ${Object.entries(flash || {}).forEach(
-          ([type, messages]) =>
-            messages?.length &&
-            html`
-              <section class="flash ${type}">
-                ${messages.map(
-                  (message) =>
-                    html`<div class="message ${type}">${message}</div>`
-                )}
-              </section>
-            `
-        )}
-        ${user
-          ? html`
-              <h1>
-                Welcome <a href="/u/${user.username}">${user.username}</a>
-              </h1>
-              <form action="/logout" method="post">
-                <button type="submit">
-                  Logout (${user.username} (${user.id}))
-                </button>
-              </form>
-            `
-          : html`<a href="/login">login</a>`}
-        ${content}
+        <details-closer>
+          <header class="site">
+            <section class="masthead">
+              <h1><a href="/">Pebbling Club 🐧🪨</a></h1>
+            </section>
+            <nav>
+              ${user
+                ? html`
+                    <details class="autoclose">
+                      <summary>
+                        <span>${user.username}</span>
+                      </summary>
+                      <div>
+                        <a href="/u/${user.username}">Profile</a>
+                        <a href="/settings">Settings</a>
+                        <form action="/logout" method="post">
+                          <button type="submit">Logout</button>
+                        </form>
+                      </div>
+                    </details>
+                  `
+                : html`
+                    <details class="autoclose">
+                      <summary>Welcome!</summary>
+                      <div>
+                        <a href="/signup">Signup</a>
+                        <a href="/login">Login</a>
+                      </div>
+                    </details>
+                  `}
+            </nav>
+          </header>
+
+          ${content}
+
+          <footer></footer>
+        </details-closer>
       </body>
     </html>
   `;
