@@ -200,7 +200,7 @@ section.flash .message.info {
 
 .bookmark.h-entry .p-category::before {
   /* content: "\1FBCA"; */
-  content: "\1F4D1";
+  content: "\1F3F7";
   padding-right: 0.25em;
 }
 
@@ -249,23 +249,28 @@ section.flash .message.info {
 }
 
 .pagination .directions a {}
+
 .pagination .directions a.previous::before {
-  content: "\1F844";
+  content: "\2190";
   padding-right: 0.25em;
 }
 
 .pagination .directions a.next::after {
-  content: "\1F846";
+  content: "\2192";
   padding-left: 0.25em;
 }
+
 .pagination .limitChoices {
   display: flex;
   flex-direction: row;
   column-gap: 0.75em;
 }
+
 .pagination .limitChoices span {}
 
 .pagination .limitChoices a:before  {
-  content: "\1F5D0";
+  content: "\1F5CA";
+  content: "\1F4D1";
+
   padding-right: 0.125em;
 }

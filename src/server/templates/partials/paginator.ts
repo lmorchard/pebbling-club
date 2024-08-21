@@ -20,7 +20,7 @@ export default ({
   if (offset > 0) {
     const searchParams = new URLSearchParams({
       limit: limit.toString(),
-      offset: (offset - limit).toString(),
+      offset: (Math.max(0, offset - limit)).toString(),
     });
     prevUrl = `${baseUrl}?${searchParams.toString()}`;
   }
@@ -29,7 +29,7 @@ export default ({
   if (offset + limit < total) {
     const searchParams = new URLSearchParams({
       limit: limit.toString(),
-      offset: (offset + limit).toString(),
+      offset: (Math.min(total - limit, offset + limit)).toString(),
     });
     nextUrl = `${baseUrl}?${searchParams.toString()}`;
   }
