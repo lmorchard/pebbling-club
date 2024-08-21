@@ -12,6 +12,7 @@ import { RequirePasswordAuth } from "./auth";
 import templateBookmarksEdit from "./templates/bookmarks/edit";
 import templateBookmarksNew from "./templates/bookmarks/new";
 import templateBookmarksView from "./templates/bookmarks/view";
+import templateBookmarksDelete from "./templates/bookmarks/delete";
 import { IBaseRouterOptions } from "./types";
 import { addValidationError, FormValidationError } from "./utils/forms";
 
@@ -136,8 +137,8 @@ export const BookmarksRouter: FastifyPluginAsync<
       const bookmark = await bookmarks.get(id);
       if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
 
+      // TODO: complete editing
       return reply.renderTemplate(templateBookmarksEdit, {
-        csrfToken: reply.generateCsrf(),
         formData: bookmark,
       });
     }
@@ -154,4 +155,48 @@ export const BookmarksRouter: FastifyPluginAsync<
       bookmark,
     });
   });
+
+  server.get<{
+    Params: FromSchema<typeof BookmarkUrlParamsSchema>;
+  }>(
+    "/bookmarks/:id/delete",
+    {
+      attachValidation: true,
+      preHandler: RequirePasswordAuth,
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const bookmark = await bookmarks.get(id);
+      if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
+
+      return reply.renderTemplate(templateBookmarksDelete, {
+        csrfToken: reply.generateCsrf(),
+        bookmark,
+      });
+    }
+  );
+
+  server.delete<{
+    Params: FromSchema<typeof BookmarkUrlParamsSchema>;
+  }>(
+    "/bookmarks/:id/delete",
+    {
+      attachValidation: true,
+      preValidation: server.csrfProtection,
+      preHandler: RequirePasswordAuth,
+    },
+    async (request, reply) => {
+      const user = request.user!;
+      const { id } = request.params;
+      const bookmark = await bookmarks.get(id);
+      if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
+
+      const result = await bookmarks.delete(id);
+      if (result) {
+        return reply.redirect(`/u/${user.username}`);
+      }
+
+      return reply.code(200).send("DELETE FAILED");
+    }
+  );
 };

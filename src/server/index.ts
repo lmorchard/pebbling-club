@@ -11,6 +11,8 @@ import FastifyCompress from "@fastify/compress";
 import FastifyFormbody from "@fastify/formbody";
 import FastifySecureSession from "@fastify/secure-session";
 import FastifyCsrfProtection from "@fastify/csrf-protection";
+import FastifyMethodOverride from "fastify-method-override";
+
 import AjvErrors from "ajv-errors";
 
 import { IApp, IWithServices } from "../app/types";
@@ -138,6 +140,8 @@ export default class Server extends CliAppModule {
     fastify.register(FastifyCompress);
     fastify.register(FastifyAccepts);
     fastify.register(FastifyFormbody);
+    fastify.register(FastifyMethodOverride);
+
     await this.setupSessions(fastify);
     fastify.register(FastifyCsrfProtection, {
       sessionPlugin: "@fastify/secure-session",

@@ -3,9 +3,10 @@ import { html } from "../../utils/html";
 
 export interface Props {
   bookmark: Bookmark;
+  readOnly?: boolean;
 }
 
-export default ({ bookmark }: Props) => {
+export default ({ bookmark, readOnly = false }: Props) => {
   const created = new Date(bookmark.created!);
   const modified = new Date(bookmark.modified!);
   return html`
@@ -17,10 +18,12 @@ export default ({ bookmark }: Props) => {
       ${bookmark.extended &&
       html`<div class="p-summary">${bookmark.extended}</div>`}
       <div class="meta">
-        <div class="actions">
-          <a href="/bookmarks/${bookmark.id}/edit">Edit</a>
-          <a href="/bookmarks/${bookmark.id}/delete">Delete</a>
-        </div>
+        ${!readOnly && html`
+          <div class="actions">
+            <a href="/bookmarks/${bookmark.id}/edit">Edit</a>
+            <a href="/bookmarks/${bookmark.id}/delete">Delete</a>
+          </div>
+        `}
         <time
           class="dt-published"
           title="${created.toISOString()}"

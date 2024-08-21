@@ -7,12 +7,17 @@ export interface Props extends LayoutProps {
   bookmark: Bookmark;
 }
 
-export default ({ bookmark, ...locals }: Props) => {
+export default ({ bookmark, csrfToken, ...locals }: Props) => {
   return layout({
     ...locals,
     content: html`
       <section>
-        ${partialBookmark({ bookmark })}
+        ${partialBookmark({ bookmark, readOnly: true })}
+        <form action="" method="POST">
+          <input type="hidden" name="_method" value="DELETE" />
+          <input type="hidden" name="_csrf" value="${csrfToken}" />
+          <input type="submit" value="Delete bookmark" />
+        </form>
       </section>
     `,
   });

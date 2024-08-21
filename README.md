@@ -24,13 +24,17 @@ a club for [pebbling][] enthusiasts on the web
 
 - basic UX
   - [x] view bookmarks by profile
-  - [ ] create bookmark
+  - [x] create bookmark
   - [ ] fetch URL head / opengraph metadata to pre-fill form
-  - [ ] bookmarklet-able posting form URL with params to pre-fill form
+  - [x] bookmarklet-able posting form URL with params to pre-fill form
   - [ ] edit bookmark
-  - [ ] delete bookmark
+  - [x] delete bookmark
   - [ ] view bookmarks by tag
   - [ ] view bookmarks by tag intersection
+
+- access control
+  - [ ] show bookmarks per user
+  - [ ] hide private bookmarks except for logged in user
 
 - import / export
   - [ ] web UI for pinboard import
