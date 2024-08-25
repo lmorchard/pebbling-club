@@ -1,12 +1,14 @@
 import { Bookmark } from "../../../services/bookmarks";
+import { Profile } from "../../../services/profiles";
 import { html } from "../../utils/html";
 
 export interface Props {
   bookmark: Bookmark;
   readOnly?: boolean;
+  profile?: Profile;
 }
 
-export default ({ bookmark, readOnly = false }: Props) => {
+export default ({ bookmark, readOnly = false, profile }: Props) => {
   const created = new Date(bookmark.created!);
   const modified = new Date(bookmark.modified!);
   return html`
@@ -18,7 +20,8 @@ export default ({ bookmark, readOnly = false }: Props) => {
       ${bookmark.extended &&
       html`<div class="p-summary">${bookmark.extended}</div>`}
       <div class="meta">
-        ${!readOnly && html`
+        ${!readOnly &&
+        html`
           <div class="actions">
             <a href="/bookmarks/${bookmark.id}/edit">Edit</a>
             <a href="/bookmarks/${bookmark.id}/delete">Delete</a>
@@ -34,12 +37,21 @@ export default ({ bookmark, readOnly = false }: Props) => {
         ${bookmark.tags?.length &&
         html`
           <div class="tags">
-            ${bookmark.tags?.map(
-              (tag) => html`
-                <a href="/tags/${tag}" rel="category tag" class="p-category"
-                  >${tag}</a
-                >
-              `
+            ${bookmark.tags?.map((tag) =>
+              profile
+                ? html`
+                    <a
+                      href="/u/${profile.username}/t/${tag}"
+                      rel="category tag"
+                      class="p-category"
+                      >${tag}</a
+                    >
+                  `
+                : html`
+                    <a href="/t/${tag}" rel="category tag" class="p-category"
+                      >${tag}</a
+                    >
+                  `
             )}
           </div>
         `}

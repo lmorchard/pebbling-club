@@ -4,6 +4,10 @@ a club for [pebbling][] enthusiasts on the web
 
 [pebbling]: https://en.wikipedia.org/wiki/Pebbling
 
+## overall notions
+
+- Sift, seek, save, share... with friends? overall pitch?
+
 ## Misc dev notions
 
 - separate concerns of data and logic into repository and service layers
@@ -18,6 +22,13 @@ a club for [pebbling][] enthusiasts on the web
 - [ ] drop sessions table since moving to fastify
 - [ ] switch from passport to [fastify-auth](https://github.com/fastify/fastify-auth)?
 
+- random features
+  - [ ] podcast rss feeds of bookmarked MP3s
+  - [ ] easy webring building from link collections
+  - [ ] live bookmarks - bookmark a site with an RSS feed, see updates, lighterweight than full RSS sifting UI
+  - [ ] keyword searches - bookmark a URL with a keyword and a %s in query string to launch a search redirect
+  - [ ] daily / weekly / monhtly newsletters?
+  
 - code golfing
   - [x] switch from express to fastify?
   - [x] extract minimal interfaces out of concrete services?

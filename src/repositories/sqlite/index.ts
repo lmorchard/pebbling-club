@@ -4,7 +4,8 @@ import { v4 as uuid } from "uuid";
 import { IKnexConnectionOptions } from "../knex";
 import {
   Bookmark,
-  BookmarkEditable,
+  BookmarkUpdatable,
+  BookmarkCreatable,
   IBookmarksRepository,
 } from "../../services/bookmarks";
 import {
@@ -50,6 +51,10 @@ type BookmarksRow = {
   modified: number;
 };
 
+type TagItem = {
+  name: string;
+};
+
 export class SqliteRepository
   extends CliAppModule
   implements
@@ -75,6 +80,7 @@ export class SqliteRepository
         client: "sqlite3",
         useNullAsDefault: true,
         connection: this.knexConnectionOptions(),
+        debug: config.get("logLevel") === "trace",
         pool: {
           min: 1,
           max: config.get("sqliteDatabaseMaxConnections"),
@@ -188,17 +194,18 @@ export class SqliteRepository
   }
 
   async _upsertOneBookmark(
-    bookmark: BookmarkEditable,
+    bookmark: BookmarkCreatable,
     now: number,
     connection: Knex.Knex
   ) {
     const created = bookmark.created || now;
     const modified = bookmark.modified || now;
     const toInsert = {
+      ...bookmark,
+      tags: this.serializeTagsColumn(bookmark.tags),
       id: uuid(),
       created,
       modified,
-      ...bookmark,
     };
 
     const result = await connection("bookmarks")
@@ -218,7 +225,7 @@ export class SqliteRepository
     return resultBookmark;
   }
 
-  async upsertBookmark(bookmark: BookmarkEditable) {
+  async upsertBookmark(bookmark: BookmarkCreatable) {
     const now = Date.now();
     const result = await this._upsertOneBookmark(
       bookmark,
@@ -228,7 +235,7 @@ export class SqliteRepository
     return result;
   }
 
-  async upsertBookmarksBatch(bookmarks: BookmarkEditable[]) {
+  async upsertBookmarksBatch(bookmarks: BookmarkCreatable[]) {
     const now = Date.now();
     const results: Bookmark[] = [];
     await this.connection.transaction(async (trx) => {
@@ -240,17 +247,25 @@ export class SqliteRepository
     return results;
   }
 
-  async updateBookmark(bookmarkId: string, bookmark: BookmarkEditable) {
+  async updateBookmark(bookmarkId: string, updates: BookmarkUpdatable) {
     const now = Date.now();
+
+    const original = await this.fetchBookmark(bookmarkId);
+    if (!original) throw new Error("item not found");
+
     const result = await this.connection("bookmarks")
       .where({ id: bookmarkId })
       .update({
-        ...bookmark,
+        ...updates,
         modified: now,
+        tags: this.serializeTagsColumn(updates.tags),
       });
+    if (!result) throw new Error("item update failed");
+
     // Hacky attempt at an optimistic update
     const resultBookmark = {
-      ...bookmark,
+      ...original,
+      ...updates,
       id: bookmarkId,
       modified: new Date(now),
     };
@@ -264,20 +279,41 @@ export class SqliteRepository
     return result > 0;
   }
 
-  _mapRowToBookmark(row: BookmarksRow): Bookmark {
-    const { tags = "", created, modified, meta: metaRaw = "{}", ...rest } = row;
+  serializeTagsColumn(tags: Bookmark["tags"] = []): string {
+    const tagItems: TagItem[] = tags.map((tag) => ({
+      name: tag,
+    }));
+    return JSON.stringify(tagItems);
+  }
 
-    let meta = {};
+  deserializeTagsColumn(tags: string = ""): Bookmark["tags"] {
     try {
-      meta = JSON.parse(metaRaw);
+      const tagsItems: TagItem[] = JSON.parse(tags);
+      return tagsItems.map(({ name }) => name);
     } catch (err) {
       /* no-op */
     }
+    return [];
+  }
 
+  serializeMetaColumn(meta = {}) {
+    return JSON.stringify(meta);
+  }
+
+  deserializeMetaColumn(metaRaw: string = "{}") {
+    try {
+      return JSON.parse(metaRaw);
+    } catch (err) {
+      /* no-op */
+    }
+  }
+
+  _mapRowToBookmark(row: BookmarksRow): Bookmark {
+    const { tags = "", created, modified, meta = "{}", ...rest } = row;
     return {
       ...rest,
-      meta,
-      tags: tags.split(/ /g).filter(t => !!t),
+      meta: this.deserializeMetaColumn(meta),
+      tags: this.deserializeTagsColumn(tags),
       created: new Date(created),
       modified: new Date(modified),
     };
@@ -288,14 +324,13 @@ export class SqliteRepository
       tags = [],
       created = new Date(),
       modified = new Date(),
-      meta: metaObject = {},
+      meta = {},
       ...rest
     } = bookmark;
-
     return {
       ...rest,
-      meta: JSON.stringify(metaObject),
-      tags: tags?.join(" "),
+      meta: this.serializeMetaColumn(meta),
+      tags: this.serializeTagsColumn(tags),
       created: created.getTime(),
       modified: modified.getTime(),
     };
@@ -310,13 +345,11 @@ export class SqliteRepository
     );
   }
 
-  async listBookmarksForOwner(
-    ownerId: string,
+  async _paginateBookmarksQuery(
+    baseQuery: Knex.Knex.QueryBuilder,
     limit: number,
     offset: number
-  ): Promise<{ total: number; items: Bookmark[] }> {
-    const baseQuery = this.connection("bookmarks").where({ ownerId });
-
+  ) {
     const [countResult, itemRows] = await Promise.all([
       baseQuery.clone().count<Record<string, number>>({ count: "*" }).first(),
       await baseQuery
@@ -326,12 +359,52 @@ export class SqliteRepository
         .offset(offset),
     ]);
 
-    const total = countResult?.count;
-    if (!total) throw new Error("total query failed");
+    if (!countResult) throw new Error("total query failed");
 
-    const items = itemRows.map((item) => this._mapRowToBookmark(item));
+    const total = countResult?.count;
+    const items = itemRows.map((item: BookmarksRow) =>
+      this._mapRowToBookmark(item)
+    );
 
     return { total, items };
+  }
+
+  async listBookmarksForOwner(
+    ownerId: string,
+    limit: number,
+    offset: number
+  ): Promise<{ total: number; items: Bookmark[] }> {
+    const query = this.connection("bookmarks").where({ ownerId });
+    return this._paginateBookmarksQuery(query, limit, offset);
+  }
+
+  async listBookmarksForOwnerByTags(
+    ownerId: string,
+    tags: string[],
+    limit: number,
+    offset: number
+  ): Promise<{ total: number; items: Bookmark[] }> {
+    const query = this.connection("bookmarks").where({ ownerId });
+    for (const name of tags) {
+      query.whereIn("id", function () {
+        this.select("bookmarksId").from("tags").where({ name });
+      });
+    }
+    return this._paginateBookmarksQuery(query, limit, offset);
+  }
+
+  async listBookmarksByTags(
+    tags: string[],
+    limit: number,
+    offset: number
+  ): Promise<{ total: number; items: Bookmark[] }> {
+    const query = this.connection("bookmarks");
+    for (const name of tags) {
+      query.whereIn("id", function () {
+        this.select("bookmarksId").from("tags").where({ name });
+      });
+    }
+    return this._paginateBookmarksQuery(query, limit, offset);
   }
 
   async checkIfProfileExistsForUsername(username: string): Promise<boolean> {

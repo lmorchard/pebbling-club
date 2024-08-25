@@ -32,9 +32,8 @@ export default ({
         <h2>Bookmarks (${total})</h2>
 
         ${partialPaginator({ total, limit, offset })}
-        ${partialBookmarkList({ bookmarks })}
+        ${partialBookmarkList({ bookmarks, profile })}
         ${partialPaginator({ total, limit, offset })}
-
       </section>
     `,
   });

@@ -1,5 +1,5 @@
 import { BaseService } from "./base";
-import { BookmarkEditable, BookmarksService } from "./bookmarks";
+import { BookmarkCreatable, BookmarkUpdatable, BookmarksService } from "./bookmarks";
 import { IApp } from "../app/types";
 
 export class ImportService extends BaseService {
@@ -29,7 +29,7 @@ export class ImportService extends BaseService {
         end: startIdx + batchSize,
         percent: Math.floor((startIdx / recordCount) * 10000) / 100,
       });
-      const batch: BookmarkEditable[] = importRecords
+      const batch: BookmarkCreatable[] = importRecords
         .slice(startIdx, startIdx + batchSize)
         .map(({ href, description, extended, time, tags, shared }) => {
           const date = new Date(time);
@@ -38,7 +38,7 @@ export class ImportService extends BaseService {
             href,
             title: description,
             extended: extended,
-            tags,
+            tags: tags.split(/ /g),
             visibility: shared == "yes" ? "public" : "private",
             created: date,
             modified: now,

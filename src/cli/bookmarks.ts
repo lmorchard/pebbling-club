@@ -41,6 +41,7 @@ export default class CliBookmarks extends CliAppModule {
     bookmarksProgram
       .command("list <username>")
       .description("list bookmarks by user")
+      .option("-t, --tags <tags>", "constrain list by tags")
       .option("-l, --limit <limit>", "limit bookmarks listed")
       .option("-o --offset <offset>", "offset in bookmark listed")
       .action(this.commandList.bind(this));
@@ -60,7 +61,7 @@ export default class CliBookmarks extends CliAppModule {
 
   async commandList(
     username: string,
-    options: { limit: number; offset: number }
+    options: { tags: string; limit: number; offset: number }
   ) {
     const { log } = this;
     const { bookmarks, profiles } = this.app.services;
@@ -73,11 +74,19 @@ export default class CliBookmarks extends CliAppModule {
 
     const { id: ownerId } = profile;
     const { limit = 10, offset = 0 } = options;
-    const { total, items } = await bookmarks.listForOwner(
-      ownerId,
-      limit,
-      offset
-    );
+
+    let total, items;
+    if (options.tags) {
+      const tags = options.tags.split(/ +/g);
+      ({ total, items } = await bookmarks.listForOwnerByTags(
+        ownerId,
+        tags,
+        limit,
+        offset
+      ));
+    } else {
+      ({ total, items } = await bookmarks.listForOwner(ownerId, limit, offset));
+    }
 
     log.info({ msg: "Total bookmarks", total });
     items.forEach((bookmark) => {
@@ -118,7 +127,8 @@ export default class CliBookmarks extends CliAppModule {
     }
 
     const { id: ownerId } = profile;
-    const bookmark = { ...options, ownerId, href };
+    const tags = (options.tags || "").split(/ /g);
+    const bookmark = { ...options, ownerId, href, tags };
     const result = await bookmarks.create(bookmark);
     log.info({ msg: "Bookmark created", result });
   }

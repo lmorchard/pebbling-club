@@ -1,15 +1,17 @@
 import { Bookmark } from "../../../services/bookmarks";
+import { Profile } from "../../../services/profiles";
 import { html } from "../../utils/html";
 import partialBookmark from "../partials/bookmark";
 
 export interface Props {
   bookmarks: Bookmark[];
+  profile?: Profile;
 }
 
-export default ({ bookmarks }: Props) => html`
+export default ({ bookmarks, profile }: Props) => html`
   <ul class="bookmarks h-feed">
     ${bookmarks.map(
-      (bookmark) => html`<li>${partialBookmark({ bookmark })}</li>`
+      (bookmark) => html`<li>${partialBookmark({ bookmark, profile })}</li>`
     )}
   </ul>
 `;

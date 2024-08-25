@@ -33,4 +33,35 @@ export const ProfilesRouter: FastifyPluginAsync<
       total: bookmarksTotal,
     });
   });
+
+  fastify.get<{
+    Params: { username: string; tags: string };
+    Querystring: { limit?: string; offset?: string };
+  }>("/:username/t/:tags", async (request, reply) => {
+    const { app } = options.server;
+    const { profiles, bookmarks } = app.services;
+
+    const { username, tags } = request.params;
+    const limit = parseInt((request.query.limit as string) || "50", 10);
+    const offset = parseInt((request.query.offset as string) || "0", 10);
+
+    const profile = await profiles.getByUsername(username);
+    if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
+
+    const { total: bookmarksTotal, items: bookmarksItems } =
+      await bookmarks.listForOwnerByTags(
+        profile.id,
+        tags.split(/[\+ ]+/g),
+        limit,
+        offset
+      );
+
+    return reply.renderTemplate(templateProfileIndex, {
+      profile,
+      bookmarks: bookmarksItems,
+      limit,
+      offset,
+      total: bookmarksTotal,
+    });
+  });
 };

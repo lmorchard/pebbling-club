@@ -3,10 +3,9 @@ import { FastifyPluginAsync } from "fastify";
 import { FromSchema } from "json-schema-to-ts";
 import validator from "validator";
 import {
-  BookmarkEditable,
-  BookmarksService,
+  BookmarkCreatable, BookmarksService,
   NewBookmarkQuerystringSchema,
-  NewBookmarkSchema,
+  NewBookmarkSchema
 } from "../services/bookmarks";
 import { RequirePasswordAuth } from "./auth";
 import templateBookmarksEdit from "./templates/bookmarks/edit";
@@ -84,12 +83,12 @@ export const BookmarksRouter: FastifyPluginAsync<
         });
       }
 
-      const newBookmark: BookmarkEditable = {
+      const newBookmark: BookmarkCreatable = {
         ownerId: request.user!.id!,
         href: formData.href!,
         title: formData.title!,
         extended: formData.extended,
-        tags: bookmarks.parseTagsField(formData.tags),
+        tags: bookmarks.formFieldToTags(formData.tags),
       };
       const result = await bookmarks.create(newBookmark);
       reply.redirect(`/bookmarks/${result.id}`);
@@ -109,12 +108,18 @@ export const BookmarksRouter: FastifyPluginAsync<
     },
     async (request, reply) => {
       const { id } = request.params;
+
       const bookmark = await bookmarks.get(id);
       if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
 
+      const formData = {
+        ...bookmark,
+        tags: bookmarks.tagsToFormField(bookmark.tags),
+      };
+
       return reply.renderTemplate(templateBookmarksEdit, {
         csrfToken: reply.generateCsrf(),
-        formData: bookmark,
+        formData,
       });
     }
   );
@@ -134,13 +139,22 @@ export const BookmarksRouter: FastifyPluginAsync<
     },
     async (request, reply) => {
       const { id } = request.params;
+
       const bookmark = await bookmarks.get(id);
       if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
 
-      // TODO: complete editing
-      return reply.renderTemplate(templateBookmarksEdit, {
-        formData: bookmark,
-      });
+      const { href, title, extended, visibility } = request.body;
+      const tags = bookmarks.formFieldToTags(request.body.tags);
+
+      const updateData = {
+        href,
+        title,
+        extended,
+        tags,
+      };
+
+      const result = await bookmarks.update(bookmark.id, updateData);
+      reply.redirect(`/bookmarks/${result.id}`);
     }
   );
 

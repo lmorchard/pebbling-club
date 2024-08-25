@@ -137,7 +137,6 @@ section.flash .message.info {
 }
 
 .bookmarks.h-feed {
-  width: 75vw;
   list-style-type: none;
   display: flex;
   flex-direction: column;

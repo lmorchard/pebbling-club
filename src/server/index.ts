@@ -11,6 +11,7 @@ import FastifyCompress from "@fastify/compress";
 import FastifyFormbody from "@fastify/formbody";
 import FastifySecureSession from "@fastify/secure-session";
 import FastifyCsrfProtection from "@fastify/csrf-protection";
+// @ts-ignore missing types
 import FastifyMethodOverride from "fastify-method-override";
 
 import AjvErrors from "ajv-errors";
