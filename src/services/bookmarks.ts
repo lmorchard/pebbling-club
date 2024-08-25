@@ -15,8 +15,8 @@ export type Bookmark = {
 };
 
 export type TagCount = {
-  name: string,
-  count: number,
+  name: string;
+  count: number;
 };
 
 export interface IBookmarksRepository {
@@ -59,7 +59,7 @@ export class BookmarksService extends BaseService {
     this.repository = repository;
   }
 
-  async get(bookmarkId: string): Promise<Bookmark | null> {
+  async get(bookmarkId: string) {
     return await this.repository.fetchBookmark(bookmarkId);
   }
 
@@ -71,22 +71,15 @@ export class BookmarksService extends BaseService {
     return await this.repository.upsertBookmarksBatch(bookmarks);
   }
 
-  async update(
-    bookmarkId: string,
-    bookmark: BookmarkUpdatable
-  ): Promise<Bookmark> {
+  async update(bookmarkId: string, bookmark: BookmarkUpdatable) {
     return await this.repository.updateBookmark(bookmarkId, { ...bookmark });
   }
 
-  async delete(bookmarkId: string): Promise<boolean> {
+  async delete(bookmarkId: string) {
     return await this.repository.deleteBookmark(bookmarkId);
   }
 
-  async listForOwner(
-    ownerId: string,
-    limit: number,
-    offset: number
-  ): Promise<{ total: number; items: Bookmark[] }> {
+  async listForOwner(ownerId: string, limit: number, offset: number) {
     return await this.repository.listBookmarksForOwner(ownerId, limit, offset);
   }
 
@@ -95,7 +88,7 @@ export class BookmarksService extends BaseService {
     tags: string[],
     limit: number,
     offset: number
-  ): Promise<{ total: number; items: Bookmark[] }> {
+  ) {
     return await this.repository.listBookmarksForOwnerByTags(
       ownerId,
       tags,
@@ -104,28 +97,12 @@ export class BookmarksService extends BaseService {
     );
   }
 
-  async listByTags(
-    tags: string[],
-    limit: number,
-    offset: number
-  ): Promise<{ total: number; items: Bookmark[] }> {
-    return await this.repository.listBookmarksByTags(
-      tags,
-      limit,
-      offset
-    );
+  async listByTags(tags: string[], limit: number, offset: number) {
+    return await this.repository.listBookmarksByTags(tags, limit, offset);
   }
 
-  async listTagsForOwner(
-    ownerId: string,
-    limit: number,
-    offset: number
-  ) {
-    return await this.repository.listTagsForOwner(
-      ownerId,
-      limit,
-      offset
-    );
+  async listTagsForOwner(ownerId: string, limit: number, offset: number) {
+    return await this.repository.listTagsForOwner(ownerId, limit, offset);
   }
 
   formFieldToTags(tags: string = ""): Bookmark["tags"] {
