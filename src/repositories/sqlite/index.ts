@@ -7,6 +7,7 @@ import {
   BookmarkUpdatable,
   BookmarkCreatable,
   IBookmarksRepository,
+  TagCount,
 } from "../../services/bookmarks";
 import {
   Profile,
@@ -15,6 +16,7 @@ import {
 } from "../../services/profiles";
 import { CliAppModule } from "../../app/modules";
 import { IPasswordsRepository } from "../../services/passwords";
+import { rawListeners } from "process";
 
 export const configSchema = {
   sqliteDatabaseName: {
@@ -193,38 +195,6 @@ export class SqliteRepository
     return this.connection("passwords").where("id", id).del();
   }
 
-  async _upsertOneBookmark(
-    bookmark: BookmarkCreatable,
-    now: number,
-    connection: Knex.Knex
-  ) {
-    const created = bookmark.created || now;
-    const modified = bookmark.modified || now;
-    const toInsert = {
-      ...bookmark,
-      tags: this.serializeTagsColumn(bookmark.tags),
-      id: uuid(),
-      created,
-      modified,
-    };
-
-    const result = await connection("bookmarks")
-      .insert(toInsert)
-      .onConflict(["ownerId", "href"])
-      .merge();
-
-    // Hacky attempt at an optimistic update, will probably mismatch a
-    // few fields like created if they're not supplied in the original
-    const resultBookmark = {
-      ...bookmark,
-      id: toInsert.id,
-      created: new Date(toInsert.created),
-      modified: new Date(toInsert.modified),
-    };
-
-    return resultBookmark;
-  }
-
   async upsertBookmark(bookmark: BookmarkCreatable) {
     const now = Date.now();
     const result = await this._upsertOneBookmark(
@@ -277,6 +247,99 @@ export class SqliteRepository
       .where({ id: bookmarkId })
       .del();
     return result > 0;
+  }
+
+  async fetchBookmark(bookmarkId: string): Promise<Bookmark | null> {
+    return this._mapRowToBookmark(
+      await this.connection("bookmarks")
+        .select("*")
+        .where({ id: bookmarkId })
+        .first()
+    );
+  }
+
+  async listBookmarksForOwner(
+    ownerId: string,
+    limit: number,
+    offset: number
+  ): Promise<{ total: number; items: Bookmark[] }> {
+    const query = this.connection("bookmarks").where({ ownerId });
+    return this._paginateBookmarksQuery(query, limit, offset);
+  }
+
+  async listBookmarksForOwnerByTags(
+    ownerId: string,
+    tags: string[],
+    limit: number,
+    offset: number
+  ): Promise<{ total: number; items: Bookmark[] }> {
+    const query = this.connection("bookmarks").where({ ownerId });
+    this._constrainBookmarksQueryByTag(query, tags);
+    return this._paginateBookmarksQuery(query, limit, offset);
+  }
+
+  async listBookmarksByTags(
+    tags: string[],
+    limit: number,
+    offset: number
+  ): Promise<{ total: number; items: Bookmark[] }> {
+    const query = this.connection("bookmarks");
+    this._constrainBookmarksQueryByTag(query, tags);
+    return this._paginateBookmarksQuery(query, limit, offset);
+  }
+
+  async listTagsForOwner(
+    ownerId: string,
+    limit: number,
+    offset: number
+  ): Promise<TagCount[]> {
+    const result = await this.connection.raw(
+      `--sql
+        select name, count(name) as count
+        from tags
+        where
+          ownerId=?
+          and name <> ""
+        group by name
+        order by count desc
+        limit ?
+        offset ?
+      `,
+      [ownerId, limit, offset]
+    );
+    return result.map(({ name, count }: TagCount) => ({ name, count }));
+  }
+
+  async _upsertOneBookmark(
+    bookmark: BookmarkCreatable,
+    now: number,
+    connection: Knex.Knex
+  ) {
+    const created = bookmark.created || now;
+    const modified = bookmark.modified || now;
+    const toInsert = {
+      ...bookmark,
+      tags: this.serializeTagsColumn(bookmark.tags),
+      id: uuid(),
+      created,
+      modified,
+    };
+
+    const result = await connection("bookmarks")
+      .insert(toInsert)
+      .onConflict(["ownerId", "href"])
+      .merge();
+
+    // Hacky attempt at an optimistic update, will probably mismatch a
+    // few fields like created if they're not supplied in the original
+    const resultBookmark = {
+      ...bookmark,
+      id: toInsert.id,
+      created: new Date(toInsert.created),
+      modified: new Date(toInsert.modified),
+    };
+
+    return resultBookmark;
   }
 
   serializeTagsColumn(tags: Bookmark["tags"] = []): string {
@@ -336,15 +399,6 @@ export class SqliteRepository
     };
   }
 
-  async fetchBookmark(bookmarkId: string): Promise<Bookmark | null> {
-    return this._mapRowToBookmark(
-      await this.connection("bookmarks")
-        .select("*")
-        .where({ id: bookmarkId })
-        .first()
-    );
-  }
-
   async _paginateBookmarksQuery(
     baseQuery: Knex.Knex.QueryBuilder,
     limit: number,
@@ -369,42 +423,12 @@ export class SqliteRepository
     return { total, items };
   }
 
-  async listBookmarksForOwner(
-    ownerId: string,
-    limit: number,
-    offset: number
-  ): Promise<{ total: number; items: Bookmark[] }> {
-    const query = this.connection("bookmarks").where({ ownerId });
-    return this._paginateBookmarksQuery(query, limit, offset);
-  }
-
-  async listBookmarksForOwnerByTags(
-    ownerId: string,
-    tags: string[],
-    limit: number,
-    offset: number
-  ): Promise<{ total: number; items: Bookmark[] }> {
-    const query = this.connection("bookmarks").where({ ownerId });
+  _constrainBookmarksQueryByTag(query: Knex.Knex.QueryBuilder, tags: string[]) {
     for (const name of tags) {
       query.whereIn("id", function () {
         this.select("bookmarksId").from("tags").where({ name });
       });
     }
-    return this._paginateBookmarksQuery(query, limit, offset);
-  }
-
-  async listBookmarksByTags(
-    tags: string[],
-    limit: number,
-    offset: number
-  ): Promise<{ total: number; items: Bookmark[] }> {
-    const query = this.connection("bookmarks");
-    for (const name of tags) {
-      query.whereIn("id", function () {
-        this.select("bookmarksId").from("tags").where({ name });
-      });
-    }
-    return this._paginateBookmarksQuery(query, limit, offset);
   }
 
   async checkIfProfileExistsForUsername(username: string): Promise<boolean> {

@@ -47,6 +47,13 @@ export default class CliBookmarks extends CliAppModule {
       .action(this.commandList.bind(this));
 
     bookmarksProgram
+      .command("list-tags <username>")
+      .description("list tags by user")
+      .option("-l, --limit <limit>", "limit bookmarks listed")
+      .option("-o --offset <offset>", "offset in bookmark listed")
+      .action(this.commandListTags.bind(this));
+
+    bookmarksProgram
       .command("get <id>")
       .description("get a bookmark")
       .action(this.commandGet.bind(this));
@@ -89,9 +96,29 @@ export default class CliBookmarks extends CliAppModule {
     }
 
     log.info({ msg: "Total bookmarks", total });
-    items.forEach((bookmark) => {
-      log.info(bookmark);
-    });
+    items.forEach((bookmark) => log.info({ msg: "bookmark", bookmark }));
+  }
+
+  async commandListTags(
+    username: string,
+    options: { limit: number; offset: number }
+  ) {
+    const { log } = this;
+    const { bookmarks, profiles } = this.app.services;
+
+    const profile = await profiles.getByUsername(username);
+    if (!profile?.id) {
+      log.error({ msg: "profile does not exist", username });
+      return;
+    }
+
+    const { id: ownerId } = profile;
+    const { limit = 10, offset = 0 } = options;
+
+    const result = await bookmarks.listTagsForOwner(ownerId, limit, offset);
+    for (const tag of result) {
+      log.info({ msg: "tag count", tag });
+    }
   }
 
   async commandGet(id: string) {

@@ -14,6 +14,11 @@ export type Bookmark = {
   modified?: Date;
 };
 
+export type TagCount = {
+  name: string,
+  count: number,
+};
+
 export interface IBookmarksRepository {
   upsertBookmark(bookmark: BookmarkCreatable): Promise<Bookmark>;
   upsertBookmarksBatch(bookmarks: BookmarkCreatable[]): Promise<Bookmark[]>;
@@ -39,6 +44,11 @@ export interface IBookmarksRepository {
     limit: number,
     offset: number
   ): Promise<{ total: number; items: Bookmark[] }>;
+  listTagsForOwner(
+    ownerId: string,
+    limit: number,
+    offset: number
+  ): Promise<TagCount[]>;
 }
 
 export class BookmarksService extends BaseService {
@@ -101,6 +111,18 @@ export class BookmarksService extends BaseService {
   ): Promise<{ total: number; items: Bookmark[] }> {
     return await this.repository.listBookmarksByTags(
       tags,
+      limit,
+      offset
+    );
+  }
+
+  async listTagsForOwner(
+    ownerId: string,
+    limit: number,
+    offset: number
+  ) {
+    return await this.repository.listTagsForOwner(
+      ownerId,
       limit,
       offset
     );
