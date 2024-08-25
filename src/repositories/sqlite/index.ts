@@ -16,7 +16,6 @@ import {
 } from "../../services/profiles";
 import { CliAppModule } from "../../app/modules";
 import { IPasswordsRepository } from "../../services/passwords";
-import { rawListeners } from "process";
 
 export const configSchema = {
   sqliteDatabaseName: {
@@ -194,6 +193,47 @@ export class SqliteRepository
   async deleteHashedPasswordAndSaltForId(id: string): Promise<string> {
     return this.connection("passwords").where("id", id).del();
   }
+
+  async checkIfProfileExistsForUsername(username: string): Promise<boolean> {
+    const result = await this.connection("profiles")
+      .select("id")
+      .where({ username })
+      .first();
+    return !!result;
+  }
+
+  async createProfile(profile: Profile): Promise<string> {
+    const id = uuid();
+    const now = Date.now();
+    await this.connection("profiles").insert({
+      ...profile,
+      id,
+      created: profile.created?.getTime() || now,
+      modified: profile.modified?.getTime() || now,
+    });
+    return id;
+  }
+
+  async updateProfile(id: string, profile: ProfileEditable): Promise<void> {
+    await this.connection("profiles")
+      .where({ id })
+      .update({
+        ...profile,
+        modified: Date.now(),
+      });
+  }
+
+  async getProfile(id: string): Promise<Profile> {
+    return this.connection("profiles").where({ id }).first();
+  }
+
+  async getProfileByUsername(username: string): Promise<Profile> {
+    return this.connection("profiles").where({ username }).first();
+  }
+
+  async deleteProfile(id: string): Promise<void> {
+    return await this.connection("profiles").where({ id }).del();
+  }  
 
   async upsertBookmark(bookmark: BookmarkCreatable) {
     const now = Date.now();
@@ -431,44 +471,4 @@ export class SqliteRepository
     }
   }
 
-  async checkIfProfileExistsForUsername(username: string): Promise<boolean> {
-    const result = await this.connection("profiles")
-      .select("id")
-      .where({ username })
-      .first();
-    return !!result;
-  }
-
-  async createProfile(profile: Profile): Promise<string> {
-    const id = uuid();
-    const now = Date.now();
-    await this.connection("profiles").insert({
-      ...profile,
-      id,
-      created: profile.created?.getTime() || now,
-      modified: profile.modified?.getTime() || now,
-    });
-    return id;
-  }
-
-  async updateProfile(id: string, profile: ProfileEditable): Promise<void> {
-    await this.connection("profiles")
-      .where({ id })
-      .update({
-        ...profile,
-        modified: Date.now(),
-      });
-  }
-
-  async getProfile(id: string): Promise<Profile> {
-    return this.connection("profiles").where({ id }).first();
-  }
-
-  async getProfileByUsername(username: string): Promise<Profile> {
-    return this.connection("profiles").where({ username }).first();
-  }
-
-  async deleteProfile(id: string): Promise<void> {
-    return await this.connection("profiles").where({ id }).del();
-  }
 }

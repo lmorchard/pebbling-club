@@ -21,13 +21,6 @@ a club for [pebbling][] enthusiasts on the web
 - [ ] add profileId association to password table
 - [ ] drop sessions table since moving to fastify
 - [ ] switch from passport to [fastify-auth](https://github.com/fastify/fastify-auth)?
-
-- random features
-  - [ ] podcast rss feeds of bookmarked MP3s
-  - [ ] easy webring building from link collections
-  - [ ] live bookmarks - bookmark a site with an RSS feed, see updates, lighterweight than full RSS sifting UI
-  - [ ] keyword searches - bookmark a URL with a keyword and a %s in query string to launch a search redirect
-  - [ ] daily / weekly / monhtly newsletters?
   
 - code golfing
   - [x] switch from express to fastify?
@@ -38,20 +31,23 @@ a club for [pebbling][] enthusiasts on the web
   - [x] create bookmark
   - [ ] fetch URL head / opengraph metadata to pre-fill form
   - [x] bookmarklet-able posting form URL with params to pre-fill form
-  - [ ] edit bookmark
+  - [x] edit bookmark
   - [x] delete bookmark
-  - [ ] view bookmarks by tag
-  - [ ] view bookmarks by tag intersection
+  - [x] view bookmarks by tag
+  - [x] view bookmarks by tag intersection
+  - [x] show bookmarks per user
 
-- access control
-  - [ ] show bookmarks per user
-  - [ ] hide private bookmarks except for logged in user
+- public views
+  - [ ] feed of all public bookmarks across all users
 
 - import / export
   - [ ] web UI for pinboard import
   - [ ] web UI for pocket import
   - [ ] JSON data export
   - [ ] HTML data export
+
+- access control
+  - [ ] hide private bookmarks except for logged in user
 
 - advanced UX
   - [ ] visibility settings for bookmarks (private, mutuals-only, followers-only, public)
@@ -60,7 +56,7 @@ a club for [pebbling][] enthusiasts on the web
   - [ ] browser web extensions?
 
 - tagging
-  - [ ] maintain per-user tags?
+  - [x] maintain per-user tags?
 
 - admin
   - [ ] okay to stick with CLI for admin tasks initially?
@@ -72,7 +68,7 @@ a club for [pebbling][] enthusiasts on the web
     - [openapi](https://openapi-ts.dev/introduction) - overkill?
     - graphql seems like overkill for this project
 
-- fediverse / federation
+- fediverse / federation / inbox
   - [ ] try out [`activitypub-express`](https://github.com/immers-space/activitypub-express)?
   - [ ] adapt dariusk's [`express-activitypub](https://github.com/dariusk/express-activitypub)?
   - [ ] websocket bot to ingest links from personal mastodon account
@@ -84,8 +80,8 @@ a club for [pebbling][] enthusiasts on the web
 
 - search
   - [ ] full-text search
-  - [ ] tag search
-  - [ ] user search
+  - [x] tag search
+  - [x] user search
   - [ ] federated search with authorized fetch for followers only?
   - [ ] use sqlite fulltext search? or something else? make it pluggable?
 
@@ -94,3 +90,10 @@ a club for [pebbling][] enthusiasts on the web
   - [ ] pick some other deployment targets - fastly? netlify? digitalocean? azure? gcp? aws?
   - [ ] dockerfile, pm2, nginx, etc. for self-hosting
   - [ ] decompose into serverless functions?
+
+- random feature ideas
+  - [ ] podcast rss feeds of bookmarked MP3s
+  - [ ] easy webring building from link collections
+  - [ ] live bookmarks - bookmark a site with an RSS feed, see updates, lighterweight than full RSS sifting UI
+  - [ ] keyword searches - bookmark a URL with a keyword and a %s in query string to launch a search redirect
+  - [ ] daily / weekly / monhtly newsletters?
