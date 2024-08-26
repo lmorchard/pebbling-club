@@ -15,8 +15,8 @@ export default ({
   limit,
   offset,
   limitChoices = [10, 25, 50, 100, 250],
-}: Props) => {
-  let prevUrl;
+}: Props) => {  
+  let prevUrl;  
   if (offset > 0) {
     const searchParams = new URLSearchParams({
       limit: limit.toString(),
@@ -47,9 +47,9 @@ export default ({
 
   return html`
     <div class="pagination">
-      <span>${total} items</span>
       <div class="directions">
         ${prevUrl && html`<a class="previous" href="${prevUrl}">previous</a>`}
+        <span>${offset || "0"} - ${offset + limit} of ${total} items</span>
         ${nextUrl && html`<a class="next" href="${nextUrl}">next</a>`}
       </div>
       <div class="limitChoices">

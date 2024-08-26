@@ -171,7 +171,7 @@ section.profile .tagCounts ul li::before {
   flex-direction: column;
   row-gap: 2em;
   margin: 0;
-  padding: 0;
+  padding: 1em 0;
 }
 
 .bookmark.h-entry {
@@ -267,7 +267,7 @@ section.profile .tagCounts ul li::before {
   display: flex;
   flex-direction: row;
   column-gap: 2em;
-  padding: 1em 0 1.5em 0;
+  padding: 1em 0;
 }
 
 .pagination .directions {
