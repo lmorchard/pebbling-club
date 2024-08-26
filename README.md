@@ -50,6 +50,7 @@ a club for [pebbling][] enthusiasts on the web
   - [ ] hide private bookmarks except for logged in user
 
 - advanced UX
+  - [ ] tag intersections sidebar - tags seen along with current tag at top of sidebar
   - [ ] visibility settings for bookmarks (private, mutuals-only, followers-only, public)
   - [ ] rss / atom / json feeds?
   - [ ] fetch URL thumbnails based on metadata?
