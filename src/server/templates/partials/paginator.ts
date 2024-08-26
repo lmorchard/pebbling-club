@@ -47,12 +47,12 @@ export default ({
 
   return html`
     <div class="pagination">
+      <span>${total} items</span>
       <div class="directions">
         ${prevUrl && html`<a class="previous" href="${prevUrl}">previous</a>`}
         ${nextUrl && html`<a class="next" href="${nextUrl}">next</a>`}
       </div>
       <div class="limitChoices">
-        <span>items</span>
         ${limitChoicesUrls.map(({ choice, url }) => html`
           <a href="${url}">${choice}</a>
         `)}

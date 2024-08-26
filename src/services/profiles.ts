@@ -56,7 +56,7 @@ export class ProfileService extends BaseService {
 }
 
 export type Profile = {
-  id?: string;
+  id: string;
   username: string;
   bio?: string;
   avatar?: string;

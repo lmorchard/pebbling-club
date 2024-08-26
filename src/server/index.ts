@@ -11,6 +11,7 @@ import FastifyCompress from "@fastify/compress";
 import FastifyFormbody from "@fastify/formbody";
 import FastifySecureSession from "@fastify/secure-session";
 import FastifyCsrfProtection from "@fastify/csrf-protection";
+import FastifyRequestContextPlugin from "@fastify/request-context";
 // @ts-ignore missing types
 import FastifyMethodOverride from "fastify-method-override";
 
@@ -141,8 +142,8 @@ export default class Server extends CliAppModule {
     fastify.register(FastifyCompress);
     fastify.register(FastifyAccepts);
     fastify.register(FastifyFormbody);
+    fastify.register(FastifyRequestContextPlugin);
     fastify.register(FastifyMethodOverride);
-
     await this.setupSessions(fastify);
     fastify.register(FastifyCsrfProtection, {
       sessionPlugin: "@fastify/secure-session",

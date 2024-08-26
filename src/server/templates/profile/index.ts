@@ -1,7 +1,7 @@
 import { html } from "../../utils/html";
 import { layout, LayoutProps } from "../layout";
 
-import { Bookmark } from "../../../services/bookmarks";
+import { Bookmark, TagCount } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
 
 import partialBookmarkList from "../partials/bookmarkList";
@@ -10,6 +10,7 @@ import partialPaginator from "../partials/paginator";
 export interface Props extends LayoutProps {
   profile: Profile;
   bookmarks: Bookmark[];
+  tagCounts: TagCount[];
   limit: number;
   offset: number;
   total: number;
@@ -18,6 +19,7 @@ export interface Props extends LayoutProps {
 export default ({
   profile,
   bookmarks,
+  tagCounts,
   total,
   limit,
   offset,
@@ -26,14 +28,19 @@ export default ({
   return layout({
     ...locals,
     content: html`
-      <h1>Profile ${profile.username}</h1>
-
-      <section class="bookmarks">
-        <h2>Bookmarks (${total})</h2>
-
-        ${partialPaginator({ total, limit, offset })}
-        ${partialBookmarkList({ bookmarks, profile })}
-        ${partialPaginator({ total, limit, offset })}
+      <section class="profile">
+        <section class="bookmarks">
+          ${partialPaginator({ total, limit, offset })}
+          ${partialBookmarkList({ bookmarks, profile })}
+          ${partialPaginator({ total, limit, offset })}
+        </section>
+        <section class="tagCounts">
+          <ul>
+            ${tagCounts.map(({ name, count }) => html`
+              <li><a href="/u/${profile.username}/t/${name}">${name} (${count})</a></li>
+            `)}
+          </ul>
+        </section>
       </section>
     `,
   });

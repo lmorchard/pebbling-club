@@ -2,35 +2,61 @@ import Boom from "@hapi/boom";
 import templateProfileIndex from "./templates/profile/index";
 import { IBaseRouterOptions } from "./types";
 import { FastifyPluginAsync } from "fastify";
+import { Profile } from "../services/profiles";
+import { TagCount } from "../services/bookmarks";
+
+declare module "fastify" {
+  export interface FastifyRequest {
+    profile?: Profile;
+    tagCounts?: TagCount[];
+  }
+}
 
 export interface IProfilesRouterOptions extends IBaseRouterOptions {}
 
 export const ProfilesRouter: FastifyPluginAsync<
   IProfilesRouterOptions
 > = async (fastify, options) => {
+  function parseLimitOffset(query: { limit?: string; offset?: string }) {
+    const limit = parseInt((query.limit as string) || "50", 10);
+    const offset = parseInt((query.offset as string) || "0", 10);
+    return { limit, offset };
+  }
+
+  fastify.decorateRequest("profile", null);
+
+  fastify.addHook<{
+    Params: { username: string };
+  }>("preHandler", async (request, reply) => {
+    const { profiles, bookmarks } = options.server.app.services;
+    const { username } = request.params;
+
+    const profile = await profiles.getByUsername(username);
+    if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
+
+    request.profile = profile;
+    request.tagCounts = await bookmarks.listTagsForOwner(profile.id, 50, 0);
+  });
+
   fastify.get<{
     Params: { username: string };
     Querystring: { limit?: string; offset?: string };
   }>("/:username", async (request, reply) => {
-    const { app } = options.server;
-    const { profiles, bookmarks } = app.services;
+    const { bookmarks } = options.server.app.services;
+    const { limit, offset } = parseLimitOffset(request.query);
 
-    const { username } = request.params;
-    const limit = parseInt((request.query.limit as string) || "50", 10);
-    const offset = parseInt((request.query.offset as string) || "0", 10);
-
-    const profile = await profiles.getByUsername(username);
-    if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
+    const profile = request.profile as Profile;
 
     const { total: bookmarksTotal, items: bookmarksItems } =
       await bookmarks.listForOwner(profile.id, limit, offset);
 
     return reply.renderTemplate(templateProfileIndex, {
       profile,
-      bookmarks: bookmarksItems,
       limit,
       offset,
+      tagCounts: request.tagCounts!,
       total: bookmarksTotal,
+      bookmarks: bookmarksItems,
     });
   });
 
@@ -38,15 +64,11 @@ export const ProfilesRouter: FastifyPluginAsync<
     Params: { username: string; tags: string };
     Querystring: { limit?: string; offset?: string };
   }>("/:username/t/:tags", async (request, reply) => {
-    const { app } = options.server;
-    const { profiles, bookmarks } = app.services;
+    const { bookmarks } = options.server.app.services;
+    const { tags } = request.params;
+    const { limit, offset } = parseLimitOffset(request.query);
 
-    const { username, tags } = request.params;
-    const limit = parseInt((request.query.limit as string) || "50", 10);
-    const offset = parseInt((request.query.offset as string) || "0", 10);
-
-    const profile = await profiles.getByUsername(username);
-    if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
+    const profile = request.profile as Profile;
 
     const { total: bookmarksTotal, items: bookmarksItems } =
       await bookmarks.listForOwnerByTags(
@@ -56,12 +78,14 @@ export const ProfilesRouter: FastifyPluginAsync<
         offset
       );
 
+    // TODO: use a different template? allow per-user annotation / description of tag
     return reply.renderTemplate(templateProfileIndex, {
       profile,
-      bookmarks: bookmarksItems,
       limit,
       offset,
+      tagCounts: request.tagCounts!,
       total: bookmarksTotal,
+      bookmarks: bookmarksItems,
     });
   });
 };

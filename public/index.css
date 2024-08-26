@@ -136,7 +136,36 @@ section.flash .message.info {
 
 }
 
+section.profile {
+  display: flex;
+  flex-direction: row;
+  gap: 1em;
+}
+
+section.profile .bookmarks {
+}
+
+section.profile .tagCounts {
+}
+
+section.profile .tagCounts ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+section.profile .tagCounts ul li::before {
+  /* content: "\1FBCA"; */
+  content: "\1F3F7";
+  padding-right: 0.5em;
+}
+
+
 .bookmarks.h-feed {
+  width: 80vw;
   list-style-type: none;
   display: flex;
   flex-direction: column;
@@ -238,7 +267,7 @@ section.flash .message.info {
   display: flex;
   flex-direction: row;
   column-gap: 2em;
-  padding: 2em 0;
+  padding: 1em 0 1.5em 0;
 }
 
 .pagination .directions {
