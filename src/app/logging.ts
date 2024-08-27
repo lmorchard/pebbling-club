@@ -7,7 +7,6 @@ import { CliAppModule } from "./modules";
 import { Events } from "./events";
 import { Cli } from "./cli";
 import { Command } from "commander";
-import { IEvents } from "./types";
 
 export const configSchema = {
   logLevel: {

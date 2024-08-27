@@ -2,10 +2,10 @@ import { App } from ".";
 import { AppModule } from "./modules";
 import { IEvents } from "./types";
 
-type EventName = string | Symbol
-type EventHandler = (...args: any[]) => any;
-type EventSubscriptionId = number;
-type SubscriptionsForEvent = Map<number, EventHandler>;
+export type EventName = string | Symbol
+export type EventHandler = (...args: any[]) => any;
+export type EventSubscriptionId = number;
+export type SubscriptionsForEvent = Map<number, EventHandler>;
 
 export class Events extends AppModule implements IEvents {
   lastId: number;

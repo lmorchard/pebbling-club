@@ -39,7 +39,7 @@ export const configSchema = {
 } as const;
 
 // TODO: derive type from table?
-type BookmarksRow = {
+export type BookmarksRow = {
   id: string;
   ownerId: string;
   href: string;
@@ -52,7 +52,7 @@ type BookmarksRow = {
   modified: number;
 };
 
-type TagItem = {
+export type TagItem = {
   name: string;
 };
 

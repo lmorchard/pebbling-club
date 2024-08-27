@@ -20,7 +20,7 @@ export class ProfileService extends BaseService {
     return await this.repository.checkIfProfileExistsForUsername(username);
   }
 
-  async create(profile: Profile, options: { password?: string } = {}) {
+  async create(profile: ProfileCreatable, options: { password?: string } = {}) {
     const newProfile = await this.repository.createProfile(profile);
     if (options.password) {
       await this.passwords.create(profile.username, options.password);
@@ -64,6 +64,8 @@ export type Profile = {
   modified?: Date;
 };
 
+export type ProfileCreatable = Omit<Profile, "id">;
+
 export type ProfileEditable = Omit<
   Profile,
   "id" | "username" | "created" | "modified"
@@ -71,7 +73,7 @@ export type ProfileEditable = Omit<
 
 export interface IProfilesRepository {
   checkIfProfileExistsForUsername(username: string): Promise<boolean>;
-  createProfile(profile: Profile): Promise<string>;
+  createProfile(profile: ProfileCreatable): Promise<string>;
   updateProfile(id: string, profile: ProfileEditable): Promise<void>;
   getProfile(id: string): Promise<Profile>;
   getProfileByUsername(username: string): Promise<Profile>;
