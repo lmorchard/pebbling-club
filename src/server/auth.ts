@@ -1,4 +1,4 @@
-import { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
+import { FastifyPluginAsync, FastifyReply, FastifyRequest, PassportUser } from "fastify";
 import { FromSchema } from "json-schema-to-ts";
 import FastifyPassport from "@fastify/passport";
 import { IBaseRouterOptions } from "./types";
@@ -79,11 +79,11 @@ export const RequirePasswordAuth = async (
   return reply.redirect(`/login?${nextParams.toString()}`);
 };
 
-export function buildPostLoginRedirect(query: {
+export function buildPostLoginRedirect(user: PassportUser, query: {
   nextPath?: string;
   nextParams?: string;
 }) {
-  let { nextPath, nextParams } = query;
+  let { nextPath = `/u/${user.username}`, nextParams } = query;
   const redirectPath = nextPath && nextPath.startsWith("/") ? nextPath : "/";
   let redirectParams = {};
   if (nextParams) {
@@ -195,7 +195,7 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
         });
       }
 
-      let redirect = buildPostLoginRedirect(request.query);
+      let redirect = buildPostLoginRedirect(request.user, request.query);
       return reply.redirect(redirect);
     }
   );
