@@ -17,10 +17,19 @@ a club for [pebbling][] enthusiasts on the web
 
 ## TODO
 
+- [ ] convert all these TODOs to github issues!
+
 - [ ] add email as requirement to passwords (e.g. for future recovery)
 - [ ] add profileId association to password table
 - [ ] drop sessions table since moving to fastify
 - [ ] switch from passport to [fastify-auth](https://github.com/fastify/fastify-auth)?
+
+- hosting / deployment
+  - [ ] try deploying to glitch
+  - [ ] fly.io?
+  - [ ] pick some other deployment targets - fastly? netlify? digitalocean? azure? gcp? aws?
+  - [ ] dockerfile, pm2, nginx, etc. for self-hosting
+  - [ ] decompose into serverless functions?
   
 - code golfing
   - [x] switch from express to fastify?
@@ -85,12 +94,6 @@ a club for [pebbling][] enthusiasts on the web
   - [x] user search
   - [ ] federated search with authorized fetch for followers only?
   - [ ] use sqlite fulltext search? or something else? make it pluggable?
-
-- hosting / deployment
-  - [ ] try deploying to glitch
-  - [ ] pick some other deployment targets - fastly? netlify? digitalocean? azure? gcp? aws?
-  - [ ] dockerfile, pm2, nginx, etc. for self-hosting
-  - [ ] decompose into serverless functions?
 
 - random feature ideas
   - [ ] podcast rss feeds of bookmarked MP3s
