@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npx tsc",
+    "build": "tsc",
     "start": "node ./build/index.js serve",
     "manage": "node ./build/index.js",
     "test": "glob -c \"node --import tsx --no-warnings --test\" \"./src/**/*.test.ts\"",

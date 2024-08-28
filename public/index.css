@@ -16,6 +16,14 @@ body {
   padding: 0;
 }
 
+section.home {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 header.site {
   display: flex;
   flex-direction: row;

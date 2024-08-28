@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from "fastify";
-import templateHome from "./templates";
+import templateHome from "./templates/home";
 import { render } from "./utils/html";
 import { IBaseRouterOptions } from "./types";
 
