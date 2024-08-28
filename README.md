@@ -19,10 +19,12 @@ a club for [pebbling][] enthusiasts on the web
 
 - [ ] convert all these TODOs to github issues!
 
+- [x] come up with a new name and buy a domain fast
 - [ ] add email as requirement to passwords (e.g. for future recovery)
 - [ ] add profileId association to password table
 - [ ] drop sessions table since moving to fastify
 - [ ] switch from passport to [fastify-auth](https://github.com/fastify/fastify-auth)?
+- [ ] add some metrics, measurements, observability, etc to feed to graphana / whatever
 
 - hosting / deployment
   - [ ] try deploying to glitch
@@ -30,7 +32,7 @@ a club for [pebbling][] enthusiasts on the web
   - [ ] pick some other deployment targets - fastly? netlify? digitalocean? azure? gcp? aws?
   - [ ] dockerfile, pm2, nginx, etc. for self-hosting
   - [ ] decompose into serverless functions?
-  
+
 - code golfing
   - [x] switch from express to fastify?
   - [x] extract minimal interfaces out of concrete services?
@@ -63,7 +65,7 @@ a club for [pebbling][] enthusiasts on the web
   - [ ] visibility settings for bookmarks (private, mutuals-only, followers-only, public)
   - [ ] rss / atom / json feeds?
   - [ ] fetch URL thumbnails based on metadata?
-  - [ ] browser web extensions?
+  - [ ] browser web extensions? (bookmarklet is a start)
 
 - tagging
   - [x] maintain per-user tags?
@@ -78,10 +80,14 @@ a club for [pebbling][] enthusiasts on the web
     - [openapi](https://openapi-ts.dev/introduction) - overkill?
     - graphql seems like overkill for this project
 
-- fediverse / federation / inbox
+- inbox
+  - [ ] consider integrating feed reader functionality?
+  - [ ] poll mastodon API to ingest links from personal mastodon account
+  - [ ] websocket bot to ingest links from personal mastodon account
+
+- fediverse / federation
   - [ ] try out [`activitypub-express`](https://github.com/immers-space/activitypub-express)?
   - [ ] adapt dariusk's [`express-activitypub](https://github.com/dariusk/express-activitypub)?
-  - [ ] websocket bot to ingest links from personal mastodon account
   - [ ] support for following other users
   - [ ] support for accepting / approving follow requests
   - [ ] inbox for receiving bookmarks from other users
@@ -97,7 +103,8 @@ a club for [pebbling][] enthusiasts on the web
 
 - random feature ideas
   - [ ] podcast rss feeds of bookmarked MP3s
-  - [ ] easy webring building from link collections
+  - [ ] OPML feed of bookmarked RSS feeds
+  - [ ] easy webring building from link collections - how to make it multiplayer?
   - [ ] live bookmarks - bookmark a site with an RSS feed, see updates, lighterweight than full RSS sifting UI
   - [ ] keyword searches - bookmark a URL with a keyword and a %s in query string to launch a search redirect
   - [ ] daily / weekly / monhtly newsletters?
