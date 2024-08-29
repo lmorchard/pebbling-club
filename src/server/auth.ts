@@ -195,7 +195,7 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
         });
       }
 
-      let redirect = buildPostLoginRedirect(request.user, request.query);
+      let redirect = buildPostLoginRedirect(request.user!, request.query);
       return reply.redirect(redirect);
     }
   );
