@@ -150,17 +150,21 @@ export class SqliteRepository
 
   async getHashedPasswordAndSaltForUsername(
     username: string
-  ): Promise<undefined | { id: string; hashedPassword: string; salt: string }> {
+  ): Promise<
+    | undefined
+    | { id: string; passwordHashed: string; salt: string; profileId: string }
+  > {
     const result = await this.connection("passwords")
-      .select("id", "passwordHashed", "salt")
+      .select("id", "passwordHashed", "salt", "profileId")
       .where("username", username)
       .first();
     if (!result) return;
-    const { id, salt, passwordHashed } = result;
+    const { id, salt, passwordHashed, profileId } = result;
     return {
       id,
       salt,
-      hashedPassword: passwordHashed,
+      passwordHashed,
+      profileId,
     };
   }
 
@@ -233,7 +237,7 @@ export class SqliteRepository
 
   async deleteProfile(id: string): Promise<void> {
     return await this.connection("profiles").where({ id }).del();
-  }  
+  }
 
   async upsertBookmark(bookmark: BookmarkCreatable) {
     const now = Date.now();
@@ -470,5 +474,4 @@ export class SqliteRepository
       });
     }
   }
-
 }

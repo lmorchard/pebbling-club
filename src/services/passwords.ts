@@ -23,23 +23,23 @@ export class PasswordService extends BaseService {
   }
 
   async create(username: string, password: string, originalSalt?: string) {
-    const { hashedPassword, salt } = await this.hashPassword(
+    const { passwordHashed, salt } = await this.hashPassword(
       password,
       originalSalt
     );
     const userId = await this.repository.createHashedPasswordAndSaltForUsername(
       username,
-      hashedPassword,
+      passwordHashed,
       salt
     );
     return userId;
   }
 
   async update(username: string, password: string) {
-    const { hashedPassword, salt } = await this.hashPassword(password);
+    const { passwordHashed, salt } = await this.hashPassword(password);
     return await this.repository.updateHashedPasswordAndSaltForUsername(
       username,
-      hashedPassword,
+      passwordHashed,
       salt
     );
   }
@@ -50,19 +50,19 @@ export class PasswordService extends BaseService {
     );
     if (!result) return;
 
-    const { id, hashedPassword, salt } = result;
+    const { id, passwordHashed, salt, profileId } = result;
 
-    const { hashedPassword: submittedHashedPassword } = await this.hashPassword(
+    const { passwordHashed: submittedHashedPassword } = await this.hashPassword(
       password,
       salt
     );
 
     const verified = crypto.timingSafeEqual(
       this.hexToArray(submittedHashedPassword),
-      this.hexToArray(hashedPassword)
+      this.hexToArray(passwordHashed)
     );
 
-    return verified ? id : undefined;
+    return verified ? { id, profileId } : undefined;
   }
 
   async getUsernameById(id: string) {
@@ -92,7 +92,7 @@ export class PasswordService extends BaseService {
   async hashPassword(
     password: string,
     originalSalt?: string
-  ): Promise<{ hashedPassword: string; salt: string }> {
+  ): Promise<{ passwordHashed: string; salt: string }> {
     return new Promise((resolve, reject) => {
       const salt = originalSalt || crypto.randomBytes(16).toString("hex");
       crypto.pbkdf2(
@@ -103,7 +103,7 @@ export class PasswordService extends BaseService {
         this.hashAlgo,
         function (err, hashedPassword) {
           if (err) return reject(err);
-          resolve({ hashedPassword: hashedPassword.toString("hex"), salt });
+          resolve({ passwordHashed: hashedPassword.toString("hex"), salt });
         }
       );
     });
@@ -131,7 +131,10 @@ export interface IPasswordsRepository {
   ): Promise<number>;
   getHashedPasswordAndSaltForUsername(
     username: string
-  ): Promise<undefined | { id: string; hashedPassword: string; salt: string }>;
+  ): Promise<
+    | undefined
+    | { id: string; passwordHashed: string; salt: string; profileId: string }
+  >;
   checkIfPasswordExistsForUsername(username: string): Promise<boolean>;
   getUsernameById(id: string): Promise<undefined | string>;
   getIdByUsername(username: string): Promise<undefined | string>;

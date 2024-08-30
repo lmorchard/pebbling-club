@@ -33,13 +33,14 @@ export const PassportAuth = fp(
       new LocalStrategy(async function verify(username, password, cb) {
         try {
           // First, verify the username and password
-          const passwordId = await passwords.verify(username, password);
-          if (!passwordId) return cb(null, false);
+          const passwordRecord = await passwords.verify(username, password);
+          if (!passwordRecord) return cb(null, false);
 
           // TODO: associate the password with profileId rather than username
+          const { profileId } = passwordRecord;
 
           // Then, get the profile associated with the username
-          const profile = await profiles.getByUsername(username);
+          const profile = await profiles.get(profileId);
           if (!profile?.id) return cb(null, false);
 
           return cb(null, { id: profile.id, username });
