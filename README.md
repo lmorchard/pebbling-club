@@ -93,6 +93,7 @@ a club for [pebbling][] enthusiasts on the web
   - [ ] inbox for receiving bookmarks from other users
   - [ ] outbox delivery queue for sending bookmarks to followers
   - [ ] sign-in via mastodon oauth dance? (not really meant for that)
+  - [ ] copy over bookmarks from Mastodon! (ala https://bookmark-rss.woodland.cafe/)
 
 - search
   - [ ] full-text search
