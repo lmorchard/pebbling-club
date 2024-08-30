@@ -20,9 +20,12 @@ a club for [pebbling][] enthusiasts on the web
 - [ ] convert all these TODOs to github issues!
 
 - [x] come up with a new name and buy a domain fast
+- [ ] open / close sign-up
+- [ ] invite system and sign-up mode
+- [ ] single-user mode?
 - [ ] add email as requirement to passwords (e.g. for future recovery)
-- [ ] add profileId association to password table
-- [ ] drop sessions table since moving to fastify
+- [x] add profileId association to password table
+- [x] drop sessions table since moving to fastify
 - [ ] switch from passport to [fastify-auth](https://github.com/fastify/fastify-auth)?
 - [ ] add some metrics, measurements, observability, etc to feed to graphana / whatever
 
@@ -32,12 +35,14 @@ a club for [pebbling][] enthusiasts on the web
   - [ ] pick some other deployment targets - fastly? netlify? digitalocean? azure? gcp? aws?
   - [ ] dockerfile, pm2, nginx, etc. for self-hosting
   - [ ] decompose into serverless functions?
-
+  
 - code golfing
   - [x] switch from express to fastify?
   - [x] extract minimal interfaces out of concrete services?
-
+  
 - basic UX
+  - [ ] dark theme
+  - [ ] support user notes alongsite metadata & description captured from site
   - [x] view bookmarks by profile
   - [x] create bookmark
   - [ ] fetch URL head / opengraph metadata to pre-fill form
@@ -85,9 +90,15 @@ a club for [pebbling][] enthusiasts on the web
   - [ ] poll mastodon API to ingest links from personal mastodon account
   - [ ] websocket bot to ingest links from personal mastodon account
 
+- fediverse / federation- inbox
+  - [ ] consider integrating feed reader functionality?
+  - [ ] poll mastodon API to ingest links from personal mastodon account
+  - [ ] websocket bot to ingest links from personal mastodon account
+
 - fediverse / federation
   - [ ] try out [`activitypub-express`](https://github.com/immers-space/activitypub-express)?
   - [ ] adapt dariusk's [`express-activitypub](https://github.com/dariusk/express-activitypub)?
+  - [ ] websocket bot to ingest links from personal mastodon account
   - [ ] support for following other users
   - [ ] support for accepting / approving follow requests
   - [ ] inbox for receiving bookmarks from other users
