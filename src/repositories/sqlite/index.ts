@@ -1,5 +1,7 @@
+import fs from "fs/promises";
 import path from "path";
 import Knex from "knex";
+import { mkdirp } from "mkdirp";
 import { v4 as uuid } from "uuid";
 import { IKnexConnectionOptions, IKnexRepository } from "../knex";
 import {
@@ -72,8 +74,26 @@ export class SqliteRepository
 
   async init() {
     const app = this.app as App;
+    const { config } = app;
 
     app.registerModule("sqliteCli", CliSqlite);
+
+    try {
+      const connectionOptions =
+        this.knexConnectionOptions() as Knex.Knex.Sqlite3ConnectionConfig;
+      await fs.access(
+        connectionOptions.filename,
+        fs.constants.R_OK | fs.constants.W_OK
+      );
+    } catch (err) {
+      this.log.warn({ msg: "initializing sqlite database" });
+
+      const dataPath = config.get("dataPath");
+      await mkdirp(dataPath);
+
+      const connection = this.connection;
+      await connection.migrate.latest();
+    }
 
     return this;
   }
@@ -87,28 +107,30 @@ export class SqliteRepository
     const { log } = this;
     const { config } = this.app;
 
-    if (!this._connection) {
-      log.trace({ msg: "buildDatabaseConnection" });
-
-      const migrations: Knex.Knex.MigratorConfig = {
-        directory: path.resolve(path.join(__dirname, "migrations")),
-      };
-
-      const pool: Knex.Knex.PoolConfig = {
-        min: 1,
-        max: config.get("sqliteDatabaseMaxConnections"),
-        // afterCreate: this.connectionAfterCreate.bind(this),
-      };
-
-      this._connection = Knex({
-        client: "sqlite3",
-        useNullAsDefault: true,
-        connection: this.knexConnectionOptions(),
-        debug: config.get("logLevel") === "trace",
-        migrations,
-        pool,
-      });
+    if (this._connection) {
+      return this._connection;
     }
+
+    log.trace({ msg: "buildDatabaseConnection" });
+
+    const migrations: Knex.Knex.MigratorConfig = {
+      directory: path.resolve(path.join(__dirname, "migrations")),
+    };
+
+    const pool: Knex.Knex.PoolConfig = {
+      min: 1,
+      max: config.get("sqliteDatabaseMaxConnections"),
+      // afterCreate: this.connectionAfterCreate.bind(this),
+    };
+
+    this._connection = Knex({
+      client: "sqlite3",
+      useNullAsDefault: true,
+      connection: this.knexConnectionOptions(),
+      debug: config.get("logLevel") === "trace",
+      migrations,
+      pool,
+    });
 
     return this._connection;
   }
