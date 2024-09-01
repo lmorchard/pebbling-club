@@ -1,7 +1,7 @@
 import path from "path";
 import Knex from "knex";
 import { v4 as uuid } from "uuid";
-import { IKnexConnectionOptions } from "../knex";
+import { IKnexConnectionOptions, IKnexRepository } from "../knex";
 import {
   Bookmark,
   BookmarkUpdatable,
@@ -14,8 +14,11 @@ import {
   ProfileEditable,
   IProfilesRepository,
 } from "../../services/profiles";
-import { CliAppModule } from "../../app/modules";
+import { AppModule, CliAppModule } from "../../app/modules";
 import { IPasswordsRepository } from "../../services/passwords";
+import { App } from "../../app";
+
+import CliSqlite from "./cli";
 
 export const configSchema = {
   sqliteDatabaseName: {
@@ -57,14 +60,23 @@ export type TagItem = {
 };
 
 export class SqliteRepository
-  extends CliAppModule
+  extends AppModule
   implements
     IBookmarksRepository,
     IPasswordsRepository,
     IProfilesRepository,
+    IKnexRepository,
     IKnexConnectionOptions
 {
   _connection?: Knex.Knex<any, unknown[]>;
+
+  async init() {
+    const app = this.app as App;
+
+    app.registerModule("sqliteCli", CliSqlite);
+
+    return this;
+  }
 
   async deinit() {
     if (this._connection) this._connection.destroy();
@@ -77,16 +89,24 @@ export class SqliteRepository
 
     if (!this._connection) {
       log.trace({ msg: "buildDatabaseConnection" });
+
+      const migrations: Knex.Knex.MigratorConfig = {
+        directory: path.resolve(path.join(__dirname, "migrations")),
+      };
+
+      const pool: Knex.Knex.PoolConfig = {
+        min: 1,
+        max: config.get("sqliteDatabaseMaxConnections"),
+        // afterCreate: this.connectionAfterCreate.bind(this),
+      };
+
       this._connection = Knex({
         client: "sqlite3",
         useNullAsDefault: true,
         connection: this.knexConnectionOptions(),
         debug: config.get("logLevel") === "trace",
-        pool: {
-          min: 1,
-          max: config.get("sqliteDatabaseMaxConnections"),
-          // afterCreate: this.connectionAfterCreate.bind(this),
-        },
+        migrations,
+        pool,
       });
     }
 
