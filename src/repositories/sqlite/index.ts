@@ -74,26 +74,10 @@ export class SqliteRepository
 
   async init() {
     const app = this.app as App;
-    const { config } = app;
 
     app.registerModule("sqliteCli", CliSqlite);
 
-    try {
-      const connectionOptions =
-        this.knexConnectionOptions() as Knex.Knex.Sqlite3ConnectionConfig;
-      await fs.access(
-        connectionOptions.filename,
-        fs.constants.R_OK | fs.constants.W_OK
-      );
-    } catch (err) {
-      this.log.warn({ msg: "initializing sqlite database" });
-
-      const dataPath = config.get("dataPath");
-      await mkdirp(dataPath);
-
-      const connection = this.connection;
-      await connection.migrate.latest();
-    }
+    await this.maybeInitializeDatabase();
 
     return this;
   }
@@ -101,6 +85,27 @@ export class SqliteRepository
   async deinit() {
     if (this._connection) this._connection.destroy();
     return this;
+  }
+
+  async maybeInitializeDatabase() {
+    const { log } = this;
+    const { config } = this.app;
+    try {
+      // Attempt to access the database...
+      const connectionOptions =
+        this.knexConnectionOptions() as Knex.Knex.Sqlite3ConnectionConfig;
+      await fs.access(
+        connectionOptions.filename,
+        fs.constants.R_OK | fs.constants.W_OK
+      );
+    } catch (err) {
+      // Failed to access database, assume it doesn't exist
+      // TODO: check if it's actually a permission problem
+      log.warn({ msg: "initializing sqlite database" });
+
+      await mkdirp(config.get("dataPath"));
+      await this.connection.migrate.latest();
+    }
   }
 
   get connection() {

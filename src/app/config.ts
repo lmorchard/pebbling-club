@@ -48,6 +48,23 @@ export class Config extends CliAppModule implements IConfig {
     return this.config.has.bind(this.config);
   }
 
+  async init() {
+    await this.maybeConfigureForGlitch();
+    return this;
+  }
+
+  async maybeConfigureForGlitch() {
+    const { PROJECT_DOMAIN, PROJECT_NAME, PROJECT_ID } = process.env;
+    if (!(PROJECT_DOMAIN && PROJECT_NAME && PROJECT_ID)) return;
+
+    if (!config.get("siteUrl")) {
+      const siteUrl = `https://${PROJECT_DOMAIN}.glitch.me`;
+      config.set("siteUrl", siteUrl);
+    }
+
+    config.set("dataPath", ".data");
+  }     
+
   async initCli(cli: Cli) {
     const { program } = cli;
 

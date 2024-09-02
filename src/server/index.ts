@@ -67,8 +67,9 @@ export const configSchema = {
   siteUrl: {
     doc: "Server base URL",
     env: "SITE_URL",
+    format: String,
     nullable: true,
-    default: null,
+    default: null as null | String,
   },
   projectDomain: {
     doc: "Glitch.com project domain",
