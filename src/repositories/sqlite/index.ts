@@ -1,4 +1,5 @@
 import fs from "fs/promises";
+import { constants as fsConstants } from "fs";
 import path from "path";
 import Knex from "knex";
 import { mkdirp } from "mkdirp";
@@ -96,13 +97,12 @@ export class SqliteRepository
         this.knexConnectionOptions() as Knex.Knex.Sqlite3ConnectionConfig;
       await fs.access(
         connectionOptions.filename,
-        fs.constants.R_OK | fs.constants.W_OK
+        fsConstants.R_OK | fsConstants.W_OK
       );
     } catch (err) {
       // Failed to access database, assume it doesn't exist
       // TODO: check if it's actually a permission problem
-      log.warn({ msg: "initializing sqlite database" });
-
+      log.warn({ msg: "initializing sqlite database", err });
       await mkdirp(config.get("dataPath"));
       await this.connection.migrate.latest();
     }
