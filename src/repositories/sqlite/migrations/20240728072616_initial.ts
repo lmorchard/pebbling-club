@@ -1,4 +1,6 @@
-exports.up = function(knex) {
+import type { Knex } from "knex";
+
+export async function up(knex: Knex): Promise<void> {
   return knex.schema
     .createTable("users", function (table) {
       table.uuid("id");
@@ -6,8 +8,9 @@ exports.up = function(knex) {
       table.string("hashed_password");
       table.string("salt");
     });
-};
+}
 
-exports.down = function(knex) {
+export async function down(knex: Knex): Promise<void> {
   return knex.schema.dropTableIfExists('users');
-};
+}
+
