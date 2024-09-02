@@ -166,8 +166,9 @@ export class SqliteRepository
     );
   }
 
-  async createHashedPasswordAndSaltForUsername(
+  async createHashedPasswordAndSaltForUsernameAndProfileId(
     username: string,
+    profileId: string,
     passwordHashed: string,
     salt: string
   ): Promise<string> {
@@ -175,6 +176,7 @@ export class SqliteRepository
     await this.connection("passwords").insert({
       id,
       username,
+      profileId,
       passwordHashed,
       salt,
     });

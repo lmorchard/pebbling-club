@@ -2,9 +2,13 @@
   "name": "pebbling-club",
   "version": "1.0.0",
   "main": "index.js",
+  "engines": {
+    "node": "16.x"
+  },
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && node ./build/index.js serve",
+    "start": "tsx ./src/index.ts --force-pretty-logs serve",
+    "start-built": "npm run build && node ./build/index.js serve",
     "manage": "node ./build/index.js",
     "test": "glob -c \"node --import tsx --no-warnings --test\" \"./src/**/*.test.ts\"",
     "test:watch": "glob -c \"node --import tsx --no-warnings --watch --test\" \"./src/**/*.test.ts\"",

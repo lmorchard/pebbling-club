@@ -23,7 +23,10 @@ export class ProfileService extends BaseService {
   async create(profile: ProfileCreatable, options: { password?: string } = {}) {
     const newProfile = await this.repository.createProfile(profile);
     if (options.password) {
-      await this.passwords.create(profile.username, options.password);
+      await this.passwords.create(
+        { id: newProfile, username: profile.username },
+        options.password
+      );
     }
     return newProfile;
   }

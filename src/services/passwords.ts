@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { BaseService } from "./base";
 import { IApp } from "../app/types";
+import { Profile } from "./profiles";
 
 export class PasswordService extends BaseService {
   repository: IPasswordsRepository;
@@ -22,16 +23,22 @@ export class PasswordService extends BaseService {
     return await this.repository.listAllUsers();
   }
 
-  async create(username: string, password: string, originalSalt?: string) {
+  async create(
+    profile: { id: string; username: string },
+    password: string,
+    originalSalt?: string
+  ) {
     const { passwordHashed, salt } = await this.hashPassword(
       password,
       originalSalt
     );
-    const userId = await this.repository.createHashedPasswordAndSaltForUsername(
-      username,
-      passwordHashed,
-      salt
-    );
+    const userId =
+      await this.repository.createHashedPasswordAndSaltForUsernameAndProfileId(
+        profile.username,
+        profile.id,
+        passwordHashed,
+        salt
+      );
     return userId;
   }
 
@@ -119,8 +126,9 @@ export type Password = {
 
 export interface IPasswordsRepository {
   listAllUsers(): Promise<Password[]>;
-  createHashedPasswordAndSaltForUsername(
+  createHashedPasswordAndSaltForUsernameAndProfileId(
     username: string,
+    profileId: string,
     passwordHashed: string,
     salt: string
   ): Promise<string>;

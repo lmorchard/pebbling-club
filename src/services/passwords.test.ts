@@ -24,18 +24,29 @@ describe("services.passwords", () => {
   it("should create with a random salt each time", async () => {
     const mockCreate = mock.method(
       repository,
-      "createHashedPasswordAndSaltForUsername",
-      (username: string, password: string) => id
+      "createHashedPasswordAndSaltForUsernameAndProfileId",
+      (
+        username: string,
+        profileId: string,
+        passwordHashed: string,
+        salt: string
+      ) => id
     );
 
-    const resultId1 = await passwords.create(username, password);
+    const resultId1 = await passwords.create(
+      { username, id: profileId },
+      password
+    );
     assert.equal(resultId1, id);
 
     assert.equal(mockCreate.mock.callCount(), 1);
     const call0 = mockCreate.mock.calls[0];
     const salt0 = call0.arguments[2];
 
-    const resultId2 = await passwords.create(username, password);
+    const resultId2 = await passwords.create(
+      { username, id: profileId },
+      password
+    );
     assert.equal(resultId2, id);
 
     assert.equal(mockCreate.mock.callCount(), 2);
@@ -48,28 +59,43 @@ describe("services.passwords", () => {
   it("should create the same hashed password given the same salt", async () => {
     const mockCreate = mock.method(
       repository,
-      "createHashedPasswordAndSaltForUsername",
-      (username: string, password: string) => id
+      "createHashedPasswordAndSaltForUsernameAndProfileId",
+      (
+        username: string,
+        profileId: string,
+        passwordHashed: string,
+        salt: string
+      ) => id
     );
 
-    const resultId1 = await passwords.create(username, password, salt);
+    const resultId1 = await passwords.create(
+      { username, id: profileId },
+      password,
+      salt
+    );
     assert.equal(resultId1, id);
 
     assert.equal(mockCreate.mock.callCount(), 1);
-    const hashedPassword = mockCreate.mock.calls[0].arguments[1];
+    const hashedPassword = mockCreate.mock.calls[0].arguments[2];
 
     assert.deepStrictEqual(mockCreate.mock.calls[0].arguments, [
       username,
+      profileId,
       hashedPassword,
       salt,
     ]);
 
-    const resultId2 = await passwords.create(username, password, salt);
+    const resultId2 = await passwords.create(
+      { username, id: profileId },
+      password,
+      salt
+    );
     assert.equal(resultId2, id);
 
     assert.equal(mockCreate.mock.callCount(), 2);
     assert.deepStrictEqual(mockCreate.mock.calls[1].arguments, [
       username,
+      profileId,
       hashedPassword,
       salt,
     ]);
@@ -98,8 +124,9 @@ class MockPasswordsRepository implements IPasswordsRepository {
   listAllUsers(): Promise<Password[]> {
     throw new Error("Method not implemented.");
   }
-  createHashedPasswordAndSaltForUsername(
+  createHashedPasswordAndSaltForUsernameAndProfileId(
     username: string,
+    profileId: string,
     passwordHashed: string,
     salt: string
   ): Promise<string> {
