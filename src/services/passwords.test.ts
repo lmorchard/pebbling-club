@@ -8,6 +8,7 @@ describe("services.passwords", () => {
   const password = "hunter23";
   const passwordIncorrect = "trustno1";
   const id = "8675309";
+  const profileId = "skibidi";
   const salt = "343cd9bd7aa6bbbdc775bc154994f273";
 
   let app: MockApp;
@@ -75,12 +76,12 @@ describe("services.passwords", () => {
   });
 
   it("should be able to verify a password", async () => {
-    const { hashedPassword } = await passwords.hashPassword(password, salt);
+    const { passwordHashed } = await passwords.hashPassword(password, salt);
 
     const mockGet = mock.method(
       repository,
       "getHashedPasswordAndSaltForUsername",
-      (username: string) => ({ id, hashedPassword, salt })
+      (username: string) => ({ id, passwordHashed, salt, profileId })
     );
 
     const result0 = await passwords.verify(username, password);
@@ -113,7 +114,10 @@ class MockPasswordsRepository implements IPasswordsRepository {
   }
   getHashedPasswordAndSaltForUsername(
     username: string
-  ): Promise<undefined | { id: string; hashedPassword: string; salt: string }> {
+  ): Promise<
+    | undefined
+    | { id: string; passwordHashed: string; salt: string; profileId: string }
+  > {
     throw new Error("Method not implemented.");
   }
   checkIfPasswordExistsForUsername(username: string): Promise<boolean> {
