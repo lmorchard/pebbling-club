@@ -1,4 +1,10 @@
-import { FastifyPluginAsync, FastifyReply, FastifyRequest, PassportUser } from "fastify";
+import Boom from "@hapi/boom";
+import {
+  FastifyPluginAsync,
+  FastifyReply,
+  FastifyRequest,
+  PassportUser,
+} from "fastify";
 import { FromSchema } from "json-schema-to-ts";
 import FastifyPassport from "@fastify/passport";
 import { IBaseRouterOptions } from "./types";
@@ -10,6 +16,15 @@ import { PasswordService } from "../services/passwords";
 import { ProfileService, Profile } from "../services/profiles";
 
 import { Strategy as LocalStrategy } from "passport-local";
+
+export const configSchema = {
+  authDisableSignup: {
+    doc: "Disable sign-up",
+    env: "AUTH_DISABLE_SIGNUP",
+    format: Boolean,
+    default: false,
+  },
+} as const;
 
 export interface IAuthRouterOptions extends IBaseRouterOptions {}
 
@@ -80,10 +95,13 @@ export const RequirePasswordAuth = async (
   return reply.redirect(`/login?${nextParams.toString()}`);
 };
 
-export function buildPostLoginRedirect(user: PassportUser, query: {
-  nextPath?: string;
-  nextParams?: string;
-}) {
+export function buildPostLoginRedirect(
+  user: PassportUser,
+  query: {
+    nextPath?: string;
+    nextParams?: string;
+  }
+) {
   let { nextPath = `/u/${user.username}`, nextParams } = query;
   const redirectPath = nextPath && nextPath.startsWith("/") ? nextPath : "/";
   let redirectParams = {};
@@ -108,7 +126,7 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
 ) => {
   const { server } = options;
   const { log, app } = server;
-  const { services } = app;
+  const { services, config } = app;
   const { passwords } = services;
 
   fastify.get("/login", async (request, reply) => {
@@ -207,6 +225,9 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
   });
 
   fastify.get("/signup", async (request, reply) => {
+    if (config.get("authDisableSignup")) {
+      throw Boom.notFound(`signup not available`);
+    }
     return reply.renderTemplate(templateSignup, {
       csrfToken: reply.generateCsrf(),
     });
@@ -255,6 +276,10 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
       preValidation: fastify.csrfProtection,
     },
     async (request, reply) => {
+      if (config.get("authDisableSignup")) {
+        throw Boom.notFound(`signup not available`);
+      }
+
       const {
         username,
         password,

@@ -1,0 +1,27 @@
+# fly.toml app configuration file generated for pebbling-club-cold-glade-238 on 2024-09-03T21:41:55-07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'pebbling-club-cold-glade-238'
+primary_region = 'den'
+
+[build]
+  dockerfile = 'docker/flyio-litefs/Dockerfile'
+
+[[mounts]]  
+  source = 'pebbling_club_litefs'
+  destination = '/var/lib/litefs'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

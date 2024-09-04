@@ -13,12 +13,6 @@ import { configSchema as repositorySqlite3ConfigSchema } from "../repositories/s
 // HACK: Hardcoded assemblage of all configuration schemas, would be nice
 // if was dynamic at run-time
 export const configSchema = {
-  dataPath: {
-    doc: "Data directory for application state",
-    env: "DATA_PATH",
-    format: String,
-    default: "data" as string,
-  },
   ...loggingConfigSchema,
   ...serverConfigSchema,
   ...repositorySqlite3ConfigSchema,
@@ -62,7 +56,7 @@ export class Config extends CliAppModule implements IConfig {
       config.set("siteUrl", siteUrl);
     }
 
-    config.set("dataPath", ".data");
+    config.set("sqliteDatabasePath", ".data");
   }     
 
   async initCli(cli: Cli) {

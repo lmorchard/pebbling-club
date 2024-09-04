@@ -22,7 +22,7 @@ import { IApp, IWithServices } from "../app/types";
 import { HomeRouter } from "./home";
 import { ProfilesRouter } from "./profiles";
 import { BookmarksRouter } from "./bookmarks";
-import { PassportAuth, AuthRouter } from "./auth";
+import { PassportAuth, AuthRouter, configSchema as authConfigSchema } from "./auth";
 
 import { Profile } from "../services/profiles";
 import { TemplateRenderer } from "./utils/templates";
@@ -83,6 +83,7 @@ export const configSchema = {
     nullable: true,
     default: null,
   },
+  ...authConfigSchema,
 } as const;
 
 declare module "fastify" {

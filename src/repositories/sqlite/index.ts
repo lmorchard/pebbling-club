@@ -24,6 +24,12 @@ import { App } from "../../app";
 import CliSqlite from "./cli";
 
 export const configSchema = {
+  sqliteDatabasePath: {
+    doc: "Data directory for sqlite3 database",
+    env: "SQLITE_DATA_PATH",
+    format: String,
+    default: "data" as string,
+  },
   sqliteDatabaseName: {
     doc: "Filename for sqlite3 database",
     env: "SQLITE_FILENAME",
@@ -103,7 +109,7 @@ export class SqliteRepository
       // Failed to access database, assume it doesn't exist
       // TODO: check if it's actually a permission problem
       log.warn({ msg: "initializing sqlite database", err });
-      await mkdirp(config.get("dataPath"));
+      await mkdirp(config.get("sqliteDatabasePath"));
       await this.connection.migrate.latest();
     }
   }
@@ -143,11 +149,12 @@ export class SqliteRepository
   knexConnectionOptions(): Knex.Knex.Config["connection"] {
     const { config } = this.app;
 
-    const dataPath = config.get("dataPath");
-    const databaseName = config.get("sqliteDatabaseName");
-    const databasePath = path.join(dataPath, databaseName);
-
-    return { filename: databasePath };
+    return {
+      filename: path.join(
+        config.get("sqliteDatabasePath"),
+        config.get("sqliteDatabaseName")
+      ),
+    };
   }
 
   async listAllUsers(): Promise<
