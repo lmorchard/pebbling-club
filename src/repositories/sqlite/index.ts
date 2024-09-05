@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import { constants as fsConstants } from "fs";
 import path from "path";
 import Knex from "knex";
+import sqlite3 from "sqlite3";
 import { mkdirp } from "mkdirp";
 import { v4 as uuid } from "uuid";
 import { IKnexConnectionOptions, IKnexRepository } from "../knex";
@@ -47,6 +48,12 @@ export const configSchema = {
     env: "SQLITE_MAX_CONNECTIONS",
     format: Number,
     default: 16,
+  },
+  sqliteDatabaseMmapSize: {
+    doc: "sqlite mmap_size pragma",
+    env: "SQLITE_MMAP_SIZE",
+    format: Number,
+    default: 268435456,
   },
 } as const;
 
@@ -131,7 +138,13 @@ export class SqliteRepository
     const pool: Knex.Knex.PoolConfig = {
       min: 1,
       max: config.get("sqliteDatabaseMaxConnections"),
-      // afterCreate: this.connectionAfterCreate.bind(this),
+      afterCreate: (
+        conn: sqlite3.Database,
+        done: (err: Error | null) => void
+      ) =>
+        this.connectionAfterCreate(conn)
+          .then(() => done(null))
+          .catch(done),
     };
 
     this._connection = Knex({
@@ -155,6 +168,31 @@ export class SqliteRepository
         config.get("sqliteDatabaseName")
       ),
     };
+  }
+
+  async connectionAfterCreate(conn: sqlite3.Database) {
+    const { config } = this.app;
+
+    // Cribbing some notes from here https://phiresky.github.io/blog/2020/sqlite-performance-tuning/
+    const statements = `
+      PRAGMA busy_timeout = ${config.get("sqliteDatabaseBusyTimeout")};
+      PRAGMA mmap_size = ${config.get("sqliteDatabaseMmapSize")};
+      PRAGMA journal_mode = WAL;
+      PRAGMA synchronous = normal;
+      PRAGMA temp_store = memory;
+    `
+      .split(/\n/)
+      .map((line) => line.trim())
+      .filter((line) => !!line);
+
+    const run = (statement: string) =>
+      new Promise<void>((resolve, reject) =>
+        conn.run(statement, (err: Error) => (err ? reject(err) : resolve()))
+      );
+
+    for (const statement of statements) {
+      await run(statement);
+    }
   }
 
   async listAllUsers(): Promise<
