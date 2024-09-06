@@ -1,7 +1,7 @@
 import { html } from "../../utils/html";
 import { layout, LayoutProps } from "../layout";
 
-import { Bookmark, TagCount } from "../../../services/bookmarks";
+import { BookmarkWithPermissions, TagCount } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
 
 import partialBookmarkList from "../partials/bookmarkList";
@@ -9,7 +9,7 @@ import partialPaginator from "../partials/paginator";
 
 export interface Props extends LayoutProps {
   profile: Profile;
-  bookmarks: Bookmark[];
+  bookmarks: BookmarkWithPermissions[];
   tagCounts: TagCount[];
   limit: number;
   offset: number;

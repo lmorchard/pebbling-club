@@ -1,9 +1,9 @@
-import { Bookmark } from "../../../services/bookmarks";
+import { BookmarkWithPermissions } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
 import { html } from "../../utils/html";
 
 export interface Props {
-  bookmark: Bookmark;
+  bookmark: BookmarkWithPermissions;
   readOnly?: boolean;
   profile?: Profile;
 }
@@ -20,7 +20,7 @@ export default ({ bookmark, readOnly = false, profile }: Props) => {
       ${bookmark.extended &&
       html`<div class="p-summary">${bookmark.extended}</div>`}
       <div class="meta">
-        ${!readOnly &&
+        ${!readOnly && bookmark.canEdit &&
         html`
           <div class="actions">
             <a href="/bookmarks/${bookmark.id}/edit">Edit</a>

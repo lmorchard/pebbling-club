@@ -1,10 +1,10 @@
 import { html } from "../../utils/html";
 import { layout, LayoutProps } from "../layout";
 import partialBookmark from "../partials/bookmark";
-import { Bookmark } from "../../../services/bookmarks";
+import { BookmarkWithPermissions } from "../../../services/bookmarks";
 
 export interface Props extends LayoutProps {
-  bookmark: Bookmark;
+  bookmark: BookmarkWithPermissions;
 }
 
 export default ({ bookmark, csrfToken, ...locals }: Props) => {

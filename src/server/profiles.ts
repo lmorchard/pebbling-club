@@ -44,11 +44,12 @@ export const ProfilesRouter: FastifyPluginAsync<
   }>("/:username", async (request, reply) => {
     const { bookmarks } = options.server.app.services;
     const { limit, offset } = parseLimitOffset(request.query);
+    const viewerId = request.user?.id;
 
     const profile = request.profile as Profile;
 
     const { total: bookmarksTotal, items: bookmarksItems } =
-      await bookmarks.listForOwner(profile.id, limit, offset);
+      await bookmarks.listForOwner(viewerId, profile.id, limit, offset);
 
     return reply.renderTemplate(templateProfileIndex, {
       profile,
@@ -67,11 +68,13 @@ export const ProfilesRouter: FastifyPluginAsync<
     const { bookmarks } = options.server.app.services;
     const { tags } = request.params;
     const { limit, offset } = parseLimitOffset(request.query);
+    const viewerId = request.user?.id;
 
     const profile = request.profile as Profile;
 
     const { total: bookmarksTotal, items: bookmarksItems } =
       await bookmarks.listForOwnerByTags(
+        viewerId,
         profile.id,
         tags.split(/[\+ ]+/g),
         limit,

@@ -1,6 +1,141 @@
 import { IApp } from "../app/types";
 import { BaseService } from "./base";
 
+export class BookmarksService extends BaseService {
+  repository: IBookmarksRepository;
+
+  constructor(app: IApp, repository: IBookmarksRepository) {
+    super(app);
+    this.repository = repository;
+  }
+
+  async create(bookmark: BookmarkCreatable) {
+    return await this.repository.upsertBookmark(bookmark);
+  }
+
+  async createBatch(bookmarks: BookmarkCreatable[]) {
+    return await this.repository.upsertBookmarksBatch(bookmarks);
+  }
+
+  async update(bookmarkId: string, bookmark: BookmarkUpdatable) {
+    return await this.repository.updateBookmark(bookmarkId, { ...bookmark });
+  }
+
+  async delete(bookmarkId: string) {
+    return await this.repository.deleteBookmark(bookmarkId);
+  }
+
+  async get(viewerId: string | undefined, bookmarkId: string) {
+    return await this.annotateBookmarkWithPermissions(
+      viewerId,
+      await this.repository.fetchBookmark(bookmarkId)
+    );
+  }
+
+  async listForOwner(
+    viewerId: string | undefined,
+    ownerId: string,
+    limit: number,
+    offset: number
+  ) {
+    const { total, items } = await this.repository.listBookmarksForOwner(
+      ownerId,
+      limit,
+      offset
+    );
+    return {
+      total,
+      items: await this.annotateBookmarksWithPermissions(viewerId, items),
+    };
+  }
+
+  async listForOwnerByTags(
+    viewerId: string | undefined,
+    ownerId: string,
+    tags: string[],
+    limit: number,
+    offset: number
+  ) {
+    const { total, items } = await this.repository.listBookmarksForOwnerByTags(
+      ownerId,
+      tags,
+      limit,
+      offset
+    );
+    return {
+      total,
+      items: await this.annotateBookmarksWithPermissions(viewerId, items),
+    };
+  }
+
+  async listByTags(
+    viewerId: string | undefined,
+    tags: string[],
+    limit: number,
+    offset: number
+  ) {
+    const { total, items } = await this.repository.listBookmarksByTags(
+      tags,
+      limit,
+      offset
+    );
+    return {
+      total,
+      items: await this.annotateBookmarksWithPermissions(viewerId, items),
+    };
+  }
+
+  async listTagsForOwner(ownerId: string, limit: number, offset: number) {
+    return await this.repository.listTagsForOwner(ownerId, limit, offset);
+  }
+
+  async permissionsForBookmark(
+    viewerId: string | undefined,
+    bookmark: Bookmark
+  ): Promise<BookmarkPermissions> {
+    return {
+      viewerId,
+      canEdit: bookmark.ownerId === viewerId,
+      canView: true, // todo: viaibility property check
+    };
+  }
+
+  async annotateBookmarkWithPermissions(
+    viewerId: string | undefined,
+    bookmark: Bookmark | null
+  ) {
+    return !bookmark
+      ? null
+      : {
+          ...bookmark,
+          ...(await this.permissionsForBookmark(viewerId, bookmark)),
+        };
+  }
+
+  async annotateBookmarksWithPermissions(
+    viewerId: string | undefined,
+    bookmarks: Bookmark[]
+  ) {
+    const out: BookmarkWithPermissions[] = [];
+    for (const bookmark of bookmarks) {
+      const annotated = await this.annotateBookmarkWithPermissions(
+        viewerId,
+        bookmark
+      );
+      if (annotated) out.push(annotated);
+    }
+    return out;
+  }
+
+  formFieldToTags(tags: string = ""): Bookmark["tags"] {
+    return tags.split(/ +/g).filter((t) => !!t);
+  }
+
+  tagsToFormField(tags: Bookmark["tags"] = []): string {
+    return tags.join(" ");
+  }
+}
+
 export type Bookmark = {
   id: string;
   ownerId: string;
@@ -13,6 +148,18 @@ export type Bookmark = {
   created?: Date;
   modified?: Date;
 };
+
+export type BookmarkCreatable = Omit<Bookmark, "id">;
+
+export type BookmarkUpdatable = Omit<Partial<Bookmark>, "id" | "ownerId">;
+
+export type BookmarkPermissions = {
+  viewerId: string | undefined;
+  canEdit: boolean;
+  canView: boolean;
+};
+
+export type BookmarkWithPermissions = Bookmark & BookmarkPermissions;
 
 export type TagCount = {
   name: string;
@@ -50,73 +197,6 @@ export interface IBookmarksRepository {
     offset: number
   ): Promise<TagCount[]>;
 }
-
-export class BookmarksService extends BaseService {
-  repository: IBookmarksRepository;
-
-  constructor(app: IApp, repository: IBookmarksRepository) {
-    super(app);
-    this.repository = repository;
-  }
-
-  async get(bookmarkId: string) {
-    return await this.repository.fetchBookmark(bookmarkId);
-  }
-
-  async create(bookmark: BookmarkCreatable) {
-    return await this.repository.upsertBookmark(bookmark);
-  }
-
-  async createBatch(bookmarks: BookmarkCreatable[]) {
-    return await this.repository.upsertBookmarksBatch(bookmarks);
-  }
-
-  async update(bookmarkId: string, bookmark: BookmarkUpdatable) {
-    return await this.repository.updateBookmark(bookmarkId, { ...bookmark });
-  }
-
-  async delete(bookmarkId: string) {
-    return await this.repository.deleteBookmark(bookmarkId);
-  }
-
-  async listForOwner(ownerId: string, limit: number, offset: number) {
-    return await this.repository.listBookmarksForOwner(ownerId, limit, offset);
-  }
-
-  async listForOwnerByTags(
-    ownerId: string,
-    tags: string[],
-    limit: number,
-    offset: number
-  ) {
-    return await this.repository.listBookmarksForOwnerByTags(
-      ownerId,
-      tags,
-      limit,
-      offset
-    );
-  }
-
-  async listByTags(tags: string[], limit: number, offset: number) {
-    return await this.repository.listBookmarksByTags(tags, limit, offset);
-  }
-
-  async listTagsForOwner(ownerId: string, limit: number, offset: number) {
-    return await this.repository.listTagsForOwner(ownerId, limit, offset);
-  }
-
-  formFieldToTags(tags: string = ""): Bookmark["tags"] {
-    return tags.split(/ +/g).filter((t) => !!t);
-  }
-
-  tagsToFormField(tags: Bookmark["tags"] = []): string {
-    return tags.join(" ");
-  }
-}
-
-export type BookmarkCreatable = Omit<Bookmark, "id">;
-
-export type BookmarkUpdatable = Omit<Partial<Bookmark>, "id" | "ownerId">;
 
 export const NewBookmarkQuerystringSchema = {
   type: "object",

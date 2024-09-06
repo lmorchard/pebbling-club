@@ -46,6 +46,9 @@ export const BookmarksRouter: FastifyPluginAsync<
       preHandler: RequirePasswordAuth,
     },
     async (request, reply) => {
+      const viewerId = request.user?.id;
+      if (!viewerId) throw Boom.forbidden(`cannot create bookmark`);
+
       return reply.renderTemplate(templateBookmarksNew, {
         csrfToken: reply.generateCsrf(),
         formData: request.query,
@@ -64,6 +67,9 @@ export const BookmarksRouter: FastifyPluginAsync<
       preHandler: RequirePasswordAuth,
     },
     async (request, reply) => {
+      const viewerId = request.user?.id;
+      if (!viewerId) throw Boom.forbidden(`cannot create bookmark`);
+
       let validationError = request.validationError as FormValidationError;
       let formData = request.body;
       const { href } = formData;
@@ -108,9 +114,11 @@ export const BookmarksRouter: FastifyPluginAsync<
     },
     async (request, reply) => {
       const { id } = request.params;
+      const viewerId = request.user?.id;
 
-      const bookmark = await bookmarks.get(id);
+      const bookmark = await bookmarks.get(viewerId, id);
       if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
+      if (!bookmark.canEdit) throw Boom.forbidden(`cannot edit bookmark ${id}`);
 
       const formData = {
         ...bookmark,
@@ -139,9 +147,11 @@ export const BookmarksRouter: FastifyPluginAsync<
     },
     async (request, reply) => {
       const { id } = request.params;
+      const viewerId = request.user?.id;
 
-      const bookmark = await bookmarks.get(id);
+      const bookmark = await bookmarks.get(viewerId, id);
       if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
+      if (!bookmark.canEdit) throw Boom.forbidden(`cannot edit bookmark ${id}`);
 
       const { href, title, extended, visibility } = request.body;
       const tags = bookmarks.formFieldToTags(request.body.tags);
@@ -162,7 +172,9 @@ export const BookmarksRouter: FastifyPluginAsync<
     Params: FromSchema<typeof BookmarkUrlParamsSchema>;
   }>("/bookmarks/:id", async (request, reply) => {
     const { id } = request.params;
-    const bookmark = await bookmarks.get(id);
+    const viewerId = request.user?.id;
+
+    const bookmark = await bookmarks.get(viewerId, id);
     if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
 
     return reply.renderTemplate(templateBookmarksView, {
@@ -180,8 +192,11 @@ export const BookmarksRouter: FastifyPluginAsync<
     },
     async (request, reply) => {
       const { id } = request.params;
-      const bookmark = await bookmarks.get(id);
+      const viewerId = request.user?.id;
+
+      const bookmark = await bookmarks.get(viewerId, id);
       if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
+      if (!bookmark.canEdit) throw Boom.forbidden(`cannot delete bookmark ${id}`);
 
       return reply.renderTemplate(templateBookmarksDelete, {
         csrfToken: reply.generateCsrf(),
@@ -202,8 +217,11 @@ export const BookmarksRouter: FastifyPluginAsync<
     async (request, reply) => {
       const user = request.user!;
       const { id } = request.params;
-      const bookmark = await bookmarks.get(id);
+      const viewerId = request.user?.id;
+
+      const bookmark = await bookmarks.get(viewerId, id);
       if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
+      if (!bookmark.canEdit) throw Boom.forbidden(`cannot delete bookmark ${id}`);
 
       const result = await bookmarks.delete(id);
       if (result) {

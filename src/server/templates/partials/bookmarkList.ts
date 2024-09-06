@@ -1,10 +1,10 @@
-import { Bookmark } from "../../../services/bookmarks";
+import { BookmarkWithPermissions } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
 import { html } from "../../utils/html";
 import partialBookmark from "../partials/bookmark";
 
 export interface Props {
-  bookmarks: Bookmark[];
+  bookmarks: BookmarkWithPermissions[];
   profile?: Profile;
 }
 

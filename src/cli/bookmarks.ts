@@ -79,6 +79,8 @@ export default class CliBookmarks extends CliAppModule {
       return;
     }
 
+    const viewerId = profile.id; // TODO: specify an admin user here?
+
     const { id: ownerId } = profile;
     const { limit = 10, offset = 0 } = options;
 
@@ -86,13 +88,19 @@ export default class CliBookmarks extends CliAppModule {
     if (options.tags) {
       const tags = options.tags.split(/ +/g);
       ({ total, items } = await bookmarks.listForOwnerByTags(
+        viewerId,
         ownerId,
         tags,
         limit,
         offset
       ));
     } else {
-      ({ total, items } = await bookmarks.listForOwner(ownerId, limit, offset));
+      ({ total, items } = await bookmarks.listForOwner(
+        viewerId,
+        ownerId,
+        limit,
+        offset
+      ));
     }
 
     log.info({ msg: "Total bookmarks", total });
@@ -124,8 +132,9 @@ export default class CliBookmarks extends CliAppModule {
   async commandGet(id: string) {
     const { log } = this;
     const { bookmarks } = this.app.services;
+    const viewerId = undefined; // TOSO: add a viewer profile option?
 
-    const bookmark = await bookmarks.get(id);
+    const bookmark = await bookmarks.get(viewerId, id);
     if (!bookmark) {
       log.error({ msg: "bookmark does not exist", id });
       return;
@@ -180,8 +189,9 @@ export default class CliBookmarks extends CliAppModule {
   ) {
     const { log } = this;
     const { bookmarks, profiles } = this.app.services;
+    const viewerId = undefined; // TOSO: add a viewer profile option?
 
-    const bookmark = await bookmarks.get(id);
+    const bookmark = await bookmarks.get(viewerId, id);
     if (!bookmark) {
       log.error({ msg: "bookmark does not exist", id });
       return;
