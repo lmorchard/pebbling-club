@@ -4,7 +4,6 @@ import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
 import { PinboardImportRecord } from "../services/imports";
 import { IApp, IWithServices } from "../app/types";
-import { BookmarkCreatable } from "../services/bookmarks";
 import { App } from "../app";
 
 export default class CliImport extends CliAppModule {
@@ -66,6 +65,7 @@ export default class CliImport extends CliAppModule {
     const importedCount = await imports.importPinboard(
       ownerId,
       batchSize,
+      // TODO: switch to ReadStream over here too, for a consistent import interface?
       importRecords
     );
     log.info({ msg: "imported bookmarks", ownerId, importedCount });

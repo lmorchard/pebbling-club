@@ -81,29 +81,26 @@ export class ImportService extends BaseService {
         return;
       }
 
-      const {
-        title,
-        url,
-        tags: tagsRaw,
-        created,
-        excerpt,
-        note,
-        highlights,
-      } = Object.fromEntries(
-        columns.map((columnName, i) => [columnName, chunk[i]])
-      ) as RaindropCsvRow;
+      const { title, url, tags, created, excerpt, note, highlights } =
+        Object.fromEntries(
+          columns.map((columnName, i) => [columnName, chunk[i]])
+        ) as RaindropCsvRow;
 
       const newBookmark: BookmarkCreatable = {
         ownerId,
         title,
         href: url,
-        tags: tagsRaw.split(/, +/g),
+        tags: tags.split(/, +/g),
         created: new Date(created),
         extended: [note, highlights, excerpt].filter((s) => !!s).join("\n"),
       };
 
       writeQueue.push(newBookmark);
     });
+
+    // TODO: This is maybe over-engineered, kind of assumes that CSV parsing
+    // and DB inserts will run roughly neck-and-neck. But, really, the file
+    // just gets dumped into memory very quickly and the DB is the bottleneck
 
     const wait = (delay: number) =>
       new Promise((resolve) => setTimeout(resolve, delay));
