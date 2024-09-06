@@ -1,5 +1,7 @@
+import { ReadStream } from "fs";
+import * as CSV from "csv";
 import { BaseService } from "./base";
-import { BookmarkCreatable, BookmarkUpdatable, BookmarksService } from "./bookmarks";
+import { BookmarkCreatable, BookmarksService } from "./bookmarks";
 import { IApp } from "../app/types";
 
 export class ImportService extends BaseService {
@@ -49,6 +51,77 @@ export class ImportService extends BaseService {
     }
     return importedCount;
   }
+
+  async importRaindropCsv(
+    ownerId: string,
+    batchSize: number,
+    importFileStream: ReadStream
+  ) {
+    const { log } = this;
+    const { bookmarks } = this;
+
+    const writeQueue: BookmarkCreatable[] = [];
+
+    const csvParser = CSV.parse();
+    importFileStream.pipe(csvParser);
+
+    let doneParsing = false;
+    csvParser.on("end", () => (doneParsing = true));
+
+    csvParser.on("error", (error) => {
+      log.error({ msg: "parsing failed", error });
+      doneParsing = true;
+    });
+
+    let columns: string[] | null = null;
+
+    csvParser.on("data", async (chunk: string[]) => {
+      if (!columns) {
+        columns = chunk;
+        return;
+      }
+
+      const {
+        title,
+        url,
+        tags: tagsRaw,
+        created,
+        excerpt,
+        note,
+        highlights,
+      } = Object.fromEntries(
+        columns.map((columnName, i) => [columnName, chunk[i]])
+      ) as RaindropCsvRow;
+
+      const newBookmark: BookmarkCreatable = {
+        ownerId,
+        title,
+        href: url,
+        tags: tagsRaw.split(/, +/g),
+        created: new Date(created),
+        extended: [note, highlights, excerpt].filter((s) => !!s).join("\n"),
+      };
+
+      writeQueue.push(newBookmark);
+    });
+
+    const wait = (delay: number) =>
+      new Promise((resolve) => setTimeout(resolve, delay));
+
+    while (!doneParsing || writeQueue.length > 0) {
+      if (doneParsing || writeQueue.length > batchSize) {
+        const batch = writeQueue.splice(0, batchSize);
+        const result = await bookmarks.createBatch(batch);
+        log.debug({
+          msg: "imported",
+          imported: result.length,
+          queued: writeQueue.length,
+        });
+      } else {
+        await wait(10);
+      }
+    }
+  }
 }
 
 export type PinboardImportRecord = {
@@ -62,3 +135,18 @@ export type PinboardImportRecord = {
   toread: string;
   tags: string;
 };
+
+type RaindropCsvRow = Record<
+  | "id"
+  | "title"
+  | "note"
+  | "excerpt"
+  | "url"
+  | "folder"
+  | "tags"
+  | "created"
+  | "cover"
+  | "highlights"
+  | "favorite",
+  string
+>;

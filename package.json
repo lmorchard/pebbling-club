@@ -40,6 +40,7 @@
     "convict": "^6.2.4",
     "cookie-parser": "^1.4.6",
     "csurf": "^1.11.0",
+    "csv": "^6.3.10",
     "dotenv": "^16.4.5",
     "escape-html": "^1.0.3",
     "fastify": "^4.28.1",
