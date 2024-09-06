@@ -60,7 +60,13 @@ export class ImportService extends BaseService {
     const { log } = this;
     const { bookmarks } = this;
 
+    let importedCount = 0;
     const writeQueue: BookmarkCreatable[] = [];
+
+    // This is maybe over-engineered, but: To avoid reading the whole file
+    // into memory while parsing CSV, pause the stream every time we have
+    // enough queued up for a batch and then unpause the scream after the
+    // batch upsert transaction completes. 
 
     const csvParser = CSV.parse();
     importFileStream.pipe(csvParser);
@@ -96,28 +102,33 @@ export class ImportService extends BaseService {
       };
 
       writeQueue.push(newBookmark);
+      if (writeQueue.length >= batchSize && !csvParser.isPaused()) {
+        log.debug({ msg: "parsed batch", queued: writeQueue.length });
+        csvParser.pause();
+      }
     });
-
-    // TODO: This is maybe over-engineered, kind of assumes that CSV parsing
-    // and DB inserts will run roughly neck-and-neck. But, really, the file
-    // just gets dumped into memory very quickly and the DB is the bottleneck
 
     const wait = (delay: number) =>
       new Promise((resolve) => setTimeout(resolve, delay));
 
     while (!doneParsing || writeQueue.length > 0) {
-      if (doneParsing || writeQueue.length > batchSize) {
+      if (doneParsing || writeQueue.length >= batchSize) {
         const batch = writeQueue.splice(0, batchSize);
         const result = await bookmarks.createBatch(batch);
+
+        importedCount += result.length;
         log.debug({
-          msg: "imported",
-          imported: result.length,
-          queued: writeQueue.length,
+          msg: "imported batch",
+          importedCount,
+          doneParsing,
         });
       } else {
+        if (csvParser.isPaused()) csvParser.resume();
         await wait(10);
       }
     }
+
+    return importedCount;
   }
 }
 
