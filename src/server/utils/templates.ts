@@ -1,6 +1,7 @@
 import { render, TemplateContent } from "./html";
 import { LayoutProps } from "../templates/layout";
 import fp from "fastify-plugin";
+import { IConfig } from "../../app/types";
 
 export interface ITemplateProps extends Record<string, any> {}
 
@@ -17,33 +18,40 @@ declare module "fastify" {
   }
 }
 
-export const TemplateRenderer = fp(async (fastify, options) => {
-  fastify.decorateReply("renderTemplate", function (template, props = {}) {
-    const reply = this;
-    const request = this.request;
+interface TemplateRendererOptions {
+  config: IConfig;
+}
 
-    const layoutProps: LayoutProps = {
-      user: request.user,
-      flash: {
-        info: reply.flash("info") as string[],
-        warn: reply.flash("warn") as string[],
-        error: reply.flash("error") as string[],
-      },
-    };
+export const TemplateRenderer = fp(
+  async (fastify, { config }: TemplateRendererOptions) => {
+    fastify.decorateReply("renderTemplate", function (template, props) {
+      const reply = this;
+      const request = this.request;
 
-    return reply
-      .code(200)
-      .headers({
-        "Content-Type": "text/html",
-        "Access-Control-Allow-Origin": "*",
-      })
-      .send(
-        render(
-          template({
-            ...layoutProps,
-            ...props,
-          })
-        )
-      );
-  });
-});
+      const layoutProps: LayoutProps = {
+        user: request.user,
+        siteUrl: config.get("siteUrl"),
+        flash: {
+          info: reply.flash("info") as string[],
+          warn: reply.flash("warn") as string[],
+          error: reply.flash("error") as string[],
+        },
+      };
+
+      return reply
+        .code(200)
+        .headers({
+          "Content-Type": "text/html",
+          "Access-Control-Allow-Origin": "*",
+        })
+        .send(
+          render(
+            template({
+              ...layoutProps,
+              ...props,
+            })
+          )
+        );
+    });
+  }
+);

@@ -19,9 +19,10 @@ export default ({
     <section>
       <form action="" method="post">
         <input type="hidden" name="_csrf" value="${csrfToken}" />
-        ${f("URL", "href", { required: true })}
+        ${f("URL", "href", { required: true, autofocus: !formData?.href })}
         ${f("Title", "title", { required: true })}
-        ${f("Description", "extended")} ${f("Tags", "tags")}
+        ${f("Description", "extended")} 
+        ${f("Tags", "tags", { autofocus: formData?.href })}
         <section>
           <button type="submit">${actionButtonTitle}</button>
         </section>

@@ -151,7 +151,7 @@ export default class Server extends CliAppModule {
       sessionPlugin: "@fastify/secure-session",
     });
     fastify.register(PassportAuth, { services: this.app.services });
-    fastify.register(TemplateRenderer);
+    fastify.register(TemplateRenderer, { config: this.app.config });
     await this.setupRouters(fastify);
 
     return fastify;

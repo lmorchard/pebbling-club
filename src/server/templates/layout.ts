@@ -6,12 +6,14 @@ import Page from "./page";
 export interface LayoutProps extends ITemplateProps {
   user?: Profile;
   flash?: Record<"info" | "warn" | "error", string[]>;
+  siteUrl: String;
 }
 
 export const layout = ({
   content,
   user,
   flash,
+  siteUrl,
 }: { content: TemplateContent } & LayoutProps) => {
   return Page({
     content: html`
@@ -29,6 +31,7 @@ export const layout = ({
                   <div>
                     <a href="/u/${user.username}">Profile</a>
                     <a href="/settings">Settings</a>
+                    <a href="javascript:if(document.getSelection){s=document.getSelection();}else{s='';};document.location='${siteUrl}/new?next=same&href='+encodeURIComponent(location.href)+'&extended='+encodeURIComponent(s)+'&title='+encodeURIComponent(document.title)+'&tags='+encodeURIComponent('%s')">Bookmarklet</a>
                     <form action="/logout" method="post">
                       <button type="submit">Logout</button>
                     </form>
