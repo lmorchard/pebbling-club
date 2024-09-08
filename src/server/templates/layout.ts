@@ -6,7 +6,7 @@ import Page from "./page";
 export interface LayoutProps extends ITemplateProps {
   user?: Profile;
   flash?: Record<"info" | "warn" | "error", string[]>;
-  siteUrl: String;
+  siteUrl?: String;
 }
 
 export const layout = ({
