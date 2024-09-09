@@ -49,7 +49,7 @@ export async function importRaindropCSV(
       ownerId,
       title,
       href: url,
-      tags: tags.split(/, +/g),
+      tags: [...tags.split(/, +/g), "imported:raindrop"],
       created: new Date(created),
       extended: [note, highlights, excerpt].filter((s) => !!s).join("\n"),
     };

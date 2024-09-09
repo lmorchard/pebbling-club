@@ -487,6 +487,7 @@ export class SqliteRepository
       .insert(toInsert)
       .onConflict(["ownerId", "href"])
       .merge({
+        ...toInsert,
         meta: connection.raw(`
           json_patch(
             iif(json_valid(meta), meta, "{}"),
