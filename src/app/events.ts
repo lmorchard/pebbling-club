@@ -1,4 +1,3 @@
-import { App } from ".";
 import { AppModule } from "./modules";
 import { IApp, IEvents } from "./types";
 

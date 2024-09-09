@@ -1,10 +1,22 @@
 import path from "path";
 import { mkdirp } from "mkdirp";
-import { App } from "../../app/index";
+import { BaseApp } from "../../app";
+import { SqliteRepository } from ".";
+
+class SqliteRepositoryApp extends BaseApp {
+  repository: SqliteRepository;
+
+  constructor() {
+    super();
+    this.modules.push(
+      (this.repository = new SqliteRepository(this)),
+    );
+  }
+}
 
 const connection = async () => {
   // Get an instance of App to access config
-  const app = await new App().init();
+  const app = await new SqliteRepositoryApp().init();
 
   // HACK: knex changes working directory, so adjust accordingly
   const { config } = app;

@@ -1,38 +1,41 @@
 import { Command } from "commander";
-import { App } from ".";
+import { BaseApp } from ".";
 import { CliAppModule } from "./modules";
+import { ICliAppModule } from "./types";
 
-export class Cli {
-  app: App;
+export class BaseCliApp extends BaseApp {
   program: Command;
 
   constructor() {
-    this.app = new App();
+    super();
     this.program = new Command();
   }
 
   async init() {
-    await this.app.init();
-    await this.callModules(async (m) => m.initCli(this));
+    await super.init();
     this.program.version(process.env.npm_package_version || "0.0");
+    await this.initCli();
     return this;
   }
 
+  async initCli() {
+    return this._callCliModules(async (m) => m.initCli(this));
+  }
+
+  async _callCliModules(mapfn: (m: ICliAppModule) => Promise<any>) {
+    return this._callModules(async (m) => {
+      if (m instanceof CliAppModule) mapfn(m);
+    });
+  }
+
   async run(argv = process.argv) {
-    const { log } = this.app.logging;
+    const { log } = this.logging;
     try {
       await this.program.parseAsync(argv);
     } catch (err) {
       log.error({ msg: "Command failed", err });
     } finally {
-      this.app.deinit();
+      this.deinit();
     }
-  }
-
-  async callModules(mapfn: (m: CliAppModule) => Promise<any>) {
-    await Promise.all(
-      this.app.modules.filter((m) => m instanceof CliAppModule).map(mapfn)
-    );
-    return this;
   }
 }

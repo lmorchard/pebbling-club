@@ -2,12 +2,9 @@ import stream from "stream";
 import pino, { Logger } from "pino";
 import pretty from "pino-pretty";
 
-import { App } from ".";
 import { CliAppModule } from "./modules";
-import { Events } from "./events";
-import { Cli } from "./cli";
 import { Command } from "commander";
-import { IApp } from "./types";
+import { IApp, ICliApp, IEvents } from "./types";
 
 const LOG_LEVELS = [
   "trace",
@@ -73,8 +70,8 @@ export class Logging extends CliAppModule {
     return this.logger.fatal.bind(this.logger);
   }
 
-  async initCli(cli: Cli) {
-    const { program } = cli;
+  async initCli(app: ICliApp) {
+    const { program } = app;
     program.option(
       "--no-pretty-logs",
       "disable pretty printing of logs in a TTY"
@@ -94,7 +91,7 @@ export class Logging extends CliAppModule {
 
   buildLogger() {
     const { usePrettyLogs } = this;
-    const { config, events } = this.app as App;
+    const { config, events } = this.app;
     const options = {
       level: config.get("logLevel"),
     };
@@ -118,10 +115,10 @@ export class Logging extends CliAppModule {
 }
 
 class LogEventStream extends stream.Writable {
-  events: Events;
+  events: IEvents;
   eventName: Symbol;
 
-  constructor(events: Events, eventName: Symbol) {
+  constructor(events: IEvents, eventName: Symbol) {
     super();
     this.events = events;
     this.eventName = eventName;

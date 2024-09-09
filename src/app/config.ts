@@ -1,10 +1,8 @@
 import * as dotenv from "dotenv";
 import Convict from "convict";
-import { App } from ".";
 import { CliAppModule } from "./modules";
-import { IApp, IConfig } from "./types";
+import { IApp, ICliApp, IConfig } from "./types";
 import { Command } from "commander";
-import { Cli } from "./cli";
 
 import { configSchema as loggingConfigSchema } from "./logging";
 import { configSchema as serverConfigSchema } from "../server/index";
@@ -59,8 +57,8 @@ export class Config extends CliAppModule implements IConfig {
     config.set("sqliteDatabasePath", ".data");
   }     
 
-  async initCli(cli: Cli) {
-    const { program } = cli;
+  async initCli(app: ICliApp) {
+    const { program } = app;
 
     program.option(
       "-f, --config-file <path>",

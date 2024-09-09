@@ -1,5 +1,4 @@
-import { Cli } from "./cli";
-import { IAppModule, IApp } from "./types";
+import { IAppModule, IApp, ICliApp } from "./types";
 
 export class AppModule implements IAppModule {
   app: IApp;
@@ -26,7 +25,7 @@ export class AppModule implements IAppModule {
 }
 
 export class CliAppModule extends AppModule {
-  async initCli(cli: Cli) {
+  async initCli(app: ICliApp) {
     return this;
   }
 }

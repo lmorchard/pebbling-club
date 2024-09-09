@@ -1,19 +1,25 @@
-import { App } from "../app";
-import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
-import { IApp, IWithServices } from "../app/types";
+import { IApp, ICliApp } from "../app/types";
+import { BookmarksService } from "../services/bookmarks";
+import { ProfileService } from "../services/profiles";
+
+export type IAppRequirements = IApp & {
+  services: {
+    bookmarks: BookmarksService;
+    profiles: ProfileService;
+  };
+};
 
 export default class CliBookmarks extends CliAppModule {
-  app: IApp & IWithServices;
+  app: IAppRequirements;
 
-  constructor(app: IApp) {
+  constructor(app: IAppRequirements) {
     super(app);
-    // TODO fix this type confusion
-    this.app = app as IApp & IWithServices;
+    this.app = app;
   }
 
-  async initCli(cli: Cli) {
-    const { program } = cli;
+  async initCli(app: ICliApp) {
+    const { program } = app;
 
     const bookmarksProgram = program
       .command("bookmarks")

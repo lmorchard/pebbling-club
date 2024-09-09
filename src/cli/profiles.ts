@@ -1,21 +1,29 @@
-import { App } from "../app";
-import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
-import { IApp, IWithServices } from "../app/types";
+import { IApp, ICliApp } from "../app/types";
+import { PasswordService } from "../services/passwords";
+import { ProfileService } from "../services/profiles";
+
+export type IAppRequirements = IApp & {
+  services: {
+    profiles: ProfileService;
+    passwords: PasswordService;
+  };
+};
 
 export default class CliProfiles extends CliAppModule {
-  app: App;
+  app: IAppRequirements;
 
-  constructor(app: IApp) {
+  constructor(app: IAppRequirements) {
     super(app);
-    // TODO: fix this type confusion
-    this.app = app as App;
+    this.app = app;
   }
 
-  async initCli(cli: Cli) {
-    const { program } = cli;
+  async initCli(app: ICliApp) {
+    const { program } = app;
 
-    const profilesProgram = program.command("profiles").description("manage profiles");
+    const profilesProgram = program
+      .command("profiles")
+      .description("manage profiles");
 
     profilesProgram
       .command("list")
@@ -42,7 +50,7 @@ export default class CliProfiles extends CliAppModule {
 
   async commandList() {
     const { log } = this;
-    const { services } = this.app as App;
+    const { services } = this.app;
     const { passwords } = services;
 
     const users = await passwords.list();

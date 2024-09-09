@@ -1,9 +1,13 @@
-import { App } from "../app";
 import { AppModule } from "../app/modules";
-import { BookmarksService } from "./bookmarks";
+import { IApp } from "../app/types";
+import { BookmarksService, IBookmarksRepository } from "./bookmarks";
 import { ImportService } from "./imports";
-import { PasswordService } from "./passwords";
-import { ProfileService } from "./profiles";
+import { IPasswordsRepository, PasswordService } from "./passwords";
+import { IProfilesRepository, ProfileService } from "./profiles";
+
+export type IAppRequirements = IApp & {
+  repository: IPasswordsRepository & IProfilesRepository & IBookmarksRepository;
+};
 
 export class Services extends AppModule {
   passwords: PasswordService;
@@ -11,7 +15,7 @@ export class Services extends AppModule {
   bookmarks: BookmarksService;
   imports: ImportService;
 
-  constructor(app: App) {
+  constructor(app: IAppRequirements) {
     super(app);
 
     const { repository } = app;

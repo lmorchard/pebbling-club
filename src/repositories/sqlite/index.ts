@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import { constants as fsConstants } from "fs";
 import path from "path";
-import Knex, { knex } from "knex";
+import Knex from "knex";
 import sqlite3 from "sqlite3";
 import { mkdirp } from "mkdirp";
 import { v4 as uuid } from "uuid";
@@ -18,11 +18,9 @@ import {
   ProfileEditable,
   IProfilesRepository,
 } from "../../services/profiles";
-import { AppModule, CliAppModule } from "../../app/modules";
+import { AppModule } from "../../app/modules";
 import { IPasswordsRepository } from "../../services/passwords";
-import { App } from "../../app";
 
-import CliSqlite from "./cli";
 
 export const configSchema = {
   sqliteDatabasePath: {
@@ -87,12 +85,7 @@ export class SqliteRepository
   _connection?: Knex.Knex<any, unknown[]>;
 
   async init() {
-    const app = this.app as App;
-
-    app.registerModule("sqliteCli", CliSqlite);
-
     await this.maybeInitializeDatabase();
-
     return this;
   }
 
@@ -372,12 +365,15 @@ export class SqliteRepository
         modified: now,
         tags: this.serializeTagsColumn(updates.tags),
         // meta: this.serializeMetaColumn(updates.meta),
-        meta: this.connection.raw(`
+        meta: this.connection.raw(
+          `
           json_patch(
             iif(json_valid(meta), meta, "{}"),
             ?
           )
-        `, this.serializeMetaColumn(updates.meta))
+        `,
+          this.serializeMetaColumn(updates.meta)
+        ),
       });
     if (!result) throw new Error("item update failed");
 
@@ -496,7 +492,7 @@ export class SqliteRepository
             iif(json_valid(meta), meta, "{}"),
             excluded.meta
           )
-        `)
+        `),
       });
 
     // Hacky attempt at an optimistic update, will probably mismatch a

@@ -1,11 +1,10 @@
 import { SqliteRepository } from ".";
-import { Cli } from "../../app/cli";
+import { ICliApp } from "../../app/types";
 import { KnexCliAppModule } from "../knex";
 
 export default class CliSqlite extends KnexCliAppModule {
-  async initCli(cli: Cli) {
-    const { app } = this;
-    const { program } = cli;
+  async initCli(app: ICliApp) {
+    const { program } = app;
     const repository = new SqliteRepository(app);
     const connection = repository.connection;
 

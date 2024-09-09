@@ -1,7 +1,6 @@
 import path from "path";
 import { URL } from "url";
 
-import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
 
 import Fastify, { FastifyBaseLogger, FastifyInstance } from "fastify";
@@ -17,15 +16,17 @@ import FastifyMethodOverride from "fastify-method-override";
 
 import AjvErrors from "ajv-errors";
 
-import { IApp, IWithServices } from "../app/types";
+import { IApp, ICliApp } from "../app/types";
 
 import { HomeRouter } from "./home";
 import { ProfilesRouter } from "./profiles";
 import { BookmarksRouter } from "./bookmarks";
 import { PassportAuth, AuthRouter, configSchema as authConfigSchema } from "./auth";
 
-import { Profile } from "../services/profiles";
+import { Profile, ProfileService } from "../services/profiles";
 import { TemplateRenderer } from "./utils/templates";
+import { BookmarksService } from "../services/bookmarks";
+import { PasswordService } from "../services/passwords";
 
 export const configSchema = {
   host: {
@@ -90,17 +91,24 @@ declare module "fastify" {
   interface PassportUser extends Profile {}
 }
 
-export default class Server extends CliAppModule {
-  app: IApp & IWithServices;
+export type IAppRequirements = IApp & {
+  services: {
+    passwords: PasswordService;
+    profiles: ProfileService;
+    bookmarks: BookmarksService;
+  };
+}
 
-  constructor(app: IApp) {
+export default class Server extends CliAppModule {
+  app: IAppRequirements;
+
+  constructor(app: IAppRequirements) {
     super(app);
-    // TODO fix this type confusion
-    this.app = app as IApp & IWithServices;
+    this.app = app;
   }
 
-  async initCli(cli: Cli) {
-    const { program } = cli;
+  async initCli(app: ICliApp) {
+    const { program } = app;
     program
       .command("serve")
       .description("start the web application server")

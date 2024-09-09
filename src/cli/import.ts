@@ -1,21 +1,26 @@
-import fs from "fs/promises";
 import { createReadStream } from "fs";
-import { Cli } from "../app/cli";
 import { CliAppModule } from "../app/modules";
-import { PinboardImportRecord } from "../services/imports";
-import { IApp, IWithServices } from "../app/types";
-import { App } from "../app";
+import { ImportService } from "../services/imports";
+import { IApp, ICliApp } from "../app/types";
+import { ProfileService } from "../services/profiles";
+
+export type IAppRequirements = IApp & {
+  services: {
+    profiles: ProfileService;
+    imports: ImportService;
+  };
+};
 
 export default class CliImport extends CliAppModule {
-  app: IApp;
+  app: IAppRequirements;
 
-  constructor(app: IApp) {
+  constructor(app: IAppRequirements) {
     super(app);
     this.app = app;
   }
 
-  async initCli(cli: Cli) {
-    const { program } = cli;
+  async initCli(app: ICliApp) {
+    const { program } = app;
 
     const importProgram = program.command("import").description("import data");
 
@@ -47,7 +52,7 @@ export default class CliImport extends CliAppModule {
   ) {
     const { log } = this;
     // TODO fix this type
-    const { services } = this.app as App;
+    const { services } = this.app;
     const { profiles, imports } = services;
     const batchSize = parseInt(options.batch, 10) || 100;
 
@@ -75,8 +80,8 @@ export default class CliImport extends CliAppModule {
   ) {
     const { log } = this;
     // TODO fix this type
-    const { services } = this.app as App;
-    const { profiles, imports, bookmarks } = services;
+    const { services } = this.app;
+    const { profiles, imports } = services;
 
     const batchSize = parseInt(options.batch, 10) || 100;
 

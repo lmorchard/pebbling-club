@@ -1,3 +1,4 @@
+import { Command } from "commander";
 import { Services } from "../services";
 
 export interface IApp {
@@ -6,15 +7,18 @@ export interface IApp {
   events: IEvents;
 }
 
-// TODO: rather tied to the specific set of services, find a way to make more generic?
-export interface IWithServices {
-  services: Services;
+export interface ICliApp extends IApp {
+  program: Command;
 }
 
 export interface IAppModule {
   app: IApp;
   init(): Promise<this>;
   deinit(): Promise<this>;
+}
+
+export interface ICliAppModule extends IAppModule {
+  initCli(app: ICliApp): Promise<this>;
 }
 
 export interface IConfig {

@@ -1,18 +1,26 @@
-import { CliAppModule } from "../app/modules";
-import { App } from "../app";
+import Server from "../server";
+import { SqliteRepository } from "../repositories/sqlite";
+import { Services } from "../services";
+import CliProfiles from "../cli/profiles";
+import CliImport from "../cli/import";
+import CliBookmarks from "../cli/bookmarks";
+import CliSqlite from "../repositories/sqlite/cli";
+import { BaseCliApp } from "../app/cli";
 
-import CliProfiles from "./profiles";
-import CliImport from "./import";
-import CliBookmarks from "./bookmarks";
+export class MainCliApp extends BaseCliApp {
+  repository: SqliteRepository;
+  services: Services;
 
-export default class CliIndex extends CliAppModule {
-  async init() {
-    const app = this.app as App;
-
-    app.registerModule("profiles", CliProfiles);
-    app.registerModule("import", CliImport);
-    app.registerModule("bookmarks", CliBookmarks);
-
-    return this;
+  constructor() {
+    super();
+    this.modules.push(
+      (this.repository = new SqliteRepository(this)), // TODO make switchable
+      (this.services = new Services(this)),
+      new Server(this),
+      new CliProfiles(this),
+      new CliImport(this),
+      new CliBookmarks(this),
+      new CliSqlite(this), // TODO make switchable along with repository
+    );
   }
 }
