@@ -1,8 +1,8 @@
-import { ReadStream } from "fs";
 import * as CSV from "csv";
 import { BaseService } from "./base";
 import { BookmarkCreatable, BookmarksService } from "./bookmarks";
 import { IApp } from "../app/types";
+import { Readable } from "stream";
 
 export class ImportService extends BaseService {
   bookmarks: BookmarksService;
@@ -12,15 +12,26 @@ export class ImportService extends BaseService {
     this.bookmarks = bookmarks;
   }
 
-  async importPinboard(
+  async importPinboardJSON(
     ownerId: string,
     batchSize: number,
-    importRecords: PinboardImportRecord[]
+    importFileStream: Readable
   ) {
     const { log } = this;
     const { bookmarks } = this;
     const now = new Date();
+
+    // TODO: can this be done easier? or maybe processing the stream as
+    // it comes in without loading it all into memory?
+    const chunks = [];
+    for await (const chunk of importFileStream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    const importData = Buffer.concat(chunks).toString("utf-8");
+    const importRecords: PinboardImportRecord[] = JSON.parse(importData);
+
     const recordCount = importRecords.length;
+    log.info({ msg: "loaded exported bookmarks", ownerId, recordCount });
 
     let importedCount = 0;
     for (let startIdx = 0; startIdx < recordCount; startIdx += batchSize) {
@@ -46,16 +57,16 @@ export class ImportService extends BaseService {
             modified: now,
           };
         });
-      await bookmarks.createBatch(batch);
+      await bookmarks.upsertBatch(batch);
       importedCount += batch.length;
     }
     return importedCount;
   }
 
-  async importRaindropCsv(
+  async importRaindropCSV(
     ownerId: string,
     batchSize: number,
-    importFileStream: ReadStream
+    importFileStream: Readable
   ) {
     const { log } = this;
     const { bookmarks } = this;
@@ -66,7 +77,7 @@ export class ImportService extends BaseService {
     // This is maybe over-engineered, but: To avoid reading the whole file
     // into memory while parsing CSV, pause the stream every time we have
     // enough queued up for a batch and then unpause the scream after the
-    // batch upsert transaction completes. 
+    // batch upsert transaction completes.
 
     const csvParser = CSV.parse();
     importFileStream.pipe(csvParser);
@@ -114,7 +125,7 @@ export class ImportService extends BaseService {
     while (!doneParsing || writeQueue.length > 0) {
       if (doneParsing || writeQueue.length >= batchSize) {
         const batch = writeQueue.splice(0, batchSize);
-        const result = await bookmarks.createBatch(batch);
+        const result = await bookmarks.upsertBatch(batch);
 
         importedCount += result.length;
         log.debug({

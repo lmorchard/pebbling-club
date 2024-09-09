@@ -6,9 +6,10 @@ import { IApp, IWithServices } from "../app/types";
 export default class CliBookmarks extends CliAppModule {
   app: IApp & IWithServices;
 
-  constructor(app: IApp & IWithServices) {
+  constructor(app: IApp) {
     super(app);
-    this.app = app;
+    // TODO fix this type confusion
+    this.app = app as IApp & IWithServices;
   }
 
   async initCli(cli: Cli) {
@@ -165,7 +166,7 @@ export default class CliBookmarks extends CliAppModule {
     const { id: ownerId } = profile;
     const tags = (options.tags || "").split(/ /g);
     const bookmark = { ...options, ownerId, href, tags };
-    const result = await bookmarks.create(bookmark);
+    const result = await bookmarks.upsert(bookmark);
     log.info({ msg: "Bookmark created", result });
   }
 

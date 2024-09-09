@@ -7,13 +7,23 @@ import { CliAppModule } from "./modules";
 import { Events } from "./events";
 import { Cli } from "./cli";
 import { Command } from "commander";
+import { IApp } from "./types";
+
+const LOG_LEVELS = [
+  "trace",
+  "debug",
+  "info",
+  "warn",
+  "error",
+  "fatal",
+] as const;
 
 export const configSchema = {
   logLevel: {
     doc: "Logging level",
     env: "LOG_LEVEL",
-    format: ["trace", "debug", "info", "warn", "error"],
-    default: "debug",
+    format: LOG_LEVELS,
+    default: "debug" as (typeof LOG_LEVELS)[number],
   },
   logSingleLine: {
     doc: "Emit single-line log messages",
@@ -29,7 +39,7 @@ export class Logging extends CliAppModule {
   usePrettyLogs: boolean;
   logger: Logger<never>;
 
-  constructor(app: App) {
+  constructor(app: IApp) {
     super(app);
     this.usePrettyLogs = false;
     this.logger = this.buildLogger();

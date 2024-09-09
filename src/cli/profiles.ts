@@ -4,11 +4,12 @@ import { CliAppModule } from "../app/modules";
 import { IApp, IWithServices } from "../app/types";
 
 export default class CliProfiles extends CliAppModule {
-  app: IApp & IWithServices;
+  app: App;
 
-  constructor(app: IApp & IWithServices) {
+  constructor(app: IApp) {
     super(app);
-    this.app = app;
+    // TODO: fix this type confusion
+    this.app = app as App;
   }
 
   async initCli(cli: Cli) {

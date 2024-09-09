@@ -9,11 +9,11 @@ export class BookmarksService extends BaseService {
     this.repository = repository;
   }
 
-  async create(bookmark: BookmarkCreatable) {
+  async upsert(bookmark: BookmarkCreatable) {
     return await this.repository.upsertBookmark(bookmark);
   }
 
-  async createBatch(bookmarks: BookmarkCreatable[]) {
+  async upsertBatch(bookmarks: BookmarkCreatable[]) {
     return await this.repository.upsertBookmarksBatch(bookmarks);
   }
 
@@ -25,10 +25,23 @@ export class BookmarksService extends BaseService {
     return await this.repository.deleteBookmark(bookmarkId);
   }
 
-  async get(viewerId: string | undefined, bookmarkId: string) {
+  async get(
+    viewerId: string | undefined,
+    bookmarkId: string
+  ): Promise<BookmarkWithPermissions | null> {
     return await this.annotateBookmarkWithPermissions(
       viewerId,
       await this.repository.fetchBookmark(bookmarkId)
+    );
+  }
+
+  async getByUrl(
+    ownerId: string,
+    url: string
+  ): Promise<BookmarkWithPermissions | null> {
+    return await this.annotateBookmarkWithPermissions(
+      ownerId,
+      await this.repository.fetchBookmarkByOwnerAndUrl(ownerId, url)
     );
   }
 
@@ -144,7 +157,7 @@ export type Bookmark = {
   extended?: string;
   tags?: string[];
   visibility?: string;
-  meta?: object;
+  meta?: Record<string, any>;
   created?: Date;
   modified?: Date;
 };
@@ -175,6 +188,10 @@ export interface IBookmarksRepository {
   ): Promise<Bookmark>;
   deleteBookmark(bookmarkId: string): Promise<boolean>;
   fetchBookmark(bookmarkId: string): Promise<Bookmark | null>;
+  fetchBookmarkByOwnerAndUrl(
+    ownerId: string,
+    url: string
+  ): Promise<Bookmark | null>;
   listBookmarksForOwner(
     ownerId: string,
     limit: number,

@@ -93,9 +93,10 @@ declare module "fastify" {
 export default class Server extends CliAppModule {
   app: IApp & IWithServices;
 
-  constructor(app: IApp & IWithServices) {
+  constructor(app: IApp) {
     super(app);
-    this.app = app;
+    // TODO fix this type confusion
+    this.app = app as IApp & IWithServices;
   }
 
   async initCli(cli: Cli) {
