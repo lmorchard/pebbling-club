@@ -52,6 +52,7 @@
     "passport-local": "^1.0.0",
     "pino-http": "^10.2.0",
     "pino-pretty": "^11.2.2",
+    "rimraf": "^6.0.1",
     "sqlite3": "^5.1.7",
     "uuid": "^10.0.0",
     "validator": "^13.12.0"

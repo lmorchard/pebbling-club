@@ -3,7 +3,7 @@ import { describe, it, before, mock } from "node:test";
 import { Password, PasswordService, IPasswordsRepository } from "./passwords";
 import { MockApp } from "../app/mocks";
 
-describe("services.passwords", () => {
+describe("services/passwords", () => {
   const username = "johndoe";
   const password = "hunter23";
   const passwordIncorrect = "trustno1";

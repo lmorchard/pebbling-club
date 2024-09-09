@@ -7,9 +7,9 @@ import { IApp, IWithServices } from "../app/types";
 import { App } from "../app";
 
 export default class CliImport extends CliAppModule {
-  app: IApp & IWithServices;
+  app: IApp;
 
-  constructor(app: IApp & IWithServices) {
+  constructor(app: IApp) {
     super(app);
     this.app = app;
   }
@@ -46,7 +46,9 @@ export default class CliImport extends CliAppModule {
     options: { batch: string }
   ) {
     const { log } = this;
-    const { profiles, imports } = this.app.services;
+    // TODO fix this type
+    const { services } = this.app as App;
+    const { profiles, imports } = services;
     const batchSize = parseInt(options.batch, 10) || 100;
 
     const ownerProfile = await profiles.getByUsername(username);
@@ -55,18 +57,13 @@ export default class CliImport extends CliAppModule {
     const ownerId = ownerProfile.id;
     log.debug({ msg: "loading exported bookmarks", ownerId });
 
-    const importData = await fs.readFile(filename, "utf-8");
-    const importRecords: PinboardImportRecord[] = JSON.parse(importData);
-
-    const recordCount = importRecords.length;
-    log.info({ msg: "loaded exported bookmarks", ownerId, recordCount });
+    const importFileStream = createReadStream(filename, "utf-8");
 
     log.debug({ msg: "importing bookmarks", ownerId, batchSize });
-    const importedCount = await imports.importPinboard(
+    const importedCount = await imports.importPinboardJSON(
       ownerId,
       batchSize,
-      // TODO: switch to ReadStream over here too, for a consistent import interface?
-      importRecords
+      importFileStream
     );
     log.info({ msg: "imported bookmarks", ownerId, importedCount });
   }
@@ -77,6 +74,7 @@ export default class CliImport extends CliAppModule {
     options: { batch: string }
   ) {
     const { log } = this;
+    // TODO fix this type
     const { services } = this.app as App;
     const { profiles, imports, bookmarks } = services;
 
@@ -90,7 +88,7 @@ export default class CliImport extends CliAppModule {
 
     const importFileStream = createReadStream(filename, "utf-8");
 
-    const importedCount = await imports.importRaindropCsv(
+    const importedCount = await imports.importRaindropCSV(
       ownerId,
       batchSize,
       importFileStream

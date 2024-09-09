@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import { constants as fsConstants } from "fs";
 import path from "path";
-import Knex from "knex";
+import Knex, { knex } from "knex";
 import sqlite3 from "sqlite3";
 import { mkdirp } from "mkdirp";
 import { v4 as uuid } from "uuid";
@@ -104,10 +104,10 @@ export class SqliteRepository
   async maybeInitializeDatabase() {
     const { log } = this;
     const { config } = this.app;
+    // Attempt to access the database...
+    const connectionOptions =
+      this.knexConnectionOptions() as Knex.Knex.Sqlite3ConnectionConfig;
     try {
-      // Attempt to access the database...
-      const connectionOptions =
-        this.knexConnectionOptions() as Knex.Knex.Sqlite3ConnectionConfig;
       await fs.access(
         connectionOptions.filename,
         fsConstants.R_OK | fsConstants.W_OK
@@ -115,7 +115,11 @@ export class SqliteRepository
     } catch (err) {
       // Failed to access database, assume it doesn't exist
       // TODO: check if it's actually a permission problem
-      log.warn({ msg: "initializing sqlite database", err });
+      log.trace({ msg: "sqlite database access failed", err });
+      log.info({
+        msg: "initializing sqlite database",
+        filename: connectionOptions.filename,
+      });
       await mkdirp(config.get("sqliteDatabasePath"));
       await this.connection.migrate.latest();
     }
@@ -367,6 +371,13 @@ export class SqliteRepository
         ...updates,
         modified: now,
         tags: this.serializeTagsColumn(updates.tags),
+        // meta: this.serializeMetaColumn(updates.meta),
+        meta: this.connection.raw(`
+          json_patch(
+            iif(json_valid(meta), meta, "{}"),
+            ?
+          )
+        `, this.serializeMetaColumn(updates.meta))
       });
     if (!result) throw new Error("item update failed");
 
@@ -392,6 +403,18 @@ export class SqliteRepository
       await this.connection("bookmarks")
         .select("*")
         .where({ id: bookmarkId })
+        .first()
+    );
+  }
+
+  async fetchBookmarkByOwnerAndUrl(
+    ownerId: string,
+    url: string
+  ): Promise<Bookmark | null> {
+    return this._mapRowToBookmark(
+      await this.connection("bookmarks")
+        .select("*")
+        .where({ ownerId, href: url })
         .first()
     );
   }
@@ -458,6 +481,7 @@ export class SqliteRepository
     const toInsert = {
       ...bookmark,
       tags: this.serializeTagsColumn(bookmark.tags),
+      meta: this.serializeMetaColumn(bookmark.meta),
       id: uuid(),
       created,
       modified,
@@ -466,7 +490,14 @@ export class SqliteRepository
     const result = await connection("bookmarks")
       .insert(toInsert)
       .onConflict(["ownerId", "href"])
-      .merge();
+      .merge({
+        meta: connection.raw(`
+          json_patch(
+            iif(json_valid(meta), meta, "{}"),
+            excluded.meta
+          )
+        `)
+      });
 
     // Hacky attempt at an optimistic update, will probably mismatch a
     // few fields like created if they're not supplied in the original
@@ -509,7 +540,8 @@ export class SqliteRepository
     }
   }
 
-  _mapRowToBookmark(row: BookmarksRow): Bookmark {
+  _mapRowToBookmark(row: BookmarksRow | null): Bookmark | null {
+    if (!row) return null;
     const { tags = "", created, modified, meta = "{}", ...rest } = row;
     return {
       ...rest,

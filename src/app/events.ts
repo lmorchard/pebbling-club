@@ -1,6 +1,6 @@
 import { App } from ".";
 import { AppModule } from "./modules";
-import { IEvents } from "./types";
+import { IApp, IEvents } from "./types";
 
 export type EventName = string | Symbol
 export type EventHandler = (...args: any[]) => any;
@@ -11,7 +11,7 @@ export class Events extends AppModule implements IEvents {
   lastId: number;
   subscriptions: Map<EventName, SubscriptionsForEvent>;
 
-  constructor(app: App) {
+  constructor(app: IApp) {
     super(app);
     this.subscriptions = new Map();
     this.lastId = 0;

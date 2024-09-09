@@ -96,7 +96,7 @@ export const BookmarksRouter: FastifyPluginAsync<
         extended: formData.extended,
         tags: bookmarks.formFieldToTags(formData.tags),
       };
-      const result = await bookmarks.create(newBookmark);
+      const result = await bookmarks.upsert(newBookmark);
       reply.redirect(`/bookmarks/${result.id}`);
     }
   );
