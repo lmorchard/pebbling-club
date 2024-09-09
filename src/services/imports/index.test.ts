@@ -1,19 +1,19 @@
 import assert from "node:assert";
 import { Readable } from "stream";
 import { describe, it, beforeEach, afterEach } from "node:test";
-import { BaseApp } from "../app";
-import { IApp } from "../app/types";
-import { AppModule } from "../app/modules";
+import { BaseApp } from "../../app";
+import { IApp } from "../../app/types";
+import { AppModule } from "../../app/modules";
 import {
   BookmarksService,
   BookmarkUpdatable,
   IBookmarksRepository,
-} from "./bookmarks";
-import { SqliteRepository } from "../repositories/sqlite";
-import { ImportService } from "./imports";
+} from "../bookmarks";
+import { SqliteRepository } from "../../repositories/sqlite";
+import { ImportService } from ".";
 import { rimraf } from "rimraf";
-import { IProfilesRepository, ProfileService } from "./profiles";
-import { IPasswordsRepository, PasswordService } from "./passwords";
+import { IProfilesRepository, ProfileService } from "../profiles";
+import { IPasswordsRepository, PasswordService } from "../passwords";
 
 describe("services/imports", () => {
   const username = "johndoe";
