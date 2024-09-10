@@ -57,7 +57,7 @@ export const configSchema = {
     doc: "Web session expiration interval",
     env: "SESSION_EXPIRATION_INTERVAL",
     format: Number,
-    default: 1000 * 60 * 10,
+    default: 1000 * 60 * 60 * 24 * 7,
   },
   publicPath: {
     doc: "Public web static resources path",
