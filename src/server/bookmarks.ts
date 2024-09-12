@@ -205,7 +205,7 @@ export const BookmarksRouter: FastifyPluginAsync<
     }
   );
 
-  server.delete<{
+  server.post<{
     Params: FromSchema<typeof BookmarkUrlParamsSchema>;
   }>(
     "/bookmarks/:id/delete",

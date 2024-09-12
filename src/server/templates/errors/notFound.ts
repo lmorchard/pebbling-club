@@ -1,7 +1,9 @@
-import { html } from "../utils/html";
-import { layout, LayoutProps } from "./layout";
+import { html } from "../../utils/html";
+import { layout, LayoutProps } from "../layout";
 
-export interface Props extends LayoutProps {}
+export interface Props extends LayoutProps {
+  error?: Error | string;
+}
 
 export default ({ error, ...locals }: Props) => {
   // TODO: Need a prod / dev switch here to obscure error messages in prod
@@ -14,7 +16,7 @@ export default ({ error, ...locals }: Props) => {
   return layout({
     ...locals,
     content: html`
-      <h1>Error</h1>
+      <h1>Not Found</h1>
       ${errorMessage}
     `,
   });
