@@ -3,7 +3,11 @@ import { URL } from "url";
 
 import { CliAppModule } from "../app/modules";
 
-import Fastify, { FastifyBaseLogger, FastifyInstance } from "fastify";
+import Fastify, {
+  FastifyBaseLogger,
+  FastifyError,
+  FastifyInstance,
+} from "fastify";
 import FastifyStatic from "@fastify/static";
 import FastifyAccepts from "@fastify/accepts";
 import FastifyCompress from "@fastify/compress";
@@ -11,8 +15,6 @@ import FastifyFormbody from "@fastify/formbody";
 import FastifySecureSession from "@fastify/secure-session";
 import FastifyCsrfProtection from "@fastify/csrf-protection";
 import FastifyRequestContextPlugin from "@fastify/request-context";
-// @ts-ignore missing types
-import FastifyMethodOverride from "fastify-method-override";
 
 import AjvErrors from "ajv-errors";
 
@@ -21,12 +23,21 @@ import { IApp, ICliApp } from "../app/types";
 import { HomeRouter } from "./home";
 import { ProfilesRouter } from "./profiles";
 import { BookmarksRouter } from "./bookmarks";
-import { PassportAuth, AuthRouter, configSchema as authConfigSchema } from "./auth";
+import {
+  PassportAuth,
+  AuthRouter,
+  configSchema as authConfigSchema,
+} from "./auth";
 
 import { Profile, ProfileService } from "../services/profiles";
 import { TemplateRenderer } from "./utils/templates";
 import { BookmarksService } from "../services/bookmarks";
 import { PasswordService } from "../services/passwords";
+import { Boom } from "@hapi/boom";
+
+import templateError from "./templates/errors/error";
+import templateNotFound from "./templates/errors/notFound";
+import templateForbidden from "./templates/errors/forbidden";
 
 export const configSchema = {
   host: {
@@ -97,7 +108,7 @@ export type IAppRequirements = IApp & {
     profiles: ProfileService;
     bookmarks: BookmarksService;
   };
-}
+};
 
 export default class Server extends CliAppModule {
   app: IAppRequirements;
@@ -154,7 +165,6 @@ export default class Server extends CliAppModule {
     fastify.register(FastifyAccepts);
     fastify.register(FastifyFormbody);
     fastify.register(FastifyRequestContextPlugin);
-    fastify.register(FastifyMethodOverride);
     await this.setupSessions(fastify);
     fastify.register(FastifyCsrfProtection, {
       sessionPlugin: "@fastify/secure-session",
@@ -162,6 +172,7 @@ export default class Server extends CliAppModule {
     fastify.register(PassportAuth, { services: this.app.services });
     fastify.register(TemplateRenderer, { config: this.app.config });
     await this.setupRouters(fastify);
+    await this.setupErrorHandlers(fastify);
 
     return fastify;
   }
@@ -193,6 +204,29 @@ export default class Server extends CliAppModule {
     });
     server.register(AuthRouter, { server: this, prefix: "/" });
     server.register(HomeRouter, { server: this, prefix: "/" });
+  }
+
+  async setupErrorHandlers(server: FastifyInstance) {
+    server.setErrorHandler(
+      (error: FastifyError | Boom | Error, request, reply) => {
+        const { log } = this;
+        log.error({ msg: "Error handler", error });
+
+        if (error instanceof Boom) {
+          if ([401, 403].includes(error.output.statusCode)) {
+            // Obfuscate 401 & 403 errors as not found
+            return reply.renderTemplate(templateNotFound, { error });
+          }
+        }
+        return reply.renderTemplate(templateError, { error });
+      }
+    );
+
+    server.setNotFoundHandler((request, reply) => {
+      return reply.renderTemplate(templateNotFound, {
+        error: `${request.url} not found`,
+      });
+    });
   }
 
   setDefaultSiteUrl() {
