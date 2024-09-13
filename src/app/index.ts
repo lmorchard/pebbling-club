@@ -19,9 +19,8 @@ export class BaseApp implements IApp {
     ];
   }
 
-  async _callModules(mapfn: (m: IAppModule) => Promise<any>) {
+  async _callModules(mapfn: (m: IAppModule) => Promise<void>) {
     await Promise.all(this.modules.map(mapfn));
-    return this;
   }
 
   async init() {

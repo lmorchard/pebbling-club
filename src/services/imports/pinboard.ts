@@ -42,7 +42,7 @@ export async function importPinboardJSON(
           href,
           title: description,
           extended: extended,
-          tags: [...tags.split(/ /g), "import:pinboard"],
+          tags: [...tags.split(/ /g), "imported:pinboard"],
           visibility: shared == "yes" ? "public" : "private",
           created: date,
           modified: now,

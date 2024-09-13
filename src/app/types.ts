@@ -13,12 +13,12 @@ export interface ICliApp extends IApp {
 
 export interface IAppModule {
   app: IApp;
-  init(): Promise<this>;
-  deinit(): Promise<this>;
+  init(): Promise<void>;
+  deinit(): Promise<void>;
 }
 
 export interface ICliAppModule extends IAppModule {
-  initCli(app: ICliApp): Promise<this>;
+  initCli(program: Command): Promise<void>;
 }
 
 export interface IConfig {

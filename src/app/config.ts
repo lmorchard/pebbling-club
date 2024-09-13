@@ -6,14 +6,22 @@ import { Command } from "commander";
 
 import { configSchema as loggingConfigSchema } from "./logging";
 import { configSchema as serverConfigSchema } from "../server/index";
-import { configSchema as repositorySqlite3ConfigSchema } from "../repositories/sqlite/index";
+import { configSchema as repositorySqliteConfigSchema } from "../repositories/sqlite/index";
+import { configSchema as repositorySqliteFeedsConfigSchema } from "../repositories/sqlite/feeds/index";
+import { configSchema as repositorySqliteFetchConfigSchema } from "../repositories/sqlite/fetch/index";
+import { configSchema as fetchConfigSchema } from "../services/fetch";
+import { configSchema as feedsConfigSchema } from "../services/feeds";
 
 // HACK: Hardcoded assemblage of all configuration schemas, would be nice
 // if was dynamic at run-time
 export const configSchema = {
   ...loggingConfigSchema,
   ...serverConfigSchema,
-  ...repositorySqlite3ConfigSchema,
+  ...repositorySqliteConfigSchema,
+  ...repositorySqliteFeedsConfigSchema,
+  ...repositorySqliteFetchConfigSchema,
+  ...fetchConfigSchema,
+  ...feedsConfigSchema
 } as const;
 
 // Load up the base config from environment and schema
@@ -42,7 +50,6 @@ export class Config extends CliAppModule implements IConfig {
 
   async init() {
     await this.maybeConfigureForGlitch();
-    return this;
   }
 
   async maybeConfigureForGlitch() {
@@ -57,9 +64,7 @@ export class Config extends CliAppModule implements IConfig {
     config.set("sqliteDatabasePath", ".data");
   }     
 
-  async initCli(app: ICliApp) {
-    const { program } = app;
-
+  async initCli(program: Command) {
     program.option(
       "-f, --config-file <path>",
       "load config from specified JSON file"
@@ -75,8 +80,6 @@ export class Config extends CliAppModule implements IConfig {
       .command("show")
       .description("show current configuration")
       .action(this.commandConfigShow.bind(this));
-
-    return this;
   }
 
   async preCliAction(
@@ -97,9 +100,9 @@ export class Config extends CliAppModule implements IConfig {
     const props = config.getProperties();
 
     for (const [name, defn] of Object.entries(schema)) {
-      const { doc, env, default: defaultValue } = defn;
+      const { doc, default: defaultValue } = defn;
       const currentValue = props[name as keyof typeof props];
-      log.info({ configName: name, env, doc, defaultValue, currentValue });
+      log.info({ configName: name, doc, defaultValue, currentValue });
     }
   }
 }

@@ -26,7 +26,7 @@ export const configSchema = {
     doc: "Emit single-line log messages",
     env: "LOG_SINGLE_LINE",
     format: Boolean,
-    default: true,
+    default: false,
   },
 } as const;
 
@@ -39,6 +39,10 @@ export class Logging extends CliAppModule {
   constructor(app: IApp) {
     super(app);
     this.usePrettyLogs = false;
+    this.logger = this.buildLogger();
+  }
+
+  async init() {
     this.logger = this.buildLogger();
   }
 
@@ -70,15 +74,13 @@ export class Logging extends CliAppModule {
     return this.logger.fatal.bind(this.logger);
   }
 
-  async initCli(app: ICliApp) {
-    const { program } = app;
+  async initCli(program: Command) {
     program.option(
       "--no-pretty-logs",
       "disable pretty printing of logs in a TTY"
     );
     program.option("-C, --force-pretty-logs", "enable pretty printing of logs");
     program.hook("preAction", this.preCliAction.bind(this));
-    return this;
   }
 
   async preCliAction(command: Command) {

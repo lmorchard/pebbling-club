@@ -1,28 +1,19 @@
 import { createReadStream } from "fs";
 import { CliAppModule } from "../app/modules";
 import { ImportService } from "../services/imports";
-import { IApp, ICliApp } from "../app/types";
 import { ProfileService } from "../services/profiles";
 import { Readable } from "stream";
+import { Command } from "commander";
 
-export type IAppRequirements = IApp & {
+export type IAppRequirements = {
   services: {
     profiles: ProfileService;
     imports: ImportService;
   };
 };
 
-export default class CliImport extends CliAppModule {
-  app: IAppRequirements;
-
-  constructor(app: IAppRequirements) {
-    super(app);
-    this.app = app;
-  }
-
-  async initCli(app: ICliApp) {
-    const { program } = app;
-
+export default class CliImport extends CliAppModule<IAppRequirements> {
+  async initCli(program: Command) {
     const importProgram = program.command("import").description("import data");
 
     importProgram
@@ -51,8 +42,6 @@ export default class CliImport extends CliAppModule {
         "number of bookmarks to import per transaction batch"
       )
       .action(this.commandOPML.bind(this));
-
-    return this;
   }
 
   async commandPinboardJSON(

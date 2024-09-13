@@ -5,20 +5,19 @@ import { ImportService } from "./imports";
 import { IPasswordsRepository, PasswordService } from "./passwords";
 import { IProfilesRepository, ProfileService } from "./profiles";
 
-export type IAppRequirements = IApp & {
-  repository: IPasswordsRepository & IProfilesRepository & IBookmarksRepository;
-};
-
 export class Services extends AppModule {
   passwords: PasswordService;
   profiles: ProfileService;
   bookmarks: BookmarksService;
   imports: ImportService;
 
-  constructor(app: IAppRequirements) {
+  constructor(
+    app: IApp,
+    repository: IPasswordsRepository &
+      IProfilesRepository &
+      IBookmarksRepository,
+  ) {
     super(app);
-
-    const { repository } = app;
 
     this.passwords = new PasswordService(app, repository);
     this.profiles = new ProfileService(app, repository, this.passwords);

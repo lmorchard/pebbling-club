@@ -1,26 +1,18 @@
+import { Command } from "commander";
 import { CliAppModule } from "../app/modules";
 import { IApp, ICliApp } from "../app/types";
 import { BookmarksService } from "../services/bookmarks";
 import { ProfileService } from "../services/profiles";
 
-export type IAppRequirements = IApp & {
+export type IAppRequirements = {
   services: {
     bookmarks: BookmarksService;
     profiles: ProfileService;
   };
 };
 
-export default class CliBookmarks extends CliAppModule {
-  app: IAppRequirements;
-
-  constructor(app: IAppRequirements) {
-    super(app);
-    this.app = app;
-  }
-
-  async initCli(app: ICliApp) {
-    const { program } = app;
-
+export default class CliBookmarks extends CliAppModule<IAppRequirements> {
+  async initCli(program: Command) {
     const bookmarksProgram = program
       .command("bookmarks")
       .description("manage bookmarks");
@@ -69,8 +61,6 @@ export default class CliBookmarks extends CliAppModule {
       .command("delete <id>")
       .description("delete a bookmark")
       .action(this.commandDelete.bind(this));
-
-    return this;
   }
 
   async commandList(
