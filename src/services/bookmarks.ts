@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { IApp } from "../app/types";
 import { BaseService } from "./base";
 
@@ -10,15 +11,28 @@ export class BookmarksService extends BaseService {
   }
 
   async upsert(bookmark: BookmarkCreatable) {
-    return await this.repository.upsertBookmark(bookmark);
+    return await this.repository.upsertBookmark({
+      ...bookmark,
+      uniqueHash: await this.generateUrlHash(bookmark.href),
+    });
   }
 
   async upsertBatch(bookmarks: BookmarkCreatable[]) {
-    return await this.repository.upsertBookmarksBatch(bookmarks);
+    return await this.repository.upsertBookmarksBatch(
+      await Promise.all(
+        bookmarks.map(async (bookmark) => ({
+          ...bookmark,
+          uniqueHash: await this.generateUrlHash(bookmark.href),
+        }))
+      )
+    );
   }
 
   async update(bookmarkId: string, bookmark: BookmarkUpdatable) {
-    return await this.repository.updateBookmark(bookmarkId, { ...bookmark });
+    return await this.repository.updateBookmark(bookmarkId, {
+      ...bookmark,
+      uniqueHash: await this.generateUrlHash(bookmark.href || ""),
+    });
   }
 
   async delete(bookmarkId: string) {
@@ -147,11 +161,49 @@ export class BookmarksService extends BaseService {
   tagsToFormField(tags: Bookmark["tags"] = []): string {
     return tags.join(" ");
   }
+
+  /**
+   * Normalize a URL for hashing - note that this is destructive
+   * and shouldn't be stored as a substitute for user input.
+   */
+  async normalizeUrlForHash(urlRaw: string) {
+    try {
+      const url = new URL(urlRaw);
+
+      // alphabetize query param keys
+      url.searchParams.sort();
+
+      // strip trailing slash from URL path
+      url.pathname = url.pathname.replace(/\/$/, "");
+
+      // strip out parameters starting with utm_
+      for (const key of url.searchParams.keys()) {
+        if (key.startsWith("utm_")) {
+          url.searchParams.delete(key);
+        }
+      }
+
+      // TODO: find more parameters to strip out
+
+      return url.toString();
+    } catch (err) {
+      this.log.warn({ msg: "failed to normalize URL", urlRaw, err });
+      return urlRaw;
+    }
+  }
+
+  async generateUrlHash(urlOrig: string, normalize: boolean = true) {
+    const urlToHash = normalize
+      ? await this.normalizeUrlForHash(urlOrig)
+      : urlOrig;
+    return crypto.createHash("sha256").update(urlToHash).digest("hex");
+  }
 }
 
 export type Bookmark = {
   id: string;
   ownerId: string;
+  uniqueHash: string;
   href: string;
   title: string;
   extended?: string;
@@ -162,9 +214,19 @@ export type Bookmark = {
   modified?: Date;
 };
 
-export type BookmarkCreatable = Omit<Bookmark, "id">;
+export type BookmarkCreatable = Omit<Bookmark, "id" | "uniqueHash">;
 
-export type BookmarkUpdatable = Omit<Partial<Bookmark>, "id" | "ownerId">;
+export type BookmarkCreatableWithHash = Omit<Bookmark, "id">;
+
+export type BookmarkUpdatable = Omit<
+  Partial<Bookmark>,
+  "id" | "ownerId" | "unqueHash"
+>;
+
+export type BookmarkUpdatableWithHash = Omit<
+  Partial<Bookmark>,
+  "id" | "ownerId"
+>;
 
 export type BookmarkPermissions = {
   viewerId: string | undefined;
@@ -180,11 +242,15 @@ export type TagCount = {
 };
 
 export interface IBookmarksRepository {
-  upsertBookmark(bookmark: BookmarkCreatable): Promise<Bookmark>;
-  upsertBookmarksBatch(bookmarks: BookmarkCreatable[]): Promise<Bookmark[]>;
+  upsertBookmark(
+    bookmark: BookmarkCreatableWithHash
+  ): Promise<Bookmark>;
+  upsertBookmarksBatch(
+    bookmarks: BookmarkCreatableWithHash[]
+  ): Promise<Bookmark[]>;
   updateBookmark(
     bookmarkId: string,
-    bookmark: BookmarkUpdatable
+    bookmark: BookmarkUpdatableWithHash
   ): Promise<Bookmark>;
   deleteBookmark(bookmarkId: string): Promise<boolean>;
   fetchBookmark(bookmarkId: string): Promise<Bookmark | null>;
