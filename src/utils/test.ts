@@ -39,7 +39,6 @@ export class TestApp extends BaseApp implements IApp {
       (this.services = new TestServices(this))
     );
 
-    this.config.set("logLevel", "debug");
     this.config.set("sqliteDatabasePath", testDatabasePath);
   }
 
@@ -50,8 +49,7 @@ export class TestApp extends BaseApp implements IApp {
 
   async deinit() {
     await super.deinit();
-    await rimraf(this.config.get("sqliteDatabasePath"));
-    return this;
+    //await rimraf(this.config.get("sqliteDatabasePath"));
   }
 }
 

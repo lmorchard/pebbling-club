@@ -35,7 +35,8 @@ export const ProfilesRouter: FastifyPluginAsync<
     if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
 
     request.profile = profile;
-    request.tagCounts = await bookmarks.listTagsForOwner(profile.id, 100, 0);
+    // TODO: limit for tags list?
+    request.tagCounts = await bookmarks.listTagsForOwner(profile.id, 250, 0);
   });
 
   fastify.get<{

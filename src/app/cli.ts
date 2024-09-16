@@ -15,14 +15,13 @@ export class BaseCliApp extends BaseApp {
     await super.init();
     this.program.version(process.env.npm_package_version || "0.0");
     await this.initCli();
-    return this;
   }
 
   async initCli() {
-    return this._callCliModules(async (m) => m.initCli(this));
+    return this._callCliModules(async (m) => m.initCli(this.program));
   }
 
-  async _callCliModules(mapfn: (m: ICliAppModule) => Promise<any>) {
+  async _callCliModules(mapfn: (m: ICliAppModule) => Promise<void>) {
     return this._callModules(async (m) => {
       if (m instanceof CliAppModule) mapfn(m);
     });

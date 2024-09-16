@@ -1,31 +1,28 @@
 import { IAppModule, IApp, ICliApp } from "./types";
+import { Command } from "commander";
 
-export class AppModule implements IAppModule {
-  app: IApp;
+export class AppModule<IAppRequirements = {}> implements IAppModule {
+  app: IApp & IAppRequirements;
 
   static configSchema = {};
 
-  constructor(app: IApp) {
+  constructor(app: IApp & IAppRequirements) {
     this.app = app;
   }
 
   get log() {
     return this.app.logging.child({
-      module: this.constructor.name,
+      name: this.constructor.name,
     });
   }
 
-  async init() {
-    return this;
-  }
+  async init() {}
 
-  async deinit() {
-    return this;
-  }
+  async deinit() {}
 }
 
-export class CliAppModule extends AppModule {
-  async initCli(app: ICliApp) {
-    return this;
-  }
+export class CliAppModule<
+  IAppRequirements = {}
+> extends AppModule<IAppRequirements> {
+  async initCli(program: Command) {}
 }

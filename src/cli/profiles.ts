@@ -1,26 +1,17 @@
+import { Command } from "commander";
 import { CliAppModule } from "../app/modules";
-import { IApp, ICliApp } from "../app/types";
 import { PasswordService } from "../services/passwords";
 import { ProfileService } from "../services/profiles";
 
-export type IAppRequirements = IApp & {
+export type IAppRequirements = {
   services: {
     profiles: ProfileService;
     passwords: PasswordService;
   };
 };
 
-export default class CliProfiles extends CliAppModule {
-  app: IAppRequirements;
-
-  constructor(app: IAppRequirements) {
-    super(app);
-    this.app = app;
-  }
-
-  async initCli(app: ICliApp) {
-    const { program } = app;
-
+export default class CliProfiles extends CliAppModule<IAppRequirements> {
+  async initCli(program: Command) {
     const profilesProgram = program
       .command("profiles")
       .description("manage profiles");
@@ -44,8 +35,6 @@ export default class CliProfiles extends CliAppModule {
       .command("change-password <username> <password>")
       .description("change a user's password")
       .action(this.commandChangePassword.bind(this));
-
-    return this;
   }
 
   async commandList() {

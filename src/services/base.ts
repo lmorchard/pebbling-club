@@ -8,6 +8,6 @@ export class BaseService {
   }
 
   get log() {
-    return this.app.logging.child({ module: this.constructor.name });
+    return this.app.logging.child({ name: this.constructor.name });
   }
 }

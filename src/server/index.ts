@@ -23,6 +23,7 @@ import { IApp, ICliApp } from "../app/types";
 import { HomeRouter } from "./home";
 import { ProfilesRouter } from "./profiles";
 import { BookmarksRouter } from "./bookmarks";
+import { FeedsRouter } from "./feeds";
 import {
   PassportAuth,
   AuthRouter,
@@ -38,6 +39,8 @@ import { Boom } from "@hapi/boom";
 import templateError from "./templates/errors/error";
 import templateNotFound from "./templates/errors/notFound";
 import templateForbidden from "./templates/errors/forbidden";
+import { FeedsService } from "../services/feeds";
+import { Command } from "commander";
 
 export const configSchema = {
   host: {
@@ -102,7 +105,8 @@ declare module "fastify" {
   interface PassportUser extends Profile {}
 }
 
-export type IAppRequirements = IApp & {
+export type IAppRequirements = {
+  feeds: FeedsService;
   services: {
     passwords: PasswordService;
     profiles: ProfileService;
@@ -110,21 +114,12 @@ export type IAppRequirements = IApp & {
   };
 };
 
-export default class Server extends CliAppModule {
-  app: IAppRequirements;
-
-  constructor(app: IAppRequirements) {
-    super(app);
-    this.app = app;
-  }
-
-  async initCli(app: ICliApp) {
-    const { program } = app;
+export default class Server extends CliAppModule<IAppRequirements> {
+  async initCli(program: Command) {
     program
       .command("serve")
       .description("start the web application server")
       .action(this.commandServe.bind(this));
-    return this;
   }
 
   async commandServe() {
@@ -200,6 +195,13 @@ export default class Server extends CliAppModule {
       prefix: "/",
       services: {
         bookmarks: this.app.services.bookmarks,
+      },
+    });
+    server.register(FeedsRouter, {
+      server: this,
+      prefix: "/feeds/",
+      services: {
+        feeds: this.app.feeds,
       },
     });
     server.register(AuthRouter, { server: this, prefix: "/" });
