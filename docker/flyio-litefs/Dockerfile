@@ -1,4 +1,4 @@
-FROM node:16.19.0-slim
+FROM node:22-slim
 
 # Create app directory
 WORKDIR /usr/src/app
@@ -29,8 +29,6 @@ ENV PORT=8081
 ENV SQLITE_DATA_PATH=/litefs
 ENV AUTH_DISABLE_SIGNUP=true
 
-RUN npm run prod:build
-
 EXPOSE 8081
 ENTRYPOINT litefs mount
-# CMD [ "npm", "run", "prod:start" ]
+# CMD [ "npm", "run", "start" ]

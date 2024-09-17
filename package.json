@@ -6,17 +6,14 @@
     "node": ">=16.x "
   },
   "scripts": {
-    "start": "tsx ./src/index.ts --force-pretty-logs serve",
-    "prod:build": "tsc",
-    "prod:start": "node ./build/index.js serve",
-    "prod:manage": "node ./build/index.js",
-    "prod:migrate": "npm run prod:manage db migrate",
+    "start": "tsx ./src/index.ts serve",
+    "lint": "tsc --noEmit",
     "test": "glob -c \"node --import tsx --no-warnings --test\" \"./src/**/*.test.ts\"",
     "test:watch": "glob -c \"node --import tsx --no-warnings --watch --test\" \"./src/**/*.test.ts\"",
     "dev": "npm-run-all --parallel dev:start test:watch",
     "dev:start": "nodemon --watch src --ext 'js,ts' --exec 'tsx ./src/index.ts --force-pretty-logs serve'",
-    "dev:manage": "tsx ./src/index.ts",
-    "dev:migrate": "npm run dev:manage db migrate"
+    "manage": "tsx ./src/index.ts",
+    "migrate": "npm run dev:manage db migrate"
   },
   "author": "",
   "license": "ISC",

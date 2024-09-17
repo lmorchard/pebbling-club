@@ -1,4 +1,4 @@
-FROM node:16.19.0-slim
+FROM node:22-slim
 
 # Create app directory
 WORKDIR /usr/src/app
@@ -25,10 +25,8 @@ ENV HOST=0.0.0.0 \
 
 COPY . .
 
-RUN npm run prod:build
-
 RUN mkdir -p /var/data
 VOLUME [ "/var/data" ]
 
 EXPOSE ${PORT}
-CMD [ "npm", "run", "prod:start" ]  
+CMD [ "npm", "run", "start" ]
