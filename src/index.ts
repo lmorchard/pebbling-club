@@ -1,3 +1,4 @@
+#!/usr/bin/env -S npx tsx
 import { MainCliApp } from "./cli";
 
 async function main() {
