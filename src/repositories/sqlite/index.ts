@@ -7,6 +7,8 @@ import {
   BookmarkCreatable,
   IBookmarksRepository,
   TagCount,
+  BookmarkCreatableWithHash,
+  BookmarkUpdatableWithHash,
 } from "../../services/bookmarks";
 import {
   Profile,
@@ -54,6 +56,7 @@ export const configSchema = {
 export type BookmarksRow = {
   id: string;
   ownerId: string;
+  uniqueHash: string;
   href: string;
   title: string;
   extended?: string;
@@ -219,7 +222,7 @@ export class SqliteRepository
     return await this.connection("profiles").where({ id }).del();
   }
 
-  async upsertBookmark(bookmark: BookmarkCreatable) {
+  async upsertBookmark(bookmark: BookmarkCreatableWithHash) {
     const now = Date.now();
     const result = await this._upsertOneBookmark(
       bookmark,
@@ -229,7 +232,7 @@ export class SqliteRepository
     return result;
   }
 
-  async upsertBookmarksBatch(bookmarks: BookmarkCreatable[]) {
+  async upsertBookmarksBatch(bookmarks: BookmarkCreatableWithHash[]) {
     const now = Date.now();
     const results: Bookmark[] = [];
     await this.connection.transaction(async (trx) => {
@@ -241,7 +244,7 @@ export class SqliteRepository
     return results;
   }
 
-  async updateBookmark(bookmarkId: string, updates: BookmarkUpdatable) {
+  async updateBookmark(bookmarkId: string, updates: BookmarkUpdatableWithHash) {
     const now = Date.now();
 
     const original = await this.fetchBookmark(bookmarkId);
@@ -357,10 +360,10 @@ export class SqliteRepository
   }
 
   async _upsertOneBookmark(
-    bookmark: BookmarkCreatable,
+    bookmark: BookmarkCreatable & { uniqueHash: string },
     now: number,
     connection: Knex.Knex
-  ) {
+  ): Promise<Bookmark> {
     const created = bookmark.created || now;
     const modified = bookmark.modified || now;
     const toInsert = {
@@ -374,7 +377,7 @@ export class SqliteRepository
 
     const result = await connection("bookmarks")
       .insert(toInsert)
-      .onConflict(["ownerId", "href"])
+      .onConflict(["ownerId", "uniqueHash"])
       .merge({
         ...toInsert,
         meta: connection.raw(`
@@ -387,7 +390,7 @@ export class SqliteRepository
 
     // Hacky attempt at an optimistic update, will probably mismatch a
     // few fields like created if they're not supplied in the original
-    const resultBookmark = {
+    const resultBookmark: Bookmark = {
       ...bookmark,
       id: toInsert.id,
       created: new Date(toInsert.created),
