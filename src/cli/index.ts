@@ -1,5 +1,5 @@
 import Server from "../server";
-import { SqliteRepository } from "../repositories/sqlite";
+import { SqliteRepository } from "../repositories/sqlite/main";
 import SqliteFeedsRepository from "../repositories/sqlite/feeds";
 import SqliteFetchRepository from "../repositories/sqlite/fetch";
 import { Services } from "../services";

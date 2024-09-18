@@ -1,12 +1,12 @@
 import type { Knex } from "knex";
 import { SqliteRepository } from "..";
-import { BaseApp } from "../../../app";
-import { IApp } from "../../../app/types";
+import { BaseApp } from "../../../../app";
+import { IApp } from "../../../../app/types";
 import {
   BookmarksService,
   IBookmarksRepository,
-} from "../../../services/bookmarks";
-import { AppModule } from "../../../app/modules";
+} from "../../../../services/bookmarks";
+import { AppModule } from "../../../../app/modules";
 
 export async function up(knex: Knex): Promise<void> { 
   await knex.schema.alterTable("bookmarks", (table) => {

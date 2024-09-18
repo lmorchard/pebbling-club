@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { CliAppModule } from "../app/modules";
 import { buildKnexProgram } from "../repositories/knex";
-import { SqliteRepository } from "../repositories/sqlite";
+import { SqliteRepository } from "../repositories/sqlite/main";
 import SqliteFeedsRepository from "../repositories/sqlite/feeds";
 import SqliteFetchRepository from "../repositories/sqlite/fetch";
 

@@ -1,6 +1,6 @@
 import Knex from "knex";
 import { v4 as uuid } from "uuid";
-import { IKnexConnectionOptions, IKnexRepository } from "../knex";
+import { IKnexConnectionOptions, IKnexRepository } from "../../knex";
 import {
   Bookmark,
   BookmarkUpdatable,
@@ -9,14 +9,14 @@ import {
   TagCount,
   BookmarkCreatableWithHash,
   BookmarkUpdatableWithHash,
-} from "../../services/bookmarks";
+} from "../../../services/bookmarks";
 import {
   Profile,
   ProfileEditable,
   IProfilesRepository,
-} from "../../services/profiles";
-import { IPasswordsRepository } from "../../services/passwords";
-import BaseSqliteKnexRepository from "./base";
+} from "../../../services/profiles";
+import { IPasswordsRepository } from "../../../services/passwords";
+import BaseSqliteKnexRepository from "../base";
 import path from "path";
 
 export const configSchema = {

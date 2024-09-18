@@ -3,7 +3,7 @@ import { Readable } from "stream";
 import { BaseApp } from "../app";
 import { AppModule } from "../app/modules";
 import { IApp } from "../app/types";
-import { SqliteRepository } from "../repositories/sqlite";
+import { SqliteRepository } from "../repositories/sqlite/main";
 import { BookmarksService, IBookmarksRepository } from "../services/bookmarks";
 import { ImportService } from "../services/imports";
 import { PasswordService, IPasswordsRepository } from "../services/passwords";
