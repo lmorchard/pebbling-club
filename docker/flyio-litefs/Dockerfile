@@ -24,6 +24,8 @@ RUN npm install
 # Bundle app source
 COPY . .
 
+RUN npm run build
+
 ENV HOST=0.0.0.0
 ENV PORT=8081
 ENV SQLITE_DATA_PATH=/litefs

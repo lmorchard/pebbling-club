@@ -1,7 +1,13 @@
-import { LitElement, html, render } from "../vendor/lit-core.min.js";
-import BatchQueue from "../utils/batch-queue.js";
+import { LitElement, html, render } from "lit"; // "../vendor/lit-core.min.js";
+import BatchQueue from "../utils/batch-queue";
 
 export default class PCBookmarkElement extends LitElement {
+  isLoading: boolean;
+  hasFeed: boolean;
+  feedUrl?: string;
+  feedFetched?: boolean;
+  actionsTemplate: (data: any) => any;
+
   static get properties() {
     return {
       isLoading: { type: Boolean },
@@ -43,7 +49,7 @@ export default class PCBookmarkElement extends LitElement {
   }
 
   get url() {
-    return this.querySelector(".u-url").getAttribute("href");
+    return this.querySelector(".u-url")?.getAttribute("href");
   }
 
   render() {
@@ -67,58 +73,44 @@ export default class PCBookmarkElement extends LitElement {
 }
 
 export class PCBookmarkElementManager {
+  elements: Map<string, PCBookmarkElement>;
+  lastId: number;
+  discoverQueue: BatchQueue<DiscoverQueueJob>;
+  fetchFeedQueue: BatchQueue<FetchFeedQueueJob>;
+
   constructor() {
-    /** @type {Map<string, PCBookmarkElement>} */
     this.elements = new Map();
     this.lastId = 0;
-    this.discoverQueue = new BatchQueue({
+    this.discoverQueue = new BatchQueue<DiscoverQueueJob>({
       batchSize: 10,
-      onBatch: (batch) => this.discoverBatch(batch),
+      onBatch: this.discoverBatch.bind(this),
     });
-    this.fetchFeedQueue = new BatchQueue({
+
+    this.fetchFeedQueue = new BatchQueue<FetchFeedQueueJob>({
       batchSize: 10,
-      onBatch: (batch) => this.fetchFeedBatch(batch),
+      onBatch: this.fetchFeedBatch.bind(this),
     });
   }
 
-  /** 
-   * @returns string
-   */
   genId() {
     return `pc-bookmark-${++this.lastId}`;
   }
 
-  /**
-   * Register a managed element
-   * @param {PCBookmarkElement} element
-   */
-  register(element) {
+  register(element: PCBookmarkElement) {
     if (!element.id) element.id = this.genId();
     this.elements.set(element.id, element);
   }
 
-  /**
-   * Unregister a managed element
-   * @param {PCBookmarkElement} element
-   */
-  unregister(element) {
+  unregister(element: PCBookmarkElement) {
     const id = element.id;
     if (id) this.elements.delete(id);
   }
 
-  /**
-   *
-   * @param {PCBookmarkElement} element
-   */
-  async updateFeed(element) {
-    this.discoverQueue.push({ element, url: element.url });
+  async updateFeed(element: PCBookmarkElement) {
+    this.discoverQueue.push({ element, url: element.url! });
   }
 
-  /**
-   *
-   * @param {Array<{ element: PCBookmarkElement, url: string }>} batch
-   */
-  async discoverBatch(batch) {
+  async discoverBatch(batch: DiscoverQueueJob[]) {
     const urls = batch.map(({ url }) => url);
 
     const response = await fetch("/feeds/discover", {
@@ -131,8 +123,7 @@ export class PCBookmarkElementManager {
       throw Error(`feed discovery failed ${response.status}`);
     }
 
-    /** @type {DiscoverBatchResult} */
-    const results = await response.json();
+    const results: DiscoverBatchResult = await response.json();
     for (const result of results) {
       for (const { element, url } of batch) {
         if (url === result.url) {
@@ -143,7 +134,7 @@ export class PCBookmarkElementManager {
               const feedUrl = result.discovered[0].href;
               element.feedUrl = feedUrl;
               element.isLoading = true;
-              this.fetchFeedQueue.push({ element, feedUrl });
+              this.fetchFeedQueue.push({ element, url, feedUrl });
             }
           }
         }
@@ -152,10 +143,10 @@ export class PCBookmarkElementManager {
   }
 
   /**
-   * 
-   * @param {Array<{ element: PCBookmarkElement, url: string, feedUrl: string }>} batch 
+   *
+   * @param {Array<{ element: PCBookmarkElement, url: string, feedUrl: string }>} batch
    */
-  async fetchFeedBatch(batch) {
+  async fetchFeedBatch(batch: FetchFeedQueueJob[]): Promise<void> {
     const urls = batch.map(({ feedUrl }) => feedUrl);
 
     const response = await fetch("/feeds/get", {
@@ -183,22 +174,27 @@ export class PCBookmarkElementManager {
   }
 }
 
-/**
- * @typedef {Array<
- *  | { success: false, url: string, error: any }
- *  | {
- *      success: true,
- *      url: string,
- *      discovered: Array<{
- *        type: string,
- *        href: string,
- *        title?: string
- *      }>
- *    }
- * >} DiscoverBatchResult
- */
+type DiscoverQueueJob = { element: PCBookmarkElement; url: string };
 
-export const manager = (window.PCBookmarkElementManager =
-  new PCBookmarkElementManager());
+type FetchFeedQueueJob = {
+  element: PCBookmarkElement;
+  url: string;
+  feedUrl: string;
+};
+
+type DiscoverBatchResult = Array<
+  | { success: false; url: string; error: any }
+  | {
+      success: true;
+      url: string;
+      discovered: Array<{
+        type: string;
+        href: string;
+        title?: string;
+      }>;
+    }
+>;
+
+export const manager = new PCBookmarkElementManager();
 
 customElements.define("pc-bookmark", PCBookmarkElement);

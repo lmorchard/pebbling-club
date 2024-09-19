@@ -1,4 +1,4 @@
-import Server from "../server";
+import Server from "../web";
 import { SqliteRepository } from "../repositories/sqlite/main";
 import SqliteFeedsRepository from "../repositories/sqlite/feeds";
 import SqliteFetchRepository from "../repositories/sqlite/fetch";

@@ -1,5 +1,7 @@
 node_modules
 build
+client/web/build
 data
 .env
 tmp
+.DS_Store

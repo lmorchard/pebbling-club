@@ -1,9 +1,23 @@
-export default class BatchQueue {
+export default class BatchQueue<JobItem extends {}> {
+  onBatch: OnBatchHandler<JobItem>;
+  onError?: OnErrorHandler;
+
+  batchSize: number;
+  isRunning: boolean;
+  runDelay: number;
+  runDelayTimer: null | NodeJS.Timeout;
+  jobs: JobItem[];
+
   constructor({
-    onBatch = async (batch) => {},
-    onError = async (error) => {},
+    onBatch,
+    onError,
     batchSize = 5,
     runDelay = 100,
+  }: {
+    onBatch: OnBatchHandler<JobItem>;
+    onError?: OnErrorHandler;
+    batchSize?: number;
+    runDelay?: number;
   }) {
     this.onBatch = onBatch;
     this.onError = onError;
@@ -14,7 +28,7 @@ export default class BatchQueue {
     this.jobs = [];
   }
 
-  push(job) {
+  push(job: JobItem) {
     this.jobs.push(job);
     this.maybeRunBatch();
   }
@@ -27,15 +41,19 @@ export default class BatchQueue {
   }
 
   async runBatch() {
-    if (this.running) return;
-    this.running = true;
+    if (this.isRunning) return;
+    this.isRunning = true;
     try {
       const batch = this.jobs.splice(0, this.batchSize);
       await this.onBatch(batch);
     } catch (err) {
-      await this.onError(err);
+      this.onError && (await this.onError(err));
     }
-    this.running = false;
+    this.isRunning = false;
     this.maybeRunBatch();
   }
 }
+
+type OnBatchHandler<JobItem extends {}> = (batch: JobItem[]) => Promise<void>;
+
+type OnErrorHandler = (error: any) => Promise<void>;

@@ -5,7 +5,7 @@ import { IApp, ICliApp, IConfig } from "./types";
 import { Command } from "commander";
 
 import { configSchema as loggingConfigSchema } from "./logging";
-import { configSchema as serverConfigSchema } from "../server/index";
+import { configSchema as serverConfigSchema } from "../web/index";
 import { configSchema as repositorySqliteConfigSchema } from "../repositories/sqlite/main/index";
 import { configSchema as repositorySqliteFeedsConfigSchema } from "../repositories/sqlite/feeds/index";
 import { configSchema as repositorySqliteFetchConfigSchema } from "../repositories/sqlite/fetch/index";
