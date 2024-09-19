@@ -1,7 +1,7 @@
 import { BookmarkWithPermissions } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
 import { html } from "../../utils/html";
-import partialBookmark from "../partials/bookmark";
+import partialBookmark from "./bookmark";
 
 export interface Props {
   bookmarks: BookmarkWithPermissions[];

@@ -77,7 +77,7 @@ export const configSchema = {
     doc: "Public web static resources path",
     env: "PUBLIC_PATH",
     format: String,
-    default: "public",
+    default: "./client/web/build",
   },
   siteUrl: {
     doc: "Server base URL",

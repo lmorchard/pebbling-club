@@ -25,6 +25,8 @@ ENV HOST=0.0.0.0 \
 
 COPY . .
 
+RUN npm run build
+
 RUN mkdir -p /var/data
 VOLUME [ "/var/data" ]
 
