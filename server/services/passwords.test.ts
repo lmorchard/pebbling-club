@@ -27,7 +27,7 @@ describe("services/passwords", () => {
   before(() => {
     repository = new MockPasswordsRepository();
     app = new TestApp({ repository });
-    passwords = new PasswordService({ app });
+    passwords = new PasswordService(app);
   });
 
   it("should create with a random salt each time", async () => {

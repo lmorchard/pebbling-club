@@ -32,7 +32,7 @@ export class Config extends CliAppModule implements IConfig {
   config: typeof config;
 
   constructor(app: IApp) {
-    super({ app });
+    super(app);
     this.config = config;
   }
 

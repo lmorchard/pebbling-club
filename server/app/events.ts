@@ -11,7 +11,7 @@ export class Events extends AppModule implements IEvents {
   subscriptions: Map<EventName, SubscriptionsForEvent>;
 
   constructor(app: IApp) {
-    super({ app });
+    super(app);
     this.subscriptions = new Map();
     this.lastId = 0;
   }

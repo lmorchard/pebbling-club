@@ -12,8 +12,8 @@ export class PasswordService extends BaseService<IAppRequirements> {
   hashLength: number;
   hashAlgo: string;
 
-  constructor({ app }: { app: IApp & IAppRequirements}) {
-    super({ app });
+  constructor(app: IApp & IAppRequirements) {
+    super(app);
 
     // TODO: make these configurable
     this.hashIterations = 310000;

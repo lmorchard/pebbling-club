@@ -23,17 +23,17 @@ import CliFetch from "./cli/fetch";
 
 export class MainCliApp extends BaseCliApp {
   // TODO: make repository instances switchable via config
-  repository = new SqliteRepository({ app: this });
-  feedsRepository = new SqliteFeedsRepository({ app: this });
-  fetchRepository = new SqliteFetchRepository({ app: this });
+  repository = new SqliteRepository(this);
+  feedsRepository = new SqliteFeedsRepository(this);
+  fetchRepository = new SqliteFetchRepository(this);
 
-  passwords = new PasswordService({ app: this });
-  profiles = new ProfileService({ app: this });
-  bookmarks = new BookmarksService({ app: this });
-  imports = new ImportService({ app: this });
-  fetch = new FetchService({ app: this });
-  feeds = new FeedsService({ app: this });
-  webServer = new WebServer({ app: this });
+  passwords = new PasswordService(this);
+  profiles = new ProfileService(this);
+  bookmarks = new BookmarksService(this);
+  imports = new ImportService(this);
+  fetch = new FetchService(this);
+  feeds = new FeedsService(this);
+  webServer = new WebServer(this);
 
   constructor() {
     super();
@@ -51,12 +51,12 @@ export class MainCliApp extends BaseCliApp {
       this.fetch,
       this.feeds,
       this.webServer,
-      new CliDb({ app }),
-      new CliProfiles({ app }),
-      new CliImport({ app }),
-      new CliBookmarks({ app }),
-      new CliFeeds({ app }),
-      new CliFetch({ app })
+      new CliDb(this),
+      new CliProfiles(this),
+      new CliImport(this),
+      new CliBookmarks(this),
+      new CliFeeds(this),
+      new CliFetch(this)
     );
   }
 }

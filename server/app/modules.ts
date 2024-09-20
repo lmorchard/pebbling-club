@@ -6,7 +6,7 @@ export class AppModule<IAppRequirements = {}> implements IAppModule {
 
   static configSchema = {};
 
-  constructor({ app }: { app: IApp & IAppRequirements }) {
+  constructor(app: IApp & IAppRequirements) {
     this.app = app;
   }
 
