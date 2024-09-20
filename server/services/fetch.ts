@@ -69,8 +69,8 @@ export type IAppRequirements = {
 export class FetchService extends AppModule<IAppRequirements> {
   fetchQueue: PQueue;
 
-  constructor({ app }: { app: IApp & IAppRequirements }) {
-    super({ app });
+  constructor(app: IApp & IAppRequirements) {
+    super(app);
     this.fetchQueue = new PQueue({ concurrency: 4 });
   }
 

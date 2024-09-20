@@ -65,14 +65,14 @@ class StubApp extends BaseApp implements IApp {
     super();
     this.modules.push(
       (this.repository = new StubSqliteRepository(this, connection)),
-      (this.bookmarks = new BookmarksService({ app: this }))
+      (this.bookmarks = new BookmarksService(this))
     );
   }
 }
 
 class StubSqliteRepository extends SqliteRepository {
   constructor(app: IApp, connection: Knex<any, unknown[]>) {
-    super({ app });
+    super(app);
     this._connection = connection;
   }
   async init() {}

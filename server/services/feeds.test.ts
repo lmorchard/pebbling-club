@@ -212,10 +212,10 @@ export class TestApp extends BaseApp implements IApp {
     super();
     const app = this;
     this.modules.push(
-      (this.feedsRepository = new SqliteFeedsRepository({ app })),
-      (this.fetchRepository = new SqliteFetchRepository({ app })),
-      (this.fetch = new FetchService({ app })),
-      (this.feeds = new FeedsService({ app }))
+      (this.feedsRepository = new SqliteFeedsRepository(app)),
+      (this.fetchRepository = new SqliteFetchRepository(app)),
+      (this.fetch = new FetchService(app)),
+      (this.feeds = new FeedsService(app))
     );
 
     this.config.set("sqliteDatabasePath", testDatabasePath);
