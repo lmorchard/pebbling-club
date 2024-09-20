@@ -22,17 +22,18 @@ import CliDb from "./cli/db";
 import CliFetch from "./cli/fetch";
 
 export class MainCliApp extends BaseCliApp {
-  repository: SqliteRepository;
-  feedsRepository: SqliteFeedsRepository;
-  fetchRepository: SqliteFetchRepository;
+  // TODO: make repository instances switchable via config
+  repository = new SqliteRepository({ app: this });
+  feedsRepository = new SqliteFeedsRepository({ app: this });
+  fetchRepository = new SqliteFetchRepository({ app: this });
 
-  passwords: PasswordService;
-  profiles: ProfileService;
-  bookmarks: BookmarksService;
-  imports: ImportService;
-  fetch: FetchService;
-  feeds: FeedsService;
-  webServer: WebServer;
+  passwords = new PasswordService({ app: this });
+  profiles = new ProfileService({ app: this });
+  bookmarks = new BookmarksService({ app: this });
+  imports = new ImportService({ app: this });
+  fetch = new FetchService({ app: this });
+  feeds = new FeedsService({ app: this });
+  webServer = new WebServer({ app: this });
 
   constructor() {
     super();
@@ -40,17 +41,16 @@ export class MainCliApp extends BaseCliApp {
     const app = this;
 
     this.modules.push(
-      // TODO: make repository instances switchable via config
-      (this.repository = new SqliteRepository({ app })),
-      (this.feedsRepository = new SqliteFeedsRepository({ app })),
-      (this.fetchRepository = new SqliteFetchRepository({ app })),
-      (this.passwords = new PasswordService({ app })),
-      (this.profiles = new ProfileService({ app })),
-      (this.bookmarks = new BookmarksService({ app })),
-      (this.imports = new ImportService({ app })),
-      (this.fetch = new FetchService({ app })),
-      (this.feeds = new FeedsService({ app })),
-      (this.webServer = new WebServer({ app })),
+      this.repository,
+      this.feedsRepository,
+      this.fetchRepository,
+      this.passwords,
+      this.profiles,
+      this.bookmarks,
+      this.imports,
+      this.fetch,
+      this.feeds,
+      this.webServer,
       new CliDb({ app }),
       new CliProfiles({ app }),
       new CliImport({ app }),
