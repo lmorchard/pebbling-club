@@ -12,7 +12,7 @@ describe("services/bookmarks", () => {
   beforeEach(async () => {
     app = new TestApp("data/test/bookmarks");
     await app.init();
-    profileId = await app.services.profiles.create({ username }, { password });
+    profileId = await app.profiles.create({ username }, { password });
   });
 
   afterEach(async () => {
@@ -22,7 +22,7 @@ describe("services/bookmarks", () => {
   describe("normalizeUrlForHash", () => {
     it("should normalize URLs for hashing", async () => {
       for (const [ testUrl, { expected }] of Object.entries(TEST_URLS)) {
-        const normalized = await app.services.bookmarks.normalizeUrlForHash(
+        const normalized = await app.bookmarks.normalizeUrlForHash(
           testUrl
         );
         assert.equal(normalized, expected);
@@ -33,7 +33,7 @@ describe("services/bookmarks", () => {
   describe("generateUrlHash", () => {
     it("should generate URL hashes for normalized URLs", async () => {
       for (const [ testUrl, { hashNormalized }] of Object.entries(TEST_URLS)) {
-        const resultHash = await app.services.bookmarks.generateUrlHash(
+        const resultHash = await app.bookmarks.generateUrlHash(
           testUrl,
           true
         );
@@ -42,7 +42,7 @@ describe("services/bookmarks", () => {
     });
     it("should generate URL hashes for raw URLs", async () => {
       for (const [ testUrl, { hashRaw }] of Object.entries(TEST_URLS)) {
-        const resultHash = await app.services.bookmarks.generateUrlHash(
+        const resultHash = await app.bookmarks.generateUrlHash(
           testUrl,
           false
         );

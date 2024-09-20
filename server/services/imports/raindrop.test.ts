@@ -12,7 +12,7 @@ describe("services/imports", () => {
   beforeEach(async () => {
     app = new TestApp("data/test/imports/raindrop");
     await app.init();
-    profileId = await app.services.profiles.create({ username }, { password });
+    profileId = await app.profiles.create({ username }, { password });
   });
 
   afterEach(async () => {
@@ -21,7 +21,7 @@ describe("services/imports", () => {
 
   it("importRaindropCsv should import from CSV with idempotency", async () => {
     await commonImportTest(app, profileId, TEST_RAINDROP_URLS, () =>
-      app.services.imports.importRaindropCSV(
+      app.imports.importRaindropCSV(
         profileId,
         10,
         buildReadableStreamFromString(TEST_RAINDROP_CSV)

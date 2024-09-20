@@ -13,7 +13,7 @@ describe("services/imports/opml", () => {
   beforeEach(async () => {
     app = new TestApp("data/test/imports/opml");
     await app.init();
-    profileId = await app.services.profiles.create({ username }, { password });
+    profileId = await app.profiles.create({ username }, { password });
   });
 
   afterEach(async () => {
@@ -22,14 +22,14 @@ describe("services/imports/opml", () => {
 
   it("importOpml should import from OPML with idempotency", async () => {
     await commonImportTest(app, profileId, TEST_URLS, () =>
-      app.services.imports.importOPML(
+      app.imports.importOPML(
         profileId,
         10,
         buildReadableStreamFromString(TEST_OPML)
       )
     );
 
-    const { bookmarks } = app.services;
+    const { bookmarks } = app;
 
     for (const url of TEST_URLS) {
       const result = await bookmarks.getByUrl(profileId, url);

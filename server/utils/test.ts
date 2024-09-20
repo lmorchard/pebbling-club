@@ -9,34 +9,37 @@ import { ImportService } from "../services/imports";
 import { PasswordService, IPasswordsRepository } from "../services/passwords";
 import { ProfileService, IProfilesRepository } from "../services/profiles";
 
-export class TestServices extends AppModule {
+export class TestApp extends BaseApp implements IApp {
+  repository: IPasswordsRepository & IProfilesRepository & IBookmarksRepository;
   passwords: PasswordService;
   profiles: ProfileService;
   bookmarks: BookmarksService;
   imports: ImportService;
 
-  constructor(app: TestApp) {
-    super(app);
-
-    const { repository } = app;
-
-    this.passwords = new PasswordService(app, repository);
-    this.profiles = new ProfileService(app, repository, this.passwords);
-    this.bookmarks = new BookmarksService(app, repository);
-    this.imports = new ImportService(app, this.bookmarks);
-  }
-}
-
-export class TestApp extends BaseApp implements IApp {
-  repository: IPasswordsRepository & IProfilesRepository & IBookmarksRepository;
-  services: TestServices;
-
   constructor(testDatabasePath = "data/test") {
     super();
 
+    const app = this;
+
+    this.modules.push((this.repository = new SqliteRepository({ app })));
+
+    const { repository } = this;
+
     this.modules.push(
-      (this.repository = new SqliteRepository(this)),
-      (this.services = new TestServices(this))
+      (this.passwords = new PasswordService({
+        app,
+        repository,
+      })),
+      (this.profiles = new ProfileService({
+        app,
+        repository,
+        passwords: this.passwords,
+      })),
+      (this.bookmarks = new BookmarksService({
+        app,
+        repository,
+      })),
+      (this.imports = new ImportService({ app, bookmarks: this.bookmarks }))
     );
 
     this.config.set("sqliteDatabasePath", testDatabasePath);

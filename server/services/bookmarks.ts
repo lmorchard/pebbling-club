@@ -5,8 +5,8 @@ import { BaseService } from "./base";
 export class BookmarksService extends BaseService {
   repository: IBookmarksRepository;
 
-  constructor(app: IApp, repository: IBookmarksRepository) {
-    super(app);
+  constructor({ app, repository }: { app: IApp; repository: IBookmarksRepository; }) {
+    super({ app });
     this.repository = repository;
   }
 

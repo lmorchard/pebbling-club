@@ -5,10 +5,8 @@ import { BookmarksService } from "../services/bookmarks";
 import { ProfileService } from "../services/profiles";
 
 export type IAppRequirements = {
-  services: {
     bookmarks: BookmarksService;
     profiles: ProfileService;
-  };
 };
 
 export default class CliBookmarks extends CliAppModule<IAppRequirements> {
@@ -68,7 +66,7 @@ export default class CliBookmarks extends CliAppModule<IAppRequirements> {
     options: { tags: string; limit: number; offset: number }
   ) {
     const { log } = this;
-    const { bookmarks, profiles } = this.app.services;
+    const { bookmarks, profiles } = this.app;
 
     const profile = await profiles.getByUsername(username);
     if (!profile?.id) {
@@ -109,7 +107,7 @@ export default class CliBookmarks extends CliAppModule<IAppRequirements> {
     options: { limit: number; offset: number }
   ) {
     const { log } = this;
-    const { bookmarks, profiles } = this.app.services;
+    const { bookmarks, profiles } = this.app;
 
     const profile = await profiles.getByUsername(username);
     if (!profile?.id) {
@@ -128,7 +126,7 @@ export default class CliBookmarks extends CliAppModule<IAppRequirements> {
 
   async commandGet(id: string) {
     const { log } = this;
-    const { bookmarks } = this.app.services;
+    const { bookmarks } = this.app;
     const viewerId = undefined; // TOSO: add a viewer profile option?
 
     const bookmark = await bookmarks.get(viewerId, id);
@@ -151,7 +149,7 @@ export default class CliBookmarks extends CliAppModule<IAppRequirements> {
     }
   ) {
     const { log } = this;
-    const { bookmarks, profiles } = this.app.services;
+    const { bookmarks, profiles } = this.app;
 
     const profile = await profiles.getByUsername(username);
     if (!profile?.id) {
@@ -168,7 +166,7 @@ export default class CliBookmarks extends CliAppModule<IAppRequirements> {
 
   async commandDelete(id: string) {
     const { log } = this;
-    const { bookmarks } = this.app.services;
+    const { bookmarks } = this.app;
     const result = await bookmarks.delete(id);
     log.info({ msg: "Bookmark deleted", id, result });
   }
@@ -185,7 +183,7 @@ export default class CliBookmarks extends CliAppModule<IAppRequirements> {
     }
   ) {
     const { log } = this;
-    const { bookmarks, profiles } = this.app.services;
+    const { bookmarks, profiles } = this.app;
     const viewerId = undefined; // TOSO: add a viewer profile option?
 
     const bookmark = await bookmarks.get(viewerId, id);

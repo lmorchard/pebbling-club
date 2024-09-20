@@ -8,7 +8,7 @@ export const commonImportTest = async (
   expectedUrls: string[],
   importFn: () => Promise<number>
 ) => {
-  const { bookmarks } = app.services;
+  const { bookmarks } = app;
 
   const importedCount1 = await importFn();
   assert.equal(importedCount1, 5, "expected total from import");

@@ -9,8 +9,8 @@ export class PasswordService extends BaseService {
   hashLength: number;
   hashAlgo: string;
 
-  constructor(app: IApp, repository: IPasswordsRepository) {
-    super(app);
+  constructor({ app, repository }: { app: IApp; repository: IPasswordsRepository; }) {
+    super({ app });
     this.repository = repository;
 
     // TODO: make these configurable

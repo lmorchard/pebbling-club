@@ -6,10 +6,8 @@ import { Readable } from "stream";
 import { Command } from "commander";
 
 export type IAppRequirements = {
-  services: {
-    profiles: ProfileService;
-    imports: ImportService;
-  };
+  profiles: ProfileService;
+  imports: ImportService;
 };
 
 export default class CliImport extends CliAppModule<IAppRequirements> {
@@ -50,7 +48,7 @@ export default class CliImport extends CliAppModule<IAppRequirements> {
     options: { batch: string }
   ) {
     return this.commonImportCommand(username, filename, options, (...args) =>
-      this.app.services.imports.importPinboardJSON(...args)
+      this.app.imports.importPinboardJSON(...args)
     );
   }
 
@@ -60,7 +58,7 @@ export default class CliImport extends CliAppModule<IAppRequirements> {
     options: { batch: string }
   ) {
     return this.commonImportCommand(username, filename, options, (...args) =>
-      this.app.services.imports.importRaindropCSV(...args)
+      this.app.imports.importRaindropCSV(...args)
     );
   }
 
@@ -70,7 +68,7 @@ export default class CliImport extends CliAppModule<IAppRequirements> {
     options: { batch: string }
   ) {
     return this.commonImportCommand(username, filename, options, (...args) =>
-      this.app.services.imports.importOPML(...args)
+      this.app.imports.importOPML(...args)
     );
   }
 
@@ -85,8 +83,7 @@ export default class CliImport extends CliAppModule<IAppRequirements> {
     ) => Promise<number>
   ) {
     const { log } = this;
-    const { services } = this.app;
-    const { profiles, imports } = services;
+    const { profiles } = this.app;
     const batchSize = parseInt(options.batch, 10) || 100;
 
     const ownerProfile = await profiles.getByUsername(username);

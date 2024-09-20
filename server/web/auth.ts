@@ -32,13 +32,11 @@ export const PassportAuth = fp(
   async (
     server,
     options: {
-      services: {
-        passwords: PasswordService;
-        profiles: ProfileService;
-      };
+      passwords: PasswordService;
+      profiles: ProfileService;
     }
   ) => {
-    const { passwords, profiles } = options.services;
+    const { passwords, profiles } = options;
 
     server.register(FastifyPassport.initialize());
     server.register(FastifyPassport.secureSession());
@@ -126,8 +124,7 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
 ) => {
   const { server } = options;
   const { log, app } = server;
-  const { services, config } = app;
-  const { passwords } = services;
+  const { passwords, profiles, config } = app;
 
   fastify.get("/login", async (request, reply) => {
     return reply.renderTemplate(templateLogin, {
@@ -311,7 +308,7 @@ export const AuthRouter: FastifyPluginAsync<IAuthRouterOptions> = async (
         });
       }
 
-      const id = await services.profiles.create({ username }, { password });
+      const id = await profiles.create({ username }, { password });
       await request.logIn({ id, username });
       reply.redirect("/");
     }

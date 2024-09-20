@@ -1,5 +1,4 @@
 import { Command } from "commander";
-import { Services } from "../services";
 
 export interface IApp {
   config: IConfig;
