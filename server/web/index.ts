@@ -107,11 +107,9 @@ declare module "fastify" {
 
 export type IAppRequirements = {
   feeds: FeedsService;
-  services: {
     passwords: PasswordService;
     profiles: ProfileService;
     bookmarks: BookmarksService;
-  };
 };
 
 export default class Server extends CliAppModule<IAppRequirements> {
@@ -148,7 +146,7 @@ export default class Server extends CliAppModule<IAppRequirements> {
   }
 
   async buildServer() {
-    const { config } = this.app;
+    const { config, profiles, passwords } = this.app;
 
     const fastify: FastifyInstance = Fastify({
       // HACK: ILogger is not compatible with FastifyBaseLogger, though really it is - fix this
@@ -164,8 +162,8 @@ export default class Server extends CliAppModule<IAppRequirements> {
     fastify.register(FastifyCsrfProtection, {
       sessionPlugin: "@fastify/secure-session",
     });
-    fastify.register(PassportAuth, { services: this.app.services });
-    fastify.register(TemplateRenderer, { config: this.app.config });
+    fastify.register(PassportAuth, { profiles, passwords });
+    fastify.register(TemplateRenderer, { config });
     await this.setupRouters(fastify);
     await this.setupErrorHandlers(fastify);
 
@@ -194,7 +192,7 @@ export default class Server extends CliAppModule<IAppRequirements> {
       server: this,
       prefix: "/",
       services: {
-        bookmarks: this.app.services.bookmarks,
+        bookmarks: this.app.bookmarks,
       },
     });
     server.register(FeedsRouter, {

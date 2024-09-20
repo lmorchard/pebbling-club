@@ -28,7 +28,7 @@ export const ProfilesRouter: FastifyPluginAsync<
   fastify.addHook<{
     Params: { username: string };
   }>("preHandler", async (request, reply) => {
-    const { profiles, bookmarks } = options.server.app.services;
+    const { profiles, bookmarks } = options.server.app;
     const { username } = request.params;
 
     const profile = await profiles.getByUsername(username);
@@ -43,7 +43,7 @@ export const ProfilesRouter: FastifyPluginAsync<
     Params: { username: string };
     Querystring: { limit?: string; offset?: string };
   }>("/:username", async (request, reply) => {
-    const { bookmarks } = options.server.app.services;
+    const { bookmarks } = options.server.app;
     const { limit, offset } = parseLimitOffset(request.query);
     const viewerId = request.user?.id;
 
@@ -66,7 +66,7 @@ export const ProfilesRouter: FastifyPluginAsync<
     Params: { username: string; tags: string };
     Querystring: { limit?: string; offset?: string };
   }>("/:username/t/:tags", async (request, reply) => {
-    const { bookmarks } = options.server.app.services;
+    const { bookmarks } = options.server.app;
     const { tags } = request.params;
     const { limit, offset } = parseLimitOffset(request.query);
     const viewerId = request.user?.id;

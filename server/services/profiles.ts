@@ -6,12 +6,16 @@ export class ProfileService extends BaseService {
   repository: IProfilesRepository;
   passwords: PasswordService;
 
-  constructor(
-    app: IApp,
-    repository: IProfilesRepository,
-    passwords: PasswordService
-  ) {
-    super(app);
+  constructor({
+    app,
+    repository,
+    passwords,
+  }: {
+    app: IApp;
+    repository: IProfilesRepository;
+    passwords: PasswordService;
+  }) {
+    super({ app });
     this.repository = repository;
     this.passwords = passwords;
   }

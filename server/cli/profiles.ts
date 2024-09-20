@@ -4,10 +4,8 @@ import { PasswordService } from "../services/passwords";
 import { ProfileService } from "../services/profiles";
 
 export type IAppRequirements = {
-  services: {
-    profiles: ProfileService;
-    passwords: PasswordService;
-  };
+  profiles: ProfileService;
+  passwords: PasswordService;
 };
 
 export default class CliProfiles extends CliAppModule<IAppRequirements> {
@@ -39,8 +37,7 @@ export default class CliProfiles extends CliAppModule<IAppRequirements> {
 
   async commandList() {
     const { log } = this;
-    const { services } = this.app;
-    const { passwords } = services;
+    const { passwords } = this.app;
 
     const users = await passwords.list();
     users.forEach((user) => {
@@ -51,7 +48,7 @@ export default class CliProfiles extends CliAppModule<IAppRequirements> {
 
   async commandDelete(username: string) {
     const { log } = this;
-    const { profiles, passwords } = this.app.services;
+    const { profiles, passwords } = this.app;
 
     const existingProfile = await profiles.getByUsername(username);
     if (!existingProfile?.id) {
@@ -66,7 +63,7 @@ export default class CliProfiles extends CliAppModule<IAppRequirements> {
 
   async commandCreate(username: string, password: string) {
     const { log } = this;
-    const { profiles } = this.app.services;
+    const { profiles } = this.app;
 
     if (await profiles.usernameExists(username)) {
       log.error({ msg: "username already exists", username });
@@ -83,7 +80,7 @@ export default class CliProfiles extends CliAppModule<IAppRequirements> {
 
   async commandChangePassword(username: string, password: string) {
     const { log } = this;
-    const { passwords } = this.app.services;
+    const { passwords } = this.app;
 
     const result = await passwords.update(username, password);
     if (result) {

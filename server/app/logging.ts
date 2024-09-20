@@ -37,7 +37,7 @@ export class Logging extends CliAppModule {
   logger: Logger<never>;
 
   constructor(app: IApp) {
-    super(app);
+    super({ app });
     this.usePrettyLogs = false;
     this.logger = this.buildLogger();
   }

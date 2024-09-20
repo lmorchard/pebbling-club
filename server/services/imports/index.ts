@@ -12,8 +12,8 @@ export class ImportService extends BaseService {
   importRaindropCSV: typeof importRaindropCSV;
   importOPML: typeof importOPML;
 
-  constructor(app: IApp, bookmarks: BookmarksService) {
-    super(app);
+  constructor({ app, bookmarks }: { app: IApp; bookmarks: BookmarksService }) {
+    super({ app });
     this.bookmarks = bookmarks;
 
     this.importPinboardJSON = importPinboardJSON.bind(this);

@@ -13,7 +13,7 @@ describe("services/imports", () => {
   beforeEach(async () => {
     app = new TestApp("data/test/imports/index");
     await app.init();
-    profileId = await app.services.profiles.create({ username }, { password });
+    profileId = await app.profiles.create({ username }, { password });
   });
 
   afterEach(async () => {
@@ -21,9 +21,9 @@ describe("services/imports", () => {
   });
 
   it("importPinboardJSON and importRaindropCSV should not produce duplicates", async () => {
-    const { bookmarks } = app.services;
+    const { bookmarks } = app;
 
-    const importedCount1 = await app.services.imports.importRaindropCSV(
+    const importedCount1 = await app.imports.importRaindropCSV(
       profileId,
       10,
       buildReadableStreamFromString(TEST_RAINDROP_CSV)
@@ -31,7 +31,7 @@ describe("services/imports", () => {
     console.log(importedCount1);
     assert.equal(importedCount1, TEST_RAINDROP_URLS.length);
 
-    const importedCount2 = await app.services.imports.importPinboardJSON(
+    const importedCount2 = await app.imports.importPinboardJSON(
       profileId,
       10,
       buildReadableStreamFromString(TEST_PINBOARD_JSON)

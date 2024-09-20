@@ -35,8 +35,8 @@ export class FeedsService extends AppModule {
   repository: IFeedsRepository;
   fetch: FetchService;
 
-  constructor(app: IApp, repository: IFeedsRepository, fetch: FetchService) {
-    super(app);
+  constructor({ app, repository, fetch }: { app: IApp; repository: IFeedsRepository; fetch: FetchService; }) {
+    super({ app });
     this.repository = repository;
     this.fetch = fetch;
   }

@@ -12,7 +12,7 @@ describe("services/imports/pinboard", () => {
   beforeEach(async () => {
     app = new TestApp("data/test/imports/pinboard");
     await app.init();
-    profileId = await app.services.profiles.create({ username }, { password });
+    profileId = await app.profiles.create({ username }, { password });
   });
 
   afterEach(async () => {
@@ -21,7 +21,7 @@ describe("services/imports/pinboard", () => {
 
   it("importPinboard should import from JSON with idempotency", async () => {
     await commonImportTest(app, profileId, TEST_PINBOARD_URLS, () =>
-      app.services.imports.importPinboardJSON(
+      app.imports.importPinboardJSON(
         profileId,
         10,
         buildReadableStreamFromString(TEST_PINBOARD_JSON)

@@ -81,15 +81,15 @@ class StubServices extends AppModule<IAppRequirements> {
   bookmarks: BookmarksService;
 
   constructor(app: StubApp) {
-    super(app);
+    super({ app });
     const { repository } = app;
-    this.bookmarks = new BookmarksService(app, repository);
+    this.bookmarks = new BookmarksService({ app, repository });
   }
 }
 
 class StubSqliteRepository extends SqliteRepository {
   constructor(app: IApp & IAppRequirements, connection: Knex<any, unknown[]>) {
-    super(app);
+    super({ app });
     this._connection = connection;
   }
   async init() {}

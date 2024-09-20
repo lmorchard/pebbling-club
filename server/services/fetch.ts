@@ -66,8 +66,14 @@ export class FetchService extends AppModule {
   repository: IFetchRepository;
   fetchQueue: PQueue;
 
-  constructor(app: IApp, repository: IFetchRepository) {
-    super(app);
+  constructor({
+    app,
+    repository,
+  }: {
+    app: IApp;
+    repository: IFetchRepository;
+  }) {
+    super({ app });
     this.repository = repository;
     this.fetchQueue = new PQueue({ concurrency: 4 });
   }
