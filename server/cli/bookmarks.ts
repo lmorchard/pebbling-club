@@ -5,8 +5,8 @@ import { BookmarksService } from "../services/bookmarks";
 import { ProfileService } from "../services/profiles";
 
 export type IAppRequirements = {
-    bookmarks: BookmarksService;
-    profiles: ProfileService;
+  bookmarks: BookmarksService;
+  profiles: ProfileService;
 };
 
 export default class CliBookmarks extends CliAppModule<IAppRequirements> {

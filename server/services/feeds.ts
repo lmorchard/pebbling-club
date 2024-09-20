@@ -31,16 +31,12 @@ export type FeedPollOptions = {
   maxage?: number;
 };
 
-export class FeedsService extends AppModule {
-  repository: IFeedsRepository;
+export type IAppRequirements = {
+  feedsRepository: IFeedsRepository;
   fetch: FetchService;
+};
 
-  constructor({ app, repository, fetch }: { app: IApp; repository: IFeedsRepository; fetch: FetchService; }) {
-    super({ app });
-    this.repository = repository;
-    this.fetch = fetch;
-  }
-
+export class FeedsService extends AppModule<IAppRequirements> {
   async get(
     urlIn: string,
     options: FeedPollOptions & {
@@ -81,10 +77,10 @@ export class FeedsService extends AppModule {
       }
     }
 
-    const feed = await this.repository.fetchFeedByUrl(url);
+    const feed = await this.app.feedsRepository.fetchFeedByUrl(url);
     if (!feed) return null;
 
-    const items = await this.repository.fetchItemsForFeed(
+    const items = await this.app.feedsRepository.fetchItemsForFeed(
       feed?.id,
       limit,
       offset
@@ -94,7 +90,8 @@ export class FeedsService extends AppModule {
   }
 
   async autodiscover(url: string, options: { forceFetch?: boolean } = {}) {
-    const { log, fetch, repository } = this;
+    const { log, app } = this;
+    const { fetch, feedsRepository: repository } = app;
 
     log.trace({ msg: "autodiscover", url });
 
@@ -199,8 +196,7 @@ export class FeedsService extends AppModule {
   async update(feedIn: Feed, options: FeedPollOptions = {}) {
     const {
       log,
-      repository,
-      app: { config },
+      app: { config, feedsRepository: repository },
     } = this;
 
     log.trace({ msg: "updateFeed", feed: feedIn, options });
@@ -236,8 +232,8 @@ export class FeedsService extends AppModule {
     if (!result) return;
 
     const { feed: feedUpdates, items } = result;
-    const feedId = await this.repository.upsertFeed(feedUpdates);
-    const itemIds = await this.repository.upsertFeedItemBatch(
+    const feedId = await this.app.feedsRepository.upsertFeed(feedUpdates);
+    const itemIds = await this.app.feedsRepository.upsertFeedItemBatch(
       {
         id: feedId,
         ...feedUpdates,
@@ -251,8 +247,7 @@ export class FeedsService extends AppModule {
   async poll(feed: Feed, options: FeedPollOptions = {}) {
     const {
       log,
-      fetch,
-      app: { config },
+      app: { config, fetch },
     } = this;
     const {
       forceFetch = false,

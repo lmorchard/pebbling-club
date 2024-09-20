@@ -26,20 +26,10 @@ export class TestApp extends BaseApp implements IApp {
     const { repository } = this;
 
     this.modules.push(
-      (this.passwords = new PasswordService({
-        app,
-        repository,
-      })),
-      (this.profiles = new ProfileService({
-        app,
-        repository,
-        passwords: this.passwords,
-      })),
-      (this.bookmarks = new BookmarksService({
-        app,
-        repository,
-      })),
-      (this.imports = new ImportService({ app, bookmarks: this.bookmarks }))
+      (this.passwords = new PasswordService({ app })),
+      (this.profiles = new ProfileService({ app })),
+      (this.bookmarks = new BookmarksService({ app })),
+      (this.imports = new ImportService({ app }))
     );
 
     this.config.set("sqliteDatabasePath", testDatabasePath);

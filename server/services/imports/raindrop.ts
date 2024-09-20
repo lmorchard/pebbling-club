@@ -11,7 +11,7 @@ export async function importRaindropCSV(
   importFileStream: Readable
 ) {
   const { log } = this;
-  const { bookmarks } = this;
+  const { bookmarks } = this.app;
 
   let importedCount = 0;
   const writeQueue: BookmarkCreatable[] = [];

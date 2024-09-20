@@ -9,7 +9,7 @@ export async function importPinboardJSON(
   importFileStream: Readable
 ) {
   const { log } = this;
-  const { bookmarks } = this;
+  const { bookmarks } = this.app;
   const now = new Date();
 
   // TODO: can this be done easier? or maybe processing the stream as

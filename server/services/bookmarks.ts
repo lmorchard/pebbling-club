@@ -1,24 +1,20 @@
 import crypto from "crypto";
-import { IApp } from "../app/types";
 import { BaseService } from "./base";
 
-export class BookmarksService extends BaseService {
+export type IAppRequirements = {
   repository: IBookmarksRepository;
+};
 
-  constructor({ app, repository }: { app: IApp; repository: IBookmarksRepository; }) {
-    super({ app });
-    this.repository = repository;
-  }
-
+export class BookmarksService extends BaseService<IAppRequirements> {
   async upsert(bookmark: BookmarkCreatable) {
-    return await this.repository.upsertBookmark({
+    return await this.app.repository.upsertBookmark({
       ...bookmark,
       uniqueHash: await this.generateUrlHash(bookmark.href),
     });
   }
 
   async upsertBatch(bookmarks: BookmarkCreatable[]) {
-    return await this.repository.upsertBookmarksBatch(
+    return await this.app.repository.upsertBookmarksBatch(
       await Promise.all(
         bookmarks.map(async (bookmark) => ({
           ...bookmark,
@@ -29,14 +25,14 @@ export class BookmarksService extends BaseService {
   }
 
   async update(bookmarkId: string, bookmark: BookmarkUpdatable) {
-    return await this.repository.updateBookmark(bookmarkId, {
+    return await this.app.repository.updateBookmark(bookmarkId, {
       ...bookmark,
       uniqueHash: await this.generateUrlHash(bookmark.href || ""),
     });
   }
 
   async delete(bookmarkId: string) {
-    return await this.repository.deleteBookmark(bookmarkId);
+    return await this.app.repository.deleteBookmark(bookmarkId);
   }
 
   async get(
@@ -45,7 +41,7 @@ export class BookmarksService extends BaseService {
   ): Promise<BookmarkWithPermissions | null> {
     return await this.annotateBookmarkWithPermissions(
       viewerId,
-      await this.repository.fetchBookmark(bookmarkId)
+      await this.app.repository.fetchBookmark(bookmarkId)
     );
   }
 
@@ -55,7 +51,7 @@ export class BookmarksService extends BaseService {
   ): Promise<BookmarkWithPermissions | null> {
     return await this.annotateBookmarkWithPermissions(
       ownerId,
-      await this.repository.fetchBookmarkByOwnerAndUrl(ownerId, url)
+      await this.app.repository.fetchBookmarkByOwnerAndUrl(ownerId, url)
     );
   }
 
@@ -65,7 +61,7 @@ export class BookmarksService extends BaseService {
     limit: number,
     offset: number
   ) {
-    const { total, items } = await this.repository.listBookmarksForOwner(
+    const { total, items } = await this.app.repository.listBookmarksForOwner(
       ownerId,
       limit,
       offset
@@ -83,12 +79,13 @@ export class BookmarksService extends BaseService {
     limit: number,
     offset: number
   ) {
-    const { total, items } = await this.repository.listBookmarksForOwnerByTags(
-      ownerId,
-      tags,
-      limit,
-      offset
-    );
+    const { total, items } =
+      await this.app.repository.listBookmarksForOwnerByTags(
+        ownerId,
+        tags,
+        limit,
+        offset
+      );
     return {
       total,
       items: await this.annotateBookmarksWithPermissions(viewerId, items),
@@ -101,7 +98,7 @@ export class BookmarksService extends BaseService {
     limit: number,
     offset: number
   ) {
-    const { total, items } = await this.repository.listBookmarksByTags(
+    const { total, items } = await this.app.repository.listBookmarksByTags(
       tags,
       limit,
       offset
@@ -113,7 +110,7 @@ export class BookmarksService extends BaseService {
   }
 
   async listTagsForOwner(ownerId: string, limit: number, offset: number) {
-    return await this.repository.listTagsForOwner(ownerId, limit, offset);
+    return await this.app.repository.listTagsForOwner(ownerId, limit, offset);
   }
 
   async permissionsForBookmark(
@@ -242,9 +239,7 @@ export type TagCount = {
 };
 
 export interface IBookmarksRepository {
-  upsertBookmark(
-    bookmark: BookmarkCreatableWithHash
-  ): Promise<Bookmark>;
+  upsertBookmark(bookmark: BookmarkCreatableWithHash): Promise<Bookmark>;
   upsertBookmarksBatch(
     bookmarks: BookmarkCreatableWithHash[]
   ): Promise<Bookmark[]>;
