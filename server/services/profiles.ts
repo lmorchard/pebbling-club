@@ -1,33 +1,20 @@
-import { IApp } from "../app/types";
 import { BaseService } from "./base";
 import { PasswordService } from "./passwords";
 
-export class ProfileService extends BaseService {
+export type IAppRequirements = {
   repository: IProfilesRepository;
   passwords: PasswordService;
+};
 
-  constructor({
-    app,
-    repository,
-    passwords,
-  }: {
-    app: IApp;
-    repository: IProfilesRepository;
-    passwords: PasswordService;
-  }) {
-    super({ app });
-    this.repository = repository;
-    this.passwords = passwords;
-  }
-
+export class ProfileService extends BaseService<IAppRequirements> {
   async usernameExists(username: string) {
-    return await this.repository.checkIfProfileExistsForUsername(username);
+    return await this.app.repository.checkIfProfileExistsForUsername(username);
   }
 
   async create(profile: ProfileCreatable, options: { password?: string } = {}) {
-    const newProfile = await this.repository.createProfile(profile);
+    const newProfile = await this.app.repository.createProfile(profile);
     if (options.password) {
-      await this.passwords.create(
+      await this.app.passwords.create(
         { id: newProfile, username: profile.username },
         options.password
       );
@@ -36,15 +23,15 @@ export class ProfileService extends BaseService {
   }
 
   async update(id: string, profile: ProfileEditable) {
-    return await this.repository.updateProfile(id, profile);
+    return await this.app.repository.updateProfile(id, profile);
   }
 
   async get(id: string) {
-    return await this.repository.getProfile(id);
+    return await this.app.repository.getProfile(id);
   }
 
   async getByUsername(username: string) {
-    return await this.repository.getProfileByUsername(username);
+    return await this.app.repository.getProfileByUsername(username);
   }
 
   async delete(id: string) {
@@ -53,12 +40,12 @@ export class ProfileService extends BaseService {
 
     // Delete password associated with profile username, if exists.
     const { username } = existingProfile;
-    const passwordId = await this.passwords.getIdByUsername(username);
+    const passwordId = await this.app.passwords.getIdByUsername(username);
     if (passwordId) {
-      await this.passwords.delete(passwordId);
+      await this.app.passwords.delete(passwordId);
     }
 
-    return await this.repository.deleteProfile(id);
+    return await this.app.repository.deleteProfile(id);
   }
 }
 

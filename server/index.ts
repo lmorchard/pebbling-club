@@ -32,6 +32,7 @@ export class MainCliApp extends BaseCliApp {
   imports: ImportService;
   fetch: FetchService;
   feeds: FeedsService;
+  webServer: WebServer;
 
   constructor() {
     super();
@@ -39,35 +40,17 @@ export class MainCliApp extends BaseCliApp {
     const app = this;
 
     this.modules.push(
-      (this.repository = new SqliteRepository({ app })), // TODO make switchable
+      // TODO: make repository instances switchable via config
+      (this.repository = new SqliteRepository({ app })),
       (this.feedsRepository = new SqliteFeedsRepository({ app })),
-      (this.fetchRepository = new SqliteFetchRepository({ app }))
-    );
-
-    const { repository, feedsRepository, fetchRepository } = this;
-
-    this.modules.push(
-      (this.passwords = new PasswordService({ app, repository })),
-      (this.profiles = new ProfileService({
-        app,
-        repository,
-        passwords: this.passwords,
-      })),
-      (this.bookmarks = new BookmarksService({ app, repository })),
-      (this.imports = new ImportService({ app, bookmarks: this.bookmarks })),
-      (this.fetch = new FetchService({
-        app,
-        repository: fetchRepository,
-      })),
-      (this.feeds = new FeedsService({
-        app,
-        repository: feedsRepository,
-        fetch: this.fetch,
-      }))
-    );
-
-    this.modules.push(
-      new WebServer({ app }),
+      (this.fetchRepository = new SqliteFetchRepository({ app })),
+      (this.passwords = new PasswordService({ app })),
+      (this.profiles = new ProfileService({ app })),
+      (this.bookmarks = new BookmarksService({ app })),
+      (this.imports = new ImportService({ app })),
+      (this.fetch = new FetchService({ app })),
+      (this.feeds = new FeedsService({ app })),
+      (this.webServer = new WebServer({ app })),
       new CliDb({ app }),
       new CliProfiles({ app }),
       new CliImport({ app }),

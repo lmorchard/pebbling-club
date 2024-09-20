@@ -3,6 +3,15 @@ import { describe, it, before, mock } from "node:test";
 import { Password, PasswordService, IPasswordsRepository } from "./passwords";
 import { MockApp } from "../app/mocks";
 
+class TestApp extends MockApp {
+  repository: MockPasswordsRepository;
+
+  constructor({ repository }: { repository: MockPasswordsRepository }) {
+    super();
+    this.repository = repository;
+  }
+}
+
 describe("services/passwords", () => {
   const username = "johndoe";
   const password = "hunter23";
@@ -11,14 +20,14 @@ describe("services/passwords", () => {
   const profileId = "skibidi";
   const salt = "343cd9bd7aa6bbbdc775bc154994f273";
 
-  let app: MockApp;
+  let app: TestApp;
   let repository: IPasswordsRepository;
   let passwords: PasswordService;
 
   before(() => {
-    app = new MockApp();
     repository = new MockPasswordsRepository();
-    passwords = new PasswordService({ app, repository });
+    app = new TestApp({ repository });
+    passwords = new PasswordService({ app });
   });
 
   it("should create with a random salt each time", async () => {

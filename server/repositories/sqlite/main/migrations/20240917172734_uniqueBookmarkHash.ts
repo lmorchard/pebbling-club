@@ -6,9 +6,8 @@ import {
   BookmarksService,
   IBookmarksRepository,
 } from "../../../../services/bookmarks";
-import { AppModule } from "../../../../app/modules";
 
-export async function up(knex: Knex): Promise<void> { 
+export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable("bookmarks", (table) => {
     table.string("uniqueHash");
   });
@@ -20,14 +19,14 @@ export async function up(knex: Knex): Promise<void> {
     await knex.transaction(async (trx) => {
       const chunk = updates.splice(0, chunkSize);
       for (const { id, uniqueHash } of chunk) {
-        await trx('bookmarks').update({ uniqueHash }).where({ id });
+        await trx("bookmarks").update({ uniqueHash }).where({ id });
       }
     });
   };
 
   const rows = knex.select(["id", "href"]).from("bookmarks").stream();
   for await (const { id, href } of rows) {
-    const uniqueHash = await app.services.bookmarks.generateUrlHash(href);
+    const uniqueHash = await app.bookmarks.generateUrlHash(href);
     updates.push({ id, uniqueHash });
     if (updates.length >= chunkSize) await commit();
   }
@@ -50,7 +49,7 @@ export async function up(knex: Knex): Promise<void> {
 
 export async function down(knex: Knex): Promise<void> {
   await knex.schema.alterTable("bookmarks", (table) => {
-    table.dropUnique(["ownerId", "href", "uniqueHash"]);
+    table.dropUnique(["ownerId", "uniqueHash"]);
     table.unique(["ownerId", "href"]);
   });
   await knex.schema.alterTable("bookmarks", (table) => {
@@ -58,37 +57,21 @@ export async function down(knex: Knex): Promise<void> {
   });
 }
 
-export type IAppRequirements = {
-  services: {
-    bookmarks: BookmarksService;
-  };
-};
-
 class StubApp extends BaseApp implements IApp {
   repository: IBookmarksRepository;
-  services: StubServices;
+  bookmarks: BookmarksService;
 
   constructor(connection: Knex<any, unknown[]>) {
     super();
     this.modules.push(
       (this.repository = new StubSqliteRepository(this, connection)),
-      (this.services = new StubServices(this))
+      (this.bookmarks = new BookmarksService({ app: this }))
     );
   }
 }
 
-class StubServices extends AppModule<IAppRequirements> {
-  bookmarks: BookmarksService;
-
-  constructor(app: StubApp) {
-    super({ app });
-    const { repository } = app;
-    this.bookmarks = new BookmarksService({ app, repository });
-  }
-}
-
 class StubSqliteRepository extends SqliteRepository {
-  constructor(app: IApp & IAppRequirements, connection: Knex<any, unknown[]>) {
+  constructor(app: IApp, connection: Knex<any, unknown[]>) {
     super({ app });
     this._connection = connection;
   }

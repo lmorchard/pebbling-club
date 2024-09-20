@@ -19,7 +19,7 @@
     "dev": "npm-run-all --parallel dev:serve test:watch build:watch",
     "dev:serve": "nodemon --watch src --ext 'js,ts' --exec 'tsx ./server/index.ts --force-pretty-logs serve'",
     "manage": "tsx ./server/index.ts",
-    "migrate": "npm run dev:manage db migrate"
+    "migrate": "npm run manage db migrate"
   },
   "author": "",
   "license": "ISC",

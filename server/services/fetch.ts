@@ -62,19 +62,15 @@ export class FetchError extends Error {
   }
 }
 
-export class FetchService extends AppModule {
-  repository: IFetchRepository;
+export type IAppRequirements = {
+  fetchRepository: IFetchRepository;
+};
+
+export class FetchService extends AppModule<IAppRequirements> {
   fetchQueue: PQueue;
 
-  constructor({
-    app,
-    repository,
-  }: {
-    app: IApp;
-    repository: IFetchRepository;
-  }) {
+  constructor({ app }: { app: IApp & IAppRequirements }) {
     super({ app });
-    this.repository = repository;
     this.fetchQueue = new PQueue({ concurrency: 4 });
   }
 
@@ -86,7 +82,7 @@ export class FetchService extends AppModule {
   // TODO: add purgeStaleCachedResources() to delete resources past maxage
 
   async clearCachedResources() {
-    await this.repository.clearCachedResponses();
+    await this.app.fetchRepository.clearCachedResponses();
   }
 
   async fetchResource(options: FetchOptions): Promise<FetchResponse> {
@@ -109,7 +105,7 @@ export class FetchService extends AppModule {
   }: FetchOptions): Promise<FetchResponse> {
     const { log } = this;
 
-    const cachedResponse = await this.repository.fetchResponse(url);
+    const cachedResponse = await this.app.fetchRepository.fetchResponse(url);
     if (cachedResponse) {
       const { response, cachedAt } = cachedResponse;
       const now = Date.now();
@@ -159,14 +155,14 @@ export class FetchService extends AppModule {
       log.trace({ msg: "end fetchResource", url, status: response.status });
       clearTimeout(abortTimeout);
       return {
-        response: await this.repository.upsertResponse(url, response),
+        response: await this.app.fetchRepository.upsertResponse(url, response),
         meta: { cached: false },
       };
     } catch (error: any) {
       clearTimeout(abortTimeout);
       if (error.type === "aborted") {
         return {
-          response: await this.repository.upsertResponse(
+          response: await this.app.fetchRepository.upsertResponse(
             url,
             new Response(null, { status: 408, statusText: "timeout" })
           ),
