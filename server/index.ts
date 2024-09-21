@@ -4,6 +4,7 @@ import { BaseCliApp } from "./app/cli";
 import { SqliteRepository } from "./repositories/sqlite/main";
 import SqliteFeedsRepository from "./repositories/sqlite/feeds";
 import SqliteFetchRepository from "./repositories/sqlite/fetch";
+import SqliteUnfurlRepository from "./repositories/sqlite/unfurl";
 
 import { PasswordService } from "./services/passwords";
 import { ProfileService } from "./services/profiles";
@@ -11,6 +12,7 @@ import { BookmarksService } from "./services/bookmarks";
 import { ImportService } from "./services/imports";
 import { FetchService } from "./services/fetch";
 import { FeedsService } from "./services/feeds";
+import { UnfurlService } from "./services/unfurl";
 
 import WebServer from "./web";
 
@@ -20,12 +22,14 @@ import CliBookmarks from "./cli/bookmarks";
 import CliFeeds from "./cli/feeds";
 import CliDb from "./cli/db";
 import CliFetch from "./cli/fetch";
+import CliUnfurl from "./cli/unfurl";
 
 export class MainCliApp extends BaseCliApp {
   // TODO: make repository instances switchable via config
   repository = new SqliteRepository(this);
   feedsRepository = new SqliteFeedsRepository(this);
   fetchRepository = new SqliteFetchRepository(this);
+  unfurlRepository = new SqliteUnfurlRepository(this);
 
   passwords = new PasswordService(this);
   profiles = new ProfileService(this);
@@ -33,6 +37,7 @@ export class MainCliApp extends BaseCliApp {
   imports = new ImportService(this);
   fetch = new FetchService(this);
   feeds = new FeedsService(this);
+  unfurl = new UnfurlService(this);
   webServer = new WebServer(this);
 
   constructor() {
@@ -44,6 +49,7 @@ export class MainCliApp extends BaseCliApp {
       this.repository,
       this.feedsRepository,
       this.fetchRepository,
+      this.unfurlRepository,
       this.passwords,
       this.profiles,
       this.bookmarks,
@@ -56,7 +62,8 @@ export class MainCliApp extends BaseCliApp {
       new CliImport(this),
       new CliBookmarks(this),
       new CliFeeds(this),
-      new CliFetch(this)
+      new CliFetch(this),
+      new CliUnfurl(this)
     );
   }
 }

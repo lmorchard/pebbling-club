@@ -39,6 +39,7 @@ export interface IFetchRepository {
 
 export type FetchOptions = {
   url: string | URL;
+  headers?: Record<string, string>;
   maxage?: number;
   lastHeaders?: Record<string, string>;
   timeout?: number;
@@ -95,6 +96,7 @@ export class FetchService extends AppModule<IAppRequirements> {
 
   async fetchResourceImmediately({
     url,
+    headers,
     lastHeaders = {},
     maxage = this.app.config.get("fetchCacheMaxage"),
     timeout = this.app.config.get("fetchTimeout"),
@@ -133,6 +135,7 @@ export class FetchService extends AppModule<IAppRequirements> {
       headers: {
         "user-agent": userAgent,
         accept,
+        ...headers,
       } as Record<string, string>,
     };
 

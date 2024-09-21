@@ -8,6 +8,8 @@ import { BookmarksService, IBookmarksRepository } from "../services/bookmarks";
 import { ImportService } from "../services/imports";
 import { PasswordService, IPasswordsRepository } from "../services/passwords";
 import { ProfileService, IProfilesRepository } from "../services/profiles";
+import { FetchResponse, FetchService } from "../services/fetch";
+import { Response } from "node-fetch";
 
 export class TestApp extends BaseApp implements IApp {
   repository: IPasswordsRepository & IProfilesRepository & IBookmarksRepository;
@@ -51,4 +53,42 @@ export const buildReadableStreamFromString = (src: string) => {
   readableStream.push(src);
   readableStream.push(null);
   return readableStream;
+};
+
+export interface TestResources {
+  [url: string]: {
+    headers: Record<string, string>;
+    body: string;
+  };
+}
+
+export const applyFetchMock = (
+  t: any,
+  fetch: FetchService,
+  resources: TestResources
+) => {
+  return t.mock.method(
+    fetch,
+    "fetchResource",
+    async ({ url }: { url: string | URL }): Promise<FetchResponse> => {
+      const urlStr = url.toString();
+      if (!(urlStr in resources)) {
+        return {
+          response: new Response(null, { status: 404 }),
+          meta: { cached: false },
+        };
+      }
+
+      const resource = resources[urlStr];
+      const resourceStream = buildReadableStreamFromString(resource.body);
+
+      return {
+        response: new Response(resourceStream, {
+          status: 200,
+          headers: resource.headers,
+        }),
+        meta: { cached: false },
+      };
+    }
+  );
 };

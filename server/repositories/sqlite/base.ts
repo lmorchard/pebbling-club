@@ -58,6 +58,7 @@ export default class BaseSqliteKnexRepository extends AppModule {
 
     const migrations: Knex.Knex.MigratorConfig = {
       directory: this.migrationsDirectory,
+      extension: "ts",
     };
 
     const pool: Knex.Knex.PoolConfig = {

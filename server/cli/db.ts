@@ -4,17 +4,19 @@ import { buildKnexProgram } from "../repositories/knex";
 import { SqliteRepository } from "../repositories/sqlite/main";
 import SqliteFeedsRepository from "../repositories/sqlite/feeds";
 import SqliteFetchRepository from "../repositories/sqlite/fetch";
+import SqliteUnfurlRepository from "../repositories/sqlite/unfurl";
 
 export type IAppRequirements = {
   repository: SqliteRepository;
   feedsRepository: SqliteFeedsRepository;
   fetchRepository: SqliteFetchRepository;
+  unfurlRepository: SqliteUnfurlRepository;
 };
 
 export default class CliFeeds extends CliAppModule<IAppRequirements> {
   async initCli(program: Command) {
     const { log, app } = this;
-    const { repository, feedsRepository, fetchRepository } = app;
+    const { repository, feedsRepository, fetchRepository, unfurlRepository } = app;
 
     const dbProgram = program
       .command("db")
@@ -36,6 +38,10 @@ export default class CliFeeds extends CliAppModule<IAppRequirements> {
           msg: "migrate fetch db",
           result: await fetchRepository.connection.migrate.latest(),
         });
+        log.info({
+          msg: "migrate unfurl db",
+          result: await unfurlRepository.connection.migrate.latest(),
+        });
       });
 
     const mainDbProgram = dbProgram
@@ -55,5 +61,11 @@ export default class CliFeeds extends CliAppModule<IAppRequirements> {
       .description("fetch repository commands");
 
     buildKnexProgram(fetchDbProgram, fetchRepository.connection, log);
+
+    const unfurlDbProgram = dbProgram
+      .command("unfurl")
+      .description("unfurl repository commands");
+
+    buildKnexProgram(unfurlDbProgram, unfurlRepository.connection, log);
   }
 }

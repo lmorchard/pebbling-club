@@ -31,7 +31,7 @@ export default class CliFetch extends CliAppModule<IAppRequirements> {
 
     fetchProgram
       .command("clear")
-      .description("attempt to autodiscover a feed from a given URL")
+      .description("clear cached resources")
       .action(async () => {
         this.log.info({
           msg: "clear",

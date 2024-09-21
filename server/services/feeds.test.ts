@@ -5,9 +5,8 @@ import { BaseApp } from "../app";
 import { IApp } from "../app/types";
 import { FeedsService, IFeedsRepository, Feed, FeedDiscovered } from "./feeds";
 import SqliteFeedsRepository from "../repositories/sqlite/feeds";
-import { FetchResponse, FetchService, IFetchRepository } from "./fetch";
-import { Response } from "node-fetch";
-import { buildReadableStreamFromString } from "../utils/test";
+import { FetchService, IFetchRepository } from "./fetch";
+import { applyFetchMock } from "../utils/test";
 import SqliteFetchRepository from "../repositories/sqlite/fetch";
 
 describe("services/feeds", () => {
@@ -25,7 +24,7 @@ describe("services/feeds", () => {
 
     it("should detect a feed directly fetched by Content-Type", async (t) => {
       const { feeds } = app;
-      const mockFetch = applyFetchMock(t, app.fetch);
+      const mockFetch = applyFetchMock(t, app.fetch, TEST_RESOURCES);
       const url = "https://blog.lmorchard.com/index.rss";
       const resource = TEST_RESOURCES[url];
 
@@ -38,7 +37,7 @@ describe("services/feeds", () => {
 
     it("should detect a feed linked from an HTML resource", async (t) => {
       const { feeds } = app;
-      const mockFetch = applyFetchMock(t, app.fetch);
+      const mockFetch = applyFetchMock(t, app.fetch, TEST_RESOURCES);
       const url = "https://blog.lmorchard.com";
       const resource = TEST_RESOURCES[url];
 
@@ -52,7 +51,7 @@ describe("services/feeds", () => {
     it("should store results of previous autodiscovery and not fetch again", async (t) => {
       const { feeds, feedsRepository } = app;
 
-      const mockFetch = applyFetchMock(t, app.fetch);
+      const mockFetch = applyFetchMock(t, app.fetch, TEST_RESOURCES);
       const mockUpsertDiscoveries = t.mock.method(
         feedsRepository,
         "upsertFeedDiscoveriesBatch"
@@ -96,7 +95,7 @@ describe("services/feeds", () => {
       const url = "https://blog.lmorchard.com/index.rss";
       const feed = TEST_RESOURCES[url].feed!;
 
-      const mockFetch = applyFetchMock(t, app.fetch);
+      const mockFetch = applyFetchMock(t, app.fetch, TEST_RESOURCES);
 
       const result = await feeds.poll(feed, {
         forceFetch: true,
@@ -125,7 +124,7 @@ describe("services/feeds", () => {
     it("should create the feed on initial update", async (t) => {
       const { feeds } = app;
 
-      const mockFetch = applyFetchMock(t, app.fetch);
+      const mockFetch = applyFetchMock(t, app.fetch, TEST_RESOURCES);
 
       const url = "https://blog.lmorchard.com/index.rss";
       const feed = {
@@ -143,7 +142,7 @@ describe("services/feeds", () => {
     it("should update an existing feed on subsequent updates", async (t) => {
       const { feeds } = app;
 
-      const mockFetch = applyFetchMock(t, app.fetch);
+      const mockFetch = applyFetchMock(t, app.fetch, TEST_RESOURCES);
 
       const url = "https://blog.lmorchard.com/index.rss";
       const feed = { ...TEST_RESOURCES[url].feed! };
@@ -170,37 +169,6 @@ describe("services/feeds", () => {
     });
   });
 });
-
-const applyFetchMock = (
-  t: any,
-  fetch: FetchService,
-  resources = TEST_RESOURCES
-) => {
-  return t.mock.method(
-    fetch,
-    "fetchResource",
-    async ({ url }: { url: string | URL }): Promise<FetchResponse> => {
-      const urlStr = url.toString();
-      if (!(urlStr in resources)) {
-        return {
-          response: new Response(null, { status: 404 }),
-          meta: { cached: false },
-        };
-      }
-
-      const resource = resources[urlStr];
-      const resourceStream = buildReadableStreamFromString(resource.body);
-
-      return {
-        response: new Response(resourceStream, {
-          status: 200,
-          headers: resource.headers,
-        }),
-        meta: { cached: false },
-      };
-    }
-  );
-};
 
 export class TestApp extends BaseApp implements IApp {
   feedsRepository: IFeedsRepository;
