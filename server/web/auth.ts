@@ -100,8 +100,10 @@ export function buildPostLoginRedirect(
     nextParams?: string;
   }
 ) {
-  let { nextPath = `/u/${user.username}`, nextParams } = query;
-  const redirectPath = nextPath && nextPath.startsWith("/") ? nextPath : "/";
+  const profilePath = `/u/${user.username}`;
+  let { nextPath = profilePath, nextParams } = query;
+  const redirectPath =
+    nextPath && nextPath.startsWith("/") ? nextPath : profilePath;
   let redirectParams = {};
   if (nextParams) {
     try {
