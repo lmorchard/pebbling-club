@@ -167,8 +167,9 @@ section.profile .tagCounts ul {
 
 section.profile .tagCounts ul li::before {
   /* content: "\1FBCA"; */
-  content: "\1F3F7";
-  padding-right: 0.5em;
+  /* content: "\1F3F7"; */
+  content: "\002317";
+  padding-right: 0.125em;
 }
 
 
@@ -236,8 +237,9 @@ section.profile .tagCounts ul li::before {
 
 .bookmark.h-entry .p-category::before {
   /* content: "\1FBCA"; */
-  content: "\1F3F7";
-  padding-right: 0.25em;
+  /* content: "\1F3F7"; */
+  content: "\002317";
+  padding-right: 0.125em;
 }
 
 .bookmark.h-entry .p-category {
