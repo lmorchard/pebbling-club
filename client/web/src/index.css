@@ -167,11 +167,10 @@ section.profile .tagCounts ul {
 
 section.profile .tagCounts ul li::before {
   /* content: "\1FBCA"; */
-  /* content: "\1F3F7"; */
-  content: "\002317";
+  content: "\1F3F7";
+  /* content: "\002317"; */
   padding-right: 0.125em;
 }
-
 
 .bookmarks.h-feed {
   width: 80vw;
@@ -223,7 +222,7 @@ section.profile .tagCounts ul li::before {
 .bookmark.h-entry .meta {
   display: flex;
   flex-direction: row;
-  column-gap: 1.25em;
+  column-gap: 1.5em;
   align-items: baseline;
   margin: 0.25em 0;
   font-size: 0.9em;
@@ -237,8 +236,8 @@ section.profile .tagCounts ul li::before {
 
 .bookmark.h-entry .p-category::before {
   /* content: "\1FBCA"; */
-  /* content: "\1F3F7"; */
-  content: "\002317";
+  content: "\1F3F7";
+  /* content: "\002317"; */
   padding-right: 0.125em;
 }
 
@@ -253,6 +252,11 @@ section.profile .tagCounts ul li::before {
 
 .bookmark.h-entry time {
   white-space: nowrap;
+}
+
+.bookmark.h-entry .p-author::before {
+  content: "\1F464";
+  padding-right: 0.25em;
 }
 
 .bookmark.h-entry .meta .actions {

@@ -3,9 +3,10 @@ import { FastifyPluginAsync } from "fastify";
 import { FromSchema } from "json-schema-to-ts";
 import validator from "validator";
 import {
-  BookmarkCreatable, BookmarksService,
+  BookmarkCreatable,
+  BookmarksService,
   NewBookmarkQuerystringSchema,
-  NewBookmarkSchema
+  NewBookmarkSchema,
 } from "../services/bookmarks";
 import { RequirePasswordAuth } from "./auth";
 import templateBookmarksEdit from "./templates/bookmarks/edit";
@@ -14,9 +15,12 @@ import templateBookmarksView from "./templates/bookmarks/view";
 import templateBookmarksDelete from "./templates/bookmarks/delete";
 import { IBaseRouterOptions } from "./types";
 import { addValidationError, FormValidationError } from "./utils/forms";
+import { ProfileService } from "../services/profiles";
+import { profile } from "console";
 
 export interface IBookmarksRouterOptions extends IBaseRouterOptions {
   services: {
+    profiles: ProfileService;
     bookmarks: BookmarksService;
   };
 }
@@ -32,7 +36,7 @@ const BookmarkUrlParamsSchema = {
 export const BookmarksRouter: FastifyPluginAsync<
   IBookmarksRouterOptions
 > = async (server, options) => {
-  const { bookmarks } = options.services;
+  const { bookmarks, profiles } = options.services;
 
   server.get<{
     Querystring: FromSchema<typeof NewBookmarkQuerystringSchema>;
@@ -67,7 +71,7 @@ export const BookmarksRouter: FastifyPluginAsync<
       preHandler: RequirePasswordAuth,
     },
     async (request, reply) => {
-      const viewerId = request.user?.id;
+      const { id: viewerId } = request.user!;
       if (!viewerId) throw Boom.forbidden(`cannot create bookmark`);
 
       let validationError = request.validationError as FormValidationError;
@@ -147,7 +151,7 @@ export const BookmarksRouter: FastifyPluginAsync<
     },
     async (request, reply) => {
       const { id } = request.params;
-      const viewerId = request.user?.id;
+      const { id: viewerId } = request.user!;
 
       const bookmark = await bookmarks.get(viewerId, id);
       if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
@@ -164,7 +168,7 @@ export const BookmarksRouter: FastifyPluginAsync<
       };
 
       const result = await bookmarks.update(bookmark.id, updateData);
-      reply.redirect(`/bookmarks/${result.id}`);
+      return reply.redirect(`/bookmarks/${result.id}`);
     }
   );
 
@@ -177,8 +181,11 @@ export const BookmarksRouter: FastifyPluginAsync<
     const bookmark = await bookmarks.get(viewerId, id);
     if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
 
+    const profile = await profiles.get(bookmark.ownerId);
+
     return reply.renderTemplate(templateBookmarksView, {
       bookmark,
+      profile,
     });
   });
 
@@ -196,11 +203,15 @@ export const BookmarksRouter: FastifyPluginAsync<
 
       const bookmark = await bookmarks.get(viewerId, id);
       if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
-      if (!bookmark.canEdit) throw Boom.forbidden(`cannot delete bookmark ${id}`);
+      if (!bookmark.canEdit)
+        throw Boom.forbidden(`cannot delete bookmark ${id}`);
+
+      const profile = await profiles.get(bookmark.ownerId);
 
       return reply.renderTemplate(templateBookmarksDelete, {
         csrfToken: reply.generateCsrf(),
         bookmark,
+        profile,
       });
     }
   );
@@ -221,7 +232,8 @@ export const BookmarksRouter: FastifyPluginAsync<
 
       const bookmark = await bookmarks.get(viewerId, id);
       if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
-      if (!bookmark.canEdit) throw Boom.forbidden(`cannot delete bookmark ${id}`);
+      if (!bookmark.canEdit)
+        throw Boom.forbidden(`cannot delete bookmark ${id}`);
 
       const result = await bookmarks.delete(id);
       if (result) {

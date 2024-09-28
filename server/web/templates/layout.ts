@@ -29,6 +29,7 @@ export const layout = ({
                     <span>${user.username}</span>
                   </summary>
                   <div>
+                    <a class="newBookmark" href="/new">+ New</a>
                     <a href="/u/${user.username}">Profile</a>
                     <a href="/settings">Settings</a>
                     <a href="javascript:if(document.getSelection){s=document.getSelection();}else{s='';};document.location='${siteUrl}/new?next=same&href='+encodeURIComponent(location.href)+'&extended='+encodeURIComponent(s)+'&title='+encodeURIComponent(document.title)+'&tags='+encodeURIComponent('%s')">Bookmarklet</a>

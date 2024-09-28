@@ -7,12 +7,12 @@ export interface Props extends LayoutProps {
   bookmark: BookmarkWithPermissions;
 }
 
-export default ({ bookmark, ...locals }: Props) => {
+export default ({ bookmark, profile, ...locals }: Props) => {
   return layout({
     ...locals,
     content: html`
       <section>
-        ${partialBookmark({ bookmark })}
+        ${partialBookmark({ bookmark, profile })}
       </section>
     `,
   });

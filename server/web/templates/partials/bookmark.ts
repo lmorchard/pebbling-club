@@ -4,11 +4,12 @@ import { html } from "../../utils/html";
 
 export interface Props {
   bookmark: BookmarkWithPermissions;
+  profile: Profile;
   readOnly?: boolean;
-  profile?: Profile;
+  hideAuthor?: boolean;
 }
 
-export default ({ bookmark, readOnly = false, profile }: Props) => {
+export default ({ bookmark, profile, readOnly = false, hideAuthor = false }: Props) => {
   const created = new Date(bookmark.created!);
   const modified = new Date(bookmark.modified!);
   return html`
@@ -26,7 +27,7 @@ export default ({ bookmark, readOnly = false, profile }: Props) => {
             <div class="actions">
               <a href="/bookmarks/${bookmark.id}/edit">Edit</a>
               <a href="/bookmarks/${bookmark.id}/delete">Delete</a>
-              <span class="moar-actions"></span>
+              <!-- <span class="moar-actions"></span> -->
             </div>
           `}
           <time
@@ -34,8 +35,11 @@ export default ({ bookmark, readOnly = false, profile }: Props) => {
             title="${created.toISOString()}"
             datetime="${created.toISOString()}"
           >
-            ${created.toISOString()}
+            <a href="/bookmarks/${bookmark.id}">${created.toISOString()}</a>
           </time>
+          ${!hideAuthor && html`
+            <a class="p-author" href="/u/${profile.username}">${profile.username}</a>
+          `}
           ${bookmark.tags?.length &&
           html`
             <div class="tags">

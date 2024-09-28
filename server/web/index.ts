@@ -193,6 +193,7 @@ export default class Server extends CliAppModule<IAppRequirements> {
       prefix: "/",
       services: {
         bookmarks: this.app.bookmarks,
+        profiles: this.app.profiles,
       },
     });
     server.register(FeedsRouter, {

@@ -5,13 +5,16 @@ import partialBookmark from "./bookmark";
 
 export interface Props {
   bookmarks: BookmarkWithPermissions[];
-  profile?: Profile;
+  profile: Profile;
 }
 
 export default ({ bookmarks, profile }: Props) => html`
   <ul class="bookmarks h-feed">
     ${bookmarks.map(
-      (bookmark) => html`<li>${partialBookmark({ bookmark, profile })}</li>`
+      (bookmark) =>
+        html`<li>
+          ${partialBookmark({ bookmark, profile, hideAuthor: true })}
+        </li>`
     )}
   </ul>
 `;
