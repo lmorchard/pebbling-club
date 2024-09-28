@@ -40,7 +40,7 @@ export class UnfurlService extends AppModule<IAppRequirements> {
       require("metascraper-instagram")(),
       require("metascraper-soundcloud")(),
       require("metascraper-spotify")(),
-      require("metascraper-youtube")(),
+      // require("metascraper-youtube")(),
     ]);
   }
 
@@ -79,10 +79,12 @@ export class UnfurlService extends AppModule<IAppRequirements> {
 
     // TODO: might need more per-domain hacks here?
     const rules: metascraper.Rules[] = [];
+    /*
     if (/patreon\.com/.test(url)) {
       // This seems like a "cheat" to get around cloudflare? Maybe a bad idea
       rules.push(require("metascraper-media-provider")());
     }
+    */
 
     const html = await response.text();
     let metadata = await metascraper({ html, url, rules });
