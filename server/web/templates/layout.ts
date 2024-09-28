@@ -22,17 +22,26 @@ export const layout = ({
           <h1><a href="/">Pebbling Club 🐧🪨</a></h1>
         </section>
         <nav>
+          <theme-selector title="Enable dark theme">
+            <label>
+              <input type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </theme-selector>
           ${user
             ? html`
+                <a class="newBookmark" href="/new">+ New</a>
                 <details class="autoclose">
                   <summary>
                     <span>${user.username}</span>
                   </summary>
                   <div>
-                    <a class="newBookmark" href="/new">+ New</a>
                     <a href="/u/${user.username}">Profile</a>
                     <a href="/settings">Settings</a>
-                    <a href="javascript:if(document.getSelection){s=document.getSelection();}else{s='';};document.location='${siteUrl}/new?next=same&href='+encodeURIComponent(location.href)+'&extended='+encodeURIComponent(s)+'&title='+encodeURIComponent(document.title)+'&tags='+encodeURIComponent('%s')">Bookmarklet</a>
+                    <a
+                      href="javascript:if(document.getSelection){s=document.getSelection();}else{s='';};document.location='${siteUrl}/new?next=same&href='+encodeURIComponent(location.href)+'&extended='+encodeURIComponent(s)+'&title='+encodeURIComponent(document.title)+'&tags='+encodeURIComponent('%s')"
+                      >Bookmarklet</a
+                    >
                     <form action="/logout" method="post">
                       <button type="submit">Logout</button>
                     </form>

@@ -92,3 +92,16 @@ export const field = ({
     `;
   };
 };
+
+export const textarea =
+  ({ rows = 5 }: { rows?: number }): FieldTemplate =>
+  (id, label, name, value, errors, options) =>
+    html`
+      <textarea
+        rows="${rows}"
+        id="${id}"
+        name="${name}"
+        ${options.required ? "required" : ""}
+        ${options.autofocus ? "autofocus" : ""}
+      >${value}</textarea>
+    `;

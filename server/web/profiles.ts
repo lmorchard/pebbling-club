@@ -36,7 +36,7 @@ export const ProfilesRouter: FastifyPluginAsync<
 
     request.profile = profile;
     // TODO: limit for tags list?
-    request.tagCounts = await bookmarks.listTagsForOwner(profile.id, 250, 0);
+    request.tagCounts = await bookmarks.listTagsForOwner(profile.id, 25, 0);
   });
 
   fastify.get<{

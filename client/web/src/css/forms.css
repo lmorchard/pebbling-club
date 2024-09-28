@@ -1,0 +1,54 @@
+form {
+  display: flex;
+  flex-direction: column;
+  row-gap: calc(var(--row-gap) / 2);
+}
+
+form label {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25em;
+}
+
+@media (min-width: 1024px) {
+  form label {
+    display: grid;
+    column-gap: var(--column-gap);
+    grid-template-columns:
+      [label] 1fr
+      [field] 11fr;
+  }
+  form label span.label {
+    grid-column: label;
+  }
+  form label input, form label textarea {
+    grid-column: field;
+  }
+}
+
+form label span.error {
+  color: red;
+}
+
+form section {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25em;
+}
+
+form section.actions {
+  margin-top: 0.75em;
+  display: flex;
+  flex-direction: row;
+  gap: 0.25em;
+}
+
+form section.actions button {
+  padding: 0.5em;
+  cursor: pointer;
+}
+
+form input, form textarea {
+  font-size: var(--theme-font-size);
+  font-family: var(--theme-font-family);
+}

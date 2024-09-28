@@ -1,5 +1,10 @@
 import { html } from "../../utils/html";
-import { field, FormData, FormValidationError } from "../../utils/forms";
+import {
+  field,
+  textarea,
+  FormData,
+  FormValidationError,
+} from "../../utils/forms";
 
 export interface Props {
   csrfToken: string;
@@ -21,9 +26,11 @@ export default ({
         <input type="hidden" name="_csrf" value="${csrfToken}" />
         ${f("URL", "href", { required: true, autofocus: !formData?.href })}
         ${f("Title", "title", { required: true })}
-        ${f("Description", "extended")} 
+        ${f("Description", "extended", {
+          type: textarea({ rows: 5 }),
+        })}
         ${f("Tags", "tags", { autofocus: formData?.href })}
-        <section>
+        <section class="actions">
           <button type="submit">${actionButtonTitle}</button>
         </section>
       </form>

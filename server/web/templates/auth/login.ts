@@ -1,10 +1,15 @@
 import { html } from "../../utils/html";
-import { field, FormData, FormErrors, FormValidationError } from "../../utils/forms";
+import {
+  field,
+  FormData,
+  FormErrors,
+  FormValidationError,
+} from "../../utils/forms";
 import { layout, LayoutProps } from "../layout";
 
 export interface Props extends LayoutProps {
-  formData?: FormData,
-  validationError?: FormValidationError,
+  formData?: FormData;
+  validationError?: FormValidationError;
 }
 
 export default ({ formData, validationError, ...locals }: Props) => {
@@ -19,12 +24,12 @@ export default ({ formData, validationError, ...locals }: Props) => {
           <input type="hidden" name="_csrf" value="${locals.csrfToken}" />
           ${f("Username", "username", { required: true, autofocus: true })}
           ${f("Password", "password", { required: true, type: "password" })}
-          <button type="submit">Sign in</button>
+          <section class="actions">
+            <button type="submit">Sign in</button>
+          </section>
         </form>
         <hr />
-        <p class="help">
-          Don't have an account? <a href="/signup">Sign up</a>
-        </p>
+        <p class="help">Don't have an account? <a href="/signup">Sign up</a></p>
       </section>
     `,
   });

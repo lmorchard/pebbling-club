@@ -1,0 +1,38 @@
+section.profile {
+  grid-column: wide;
+}
+
+@media (min-width: 1024px) {
+  section.profile {
+    display: grid;
+    column-gap: var(--column-gap);
+    grid-template-columns:
+      [main] 9fr
+      [side] 3fr;
+  }
+}
+
+section.profile .bookmarks {
+  grid-column: main;
+}
+
+section.profile .tagCounts {
+  grid-column: side;
+}
+
+section.profile .tagCounts ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  overflow-y: scroll;
+}
+
+section.profile .tagCounts ul li::before {
+  /* content: "\1FBCA"; */
+  content: "\1F3F7";
+  /* content: "\002317"; */
+  padding-right: 0.125em;
+}
