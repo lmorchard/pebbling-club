@@ -5,16 +5,16 @@ import Page from "./page";
 
 export interface LayoutProps extends ITemplateProps {
   user?: Profile;
-  flash?: Record<"info" | "warn" | "error", string[]>;
-  siteUrl?: String;
+  siteUrl?: string;
 }
 
 export const layout = ({
   content,
   user,
-  flash,
   siteUrl,
 }: { content: TemplateContent } & LayoutProps) => {
+  const newUrl = new URL('/new', siteUrl!).toString();
+
   return Page({
     content: html`
       <header class="site">
@@ -39,7 +39,7 @@ export const layout = ({
                     <a href="/u/${user.username}">Profile</a>
                     <a href="/settings">Settings</a>
                     <a
-                      href="javascript:if(document.getSelection){s=document.getSelection();}else{s='';};document.location='${siteUrl}/new?next=same&href='+encodeURIComponent(location.href)+'&extended='+encodeURIComponent(s)+'&title='+encodeURIComponent(document.title)+'&tags='+encodeURIComponent('%s')"
+                      href="javascript:if(document.getSelection){s=document.getSelection();}else{s='';};document.location='${newUrl}?next=same&href='+encodeURIComponent(location.href)+'&extended='+encodeURIComponent(s)+'&title='+encodeURIComponent(document.title)+'&tags='+encodeURIComponent('%s')"
                       >Bookmarklet</a
                     >
                     <form action="/logout" method="post">

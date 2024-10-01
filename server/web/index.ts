@@ -242,14 +242,14 @@ export default class Server extends CliAppModule<IAppRequirements> {
       // HACK: Having PROJECT_DOMAIN and PROJECT_ID set are a good indication
       // to try auto-configuring the siteUrl for a Glitch project
       const siteUrl = `https://${projectDomain}.glitch.me`;
-      log.trace({ msg: "Using Glitch site URL", siteUrl });
+      log.debug({ msg: "Using Glitch site URL", siteUrl });
       return config.set("siteUrl", siteUrl);
     }
 
     const host = config.get("host");
     const port = config.get("port");
     const siteUrl = new URL(`http://${host}:${port}`).toString();
-    log.trace({ msg: "Using default site URL", siteUrl });
+    log.debug({ msg: "Using default site URL", siteUrl });
     config.set("siteUrl", siteUrl);
   }
 }

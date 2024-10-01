@@ -291,12 +291,18 @@ export const NewBookmarkQuerystringSchema = {
     tags: {
       type: "string",
     },
+    next: {
+      type: "string",
+    }
   },
 } as const;
 
 export const NewBookmarkSchema = {
   type: "object",
   properties: {
+    next: {
+      type: "string",
+    },
     href: {
       type: "string",
       minLength: 1,
