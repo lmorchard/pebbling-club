@@ -13,6 +13,7 @@ import templateBookmarksEdit from "./templates/bookmarks/edit";
 import templateBookmarksNew from "./templates/bookmarks/new";
 import templateBookmarksView from "./templates/bookmarks/view";
 import templateBookmarksDelete from "./templates/bookmarks/delete";
+import templateBookmarksClose from "./templates/bookmarks/close";
 import { IBaseRouterOptions } from "./types";
 import { addValidationError, FormValidationError } from "./utils/forms";
 import { ProfileService } from "../services/profiles";
@@ -101,7 +102,13 @@ export const BookmarksRouter: FastifyPluginAsync<
         tags: bookmarks.formFieldToTags(formData.tags),
       };
       const result = await bookmarks.upsert(newBookmark);
-      reply.redirect(`/bookmarks/${result.id}`);
+
+      if (formData.next == "same") {
+        return reply.redirect(href!);
+      } else if (formData.next == "close") {
+        return reply.renderTemplate(templateBookmarksClose);
+      }
+      return reply.redirect(`/bookmarks/${result.id}`);
     }
   );
 
