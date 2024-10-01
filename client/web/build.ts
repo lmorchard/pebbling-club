@@ -17,7 +17,7 @@ async function main() {
         recursive: true,
       });
     })(),
-    // Build JS
+    // Build JS and imported CSS
     esbuild.build({
       entryPoints: [`${CLIENT_SRC_PATH}/index.ts`],
       bundle: true,
@@ -25,14 +25,7 @@ async function main() {
       // target: "esnext", // may need tweaking, also upgrade your browser?
       sourcemap: true,
       outfile: `${CLIENT_BUILD_PATH}/index.js`,
-    }),
-    // Build CSS
-    esbuild.build({
-      entryPoints: [`${CLIENT_SRC_PATH}/index.css`],
-      bundle: true,
-      // minify: true, // someday, i suppose?
-      sourcemap: true,
-      outfile: `${CLIENT_BUILD_PATH}/index.css`,
+      // implicitly, index.css is produced as well
     }),
   ]);
 }

@@ -22,7 +22,7 @@ export default ({ formData, validationError, ...locals }: Props) => {
             required: true,
             type: "password",
           })}
-          <section>
+          <section class="actions">
             <button type="submit">Sign up</button>
           </section>
         </form>

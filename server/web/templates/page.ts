@@ -2,12 +2,9 @@ import { Profile } from "../../services/profiles";
 import { html, TemplateContent } from "../utils/html";
 import { ITemplateProps } from "../utils/templates";
 
-export interface PageProps extends ITemplateProps {
-}
+export interface PageProps extends ITemplateProps {}
 
-export default ({
-  content,
-}: { content: TemplateContent } & PageProps) => {
+export default ({ content }: { content: TemplateContent } & PageProps) => {
   return html`
     <html>
       <head>
@@ -21,7 +18,9 @@ export default ({
       </head>
       <body>
         <details-closer>
-          ${content}
+          <div class="content-grid-wrapper">
+            <div class="content-grid">${content}</div>
+          </div>
         </details-closer>
       </body>
     </html>

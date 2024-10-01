@@ -1,6 +1,8 @@
 import { LitElement, html, render } from "lit"; // "../vendor/lit-core.min.js";
 import BatchQueue from "../utils/batch-queue";
 
+import "./pc-bookmark.css";
+
 export default class PCBookmarkElement extends LitElement {
   isLoading: boolean;
   hasFeed: boolean;
