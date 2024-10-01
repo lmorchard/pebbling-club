@@ -1,12 +1,11 @@
 {
   "name": "pebbling-club",
   "version": "1.0.0",
-  "main": "index.js",
   "engines": {
     "node": ">=16.x "
   },
   "scripts": {
-    "start": "tsx ./server/index.ts serve",
+    "start": "tsx --tsconfig ./server/tsconfig.json ./server/index.ts serve",
     "build": "npm-run-all build:client:web",
     "build:client:web": "tsx ./client/web/build.ts",
     "build:watch": "npm-run-all --parallel build:watch:client:web",
@@ -14,17 +13,18 @@
     "lint": "npm-run-all lint:server",
     "lint:server": "tsc --project server/tsconfig.json --noEmit",
     "lint:client:web": "tsc --project client/web/tsconfig.json --noEmit",
-    "test": "glob -c \"node --import tsx --no-warnings --test\" \"./server/**/*.test.ts\"",
-    "test:watch": "glob -c \"node --import tsx --no-warnings --watch --test\" \"./server/**/*.test.ts\"",
+    "test": "glob -c \"tsx --tsconfig ./server/tsconfig.json --no-warnings --test\" \"./server/**/*.test.ts\"",
+    "test:watch": "glob -c \"tsx --tsconfig ./server/tsconfig.json --no-warnings --watch --test\" \"./server/**/*.test.ts\"",
     "dev": "npm-run-all --parallel dev:serve test:watch build:watch",
-    "dev:serve": "nodemon --watch server --ext 'js,ts' --exec 'tsx ./server/index.ts --force-pretty-logs serve'",
-    "manage": "tsx ./server/index.ts",
+    "dev:serve": "nodemon --watch server --ext 'js,ts' --exec 'tsx  --tsconfig ./server/tsconfig.json -- ./server/index.ts --force-pretty-logs serve'",
+    "manage": "tsx --tsconfig ./server/tsconfig.json ./server/index.ts",
     "migrate": "npm run manage db migrate"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "common": "./common",
     "@fastify/accepts": "^4.3.0",
     "@fastify/compress": "^7.0.3",
     "@fastify/cookie": "^9.3.1",

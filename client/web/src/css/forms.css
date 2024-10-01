@@ -52,3 +52,7 @@ form input, form textarea {
   font-size: var(--theme-font-size);
   font-family: var(--theme-font-family);
 }
+
+textarea[form] {
+  display: none;
+}

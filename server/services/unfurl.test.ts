@@ -8,6 +8,8 @@ import SqliteFetchRepository from "../repositories/sqlite/fetch";
 import { FetchService } from "./fetch";
 import SqliteUnfurlRepository from "../repositories/sqlite/unfurl";
 import { applyFetchMock } from "../utils/test";
+import { BookmarksService } from "./bookmarks";
+import { SqliteRepository } from "../repositories/sqlite/main";
 
 describe("services/unfurl", () => {
   describe("fetchMetadata", () => {
@@ -53,8 +55,10 @@ describe("services/unfurl", () => {
 });
 
 export class TestApp extends BaseApp implements IApp {
+  repository = new SqliteRepository(this);
   fetchRepository = new SqliteFetchRepository(this);
   unfurlRepository = new SqliteUnfurlRepository(this);
+  bookmarks = new BookmarksService(this);
   fetch = new FetchService(this);
   unfurl = new UnfurlService(this);
 
@@ -62,8 +66,10 @@ export class TestApp extends BaseApp implements IApp {
     super();
     const app = this;
     this.modules.push(
+      this.repository,
       this.fetchRepository,
       this.unfurlRepository,
+      this.bookmarks,
       this.fetch,
       this.unfurl
     );

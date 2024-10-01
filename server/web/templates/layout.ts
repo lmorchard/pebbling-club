@@ -13,13 +13,17 @@ export const layout = ({
   user,
   siteUrl,
 }: { content: TemplateContent } & LayoutProps) => {
-  const newUrl = new URL('/new', siteUrl!).toString();
+  const newUrl = new URL("/new", siteUrl!).toString();
 
   return Page({
     content: html`
       <header class="site">
         <section class="masthead">
-          <h1><a href="/">Pebbling Club 🐧🪨</a></h1>
+          <h1>
+            <a href="${user ? `/u/${user.username}` : "/"}"
+              >Pebbling Club 🐧🪨</a
+            >
+          </h1>
         </section>
         <nav>
           <theme-selector title="Enable dark theme">
@@ -39,7 +43,7 @@ export const layout = ({
                     <a href="/u/${user.username}">Profile</a>
                     <a href="/settings">Settings</a>
                     <a
-                      href="javascript:if(document.getSelection){s=document.getSelection();}else{s='';};document.location='${newUrl}?next=same&href='+encodeURIComponent(location.href)+'&extended='+encodeURIComponent(s)+'&title='+encodeURIComponent(document.title)+'&tags='+encodeURIComponent('%s')"
+                      href="javascript:if(document.getSelection){s=document.getSelection();}else{s='';};document.location='${newUrl}?next=same&href='+encodeURIComponent(location.href)+'&extended='+encodeURIComponent(s)+'&title='+encodeURIComponent(document.title)+'&tags='+encodeURIComponent('')"
                       >Bookmarklet</a
                     >
                     <form action="/logout" method="post">

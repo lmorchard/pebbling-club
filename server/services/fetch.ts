@@ -47,6 +47,7 @@ export type FetchOptions = {
   userAgent?: string;
   accept?: string;
   controller?: AbortController;
+  skipCache?: boolean;
 };
 
 export type FetchResponse = {
@@ -104,25 +105,28 @@ export class FetchService extends AppModule<IAppRequirements> {
     userAgent = this.app.config.get("userAgent"),
     accept = "application/rss+xml, text/rss+xml, text/xml",
     controller = new AbortController(),
+    skipCache,
   }: FetchOptions): Promise<FetchResponse> {
     const { log } = this;
 
-    const cachedResponse = await this.app.fetchRepository.fetchResponse(url);
-    if (cachedResponse) {
-      const { response, cachedAt } = cachedResponse;
-      const now = Date.now();
-      const age = now - cachedAt;
-      const logCommon = {
-        age,
-        maxage,
-        cachedAt,
-        now,
-      };
-      if (age < maxage) {
-        log.trace({ msg: "Using cached response", ...logCommon });
-        return { response, meta: { cached: true, cachedAt } };
-      } else {
-        log.trace({ msg: "Cached response too old", ...logCommon });
+    if (!skipCache) {
+      const cachedResponse = await this.app.fetchRepository.fetchResponse(url);
+      if (cachedResponse) {
+        const { response, cachedAt } = cachedResponse;
+        const now = Date.now();
+        const age = now - cachedAt;
+        const logCommon = {
+          age,
+          maxage,
+          cachedAt,
+          now,
+        };
+        if (age < maxage) {
+          log.trace({ msg: "Using cached response", ...logCommon });
+          return { response, meta: { cached: true, cachedAt } };
+        } else {
+          log.trace({ msg: "Cached response too old", ...logCommon });
+        }
       }
     }
 
@@ -158,7 +162,9 @@ export class FetchService extends AppModule<IAppRequirements> {
       log.trace({ msg: "end fetchResource", url, status: response.status });
       clearTimeout(abortTimeout);
       return {
-        response: await this.app.fetchRepository.upsertResponse(url, response),
+        response: skipCache
+          ? response
+          : await this.app.fetchRepository.upsertResponse(url, response),
         meta: { cached: false },
       };
     } catch (error: any) {
@@ -172,7 +178,7 @@ export class FetchService extends AppModule<IAppRequirements> {
           meta: { cached: false },
         };
       }
-      log.error({ msg: "Fetch failed", err: error });
+      log.debug({ msg: "Fetch failed", err: error });
       throw error;
     }
   }

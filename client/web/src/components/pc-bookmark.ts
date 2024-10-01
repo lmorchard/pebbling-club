@@ -1,5 +1,6 @@
-import { LitElement, html, render } from "lit"; // "../vendor/lit-core.min.js";
+import { LitElement, html, render } from "lit";
 import BatchQueue from "../utils/batch-queue";
+import linkSvg from "@common/svg/link";
 
 import "./pc-bookmark.css";
 
@@ -21,6 +22,7 @@ export default class PCBookmarkElement extends LitElement {
 
   constructor() {
     super();
+
     this.isLoading = false;
     this.hasFeed = false;
     this.feedUrl = undefined;
@@ -40,6 +42,22 @@ export default class PCBookmarkElement extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     manager.register(this);
+
+    // TODO: lazy load thumbnails?
+    const thumbnail: HTMLImageElement | null = this.querySelector(".bookmark-thumbnail img");
+    if (thumbnail) {
+      thumbnail.addEventListener("load", () => {
+      });
+
+      thumbnail.addEventListener("error", () => {
+        const { parentElement } = thumbnail;
+        if (parentElement) {
+          // Replace broken image with muted red link SVG default
+          parentElement.innerHTML = linkSvg();
+          parentElement.style.color = "rgba(255, 128, 128, 0.2)";
+        }
+      });
+    }
 
     // this.isLoading = true;
     // manager.updateFeed(this);

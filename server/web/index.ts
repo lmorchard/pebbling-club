@@ -41,6 +41,7 @@ import templateNotFound from "./templates/errors/notFound";
 import templateForbidden from "./templates/errors/forbidden";
 import { FeedsService } from "../services/feeds";
 import { Command } from "commander";
+import { UnfurlService } from "../services/unfurl";
 
 export const configSchema = {
   host: {
@@ -107,9 +108,10 @@ declare module "fastify" {
 
 export type IAppRequirements = {
   feeds: FeedsService;
-    passwords: PasswordService;
-    profiles: ProfileService;
-    bookmarks: BookmarksService;
+  passwords: PasswordService;
+  profiles: ProfileService;
+  bookmarks: BookmarksService;
+  unfurl: UnfurlService;
 };
 
 export default class Server extends CliAppModule<IAppRequirements> {
@@ -194,6 +196,7 @@ export default class Server extends CliAppModule<IAppRequirements> {
       services: {
         bookmarks: this.app.bookmarks,
         profiles: this.app.profiles,
+        unfurl: this.app.unfurl,
       },
     });
     server.register(FeedsRouter, {

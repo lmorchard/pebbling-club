@@ -9,12 +9,14 @@ export interface Props {
 }
 
 export default ({ bookmarks, profile }: Props) => html`
-  <ul class="bookmarks h-feed">
-    ${bookmarks.map(
-      (bookmark) =>
-        html`<li>
-          ${partialBookmark({ bookmark, profile, hideAuthor: true })}
-        </li>`
-    )}
-  </ul>
+  <pc-bookmark-list>
+    <ul class="bookmarks h-feed">
+      ${bookmarks.map(
+        (bookmark) =>
+          html`<li>
+            ${partialBookmark({ bookmark, profile, hideAuthor: true })}
+          </li>`
+      )}
+    </ul>
+  </pc-bookmark-list>
 `;
