@@ -244,6 +244,67 @@ export class SqliteRepository
     return results;
   }
 
+  async _upsertOneBookmark(
+    bookmark: BookmarkCreatable & { uniqueHash: string },
+    now: number,
+    connection: Knex.Knex
+  ): Promise<Bookmark> {
+    // Destructure just the expected fields
+    const {
+      uniqueHash,
+      ownerId,
+      href,
+      title,
+      extended,
+      tags,
+      visibility,
+      meta,
+      created = now,
+      modified = now,
+    } = bookmark;
+
+    const toInsert = {
+      ...bookmark,
+      uniqueHash,
+      ownerId,
+      href,
+      title,
+      extended,
+      visibility,
+      tags: this.serializeTagsColumn(tags),
+      meta: this.serializeMetaColumn(meta),
+      id: uuid(),
+      created,
+      modified,
+    };
+
+    const result = await connection("bookmarks")
+      .insert(toInsert)
+      .onConflict(["ownerId", "uniqueHash"])
+      .merge({
+        ...toInsert,
+        meta: connection.raw(`
+          json_patch(
+            iif(json_valid(meta), meta, "{}"),
+            excluded.meta
+          )
+        `),
+      });
+
+    // Hacky attempt at an optimistic update, will probably mismatch a
+    // few fields like created if they're not supplied in the original
+    const resultBookmark: Bookmark = {
+      ...toInsert,
+      tags,
+      meta,
+      id: toInsert.id,
+      created: new Date(toInsert.created),
+      modified: new Date(toInsert.modified),
+    };
+
+    return resultBookmark;
+  }
+
   async updateBookmark(bookmarkId: string, updates: BookmarkUpdatableWithHash) {
     const now = Date.now();
 
@@ -256,7 +317,6 @@ export class SqliteRepository
         ...updates,
         modified: now,
         tags: this.serializeTagsColumn(updates.tags),
-        // meta: this.serializeMetaColumn(updates.meta),
         meta: this.connection.raw(
           `
           json_patch(
@@ -357,47 +417,6 @@ export class SqliteRepository
       [ownerId, limit, offset]
     );
     return result.map(({ name, count }: TagCount) => ({ name, count }));
-  }
-
-  async _upsertOneBookmark(
-    bookmark: BookmarkCreatable & { uniqueHash: string },
-    now: number,
-    connection: Knex.Knex
-  ): Promise<Bookmark> {
-    const created = bookmark.created || now;
-    const modified = bookmark.modified || now;
-    const toInsert = {
-      ...bookmark,
-      tags: this.serializeTagsColumn(bookmark.tags),
-      meta: this.serializeMetaColumn(bookmark.meta),
-      id: uuid(),
-      created,
-      modified,
-    };
-
-    const result = await connection("bookmarks")
-      .insert(toInsert)
-      .onConflict(["ownerId", "uniqueHash"])
-      .merge({
-        ...toInsert,
-        meta: connection.raw(`
-          json_patch(
-            iif(json_valid(meta), meta, "{}"),
-            excluded.meta
-          )
-        `),
-      });
-
-    // Hacky attempt at an optimistic update, will probably mismatch a
-    // few fields like created if they're not supplied in the original
-    const resultBookmark: Bookmark = {
-      ...bookmark,
-      id: toInsert.id,
-      created: new Date(toInsert.created),
-      modified: new Date(toInsert.modified),
-    };
-
-    return resultBookmark;
   }
 
   serializeTagsColumn(tags: Bookmark["tags"] = []): string {

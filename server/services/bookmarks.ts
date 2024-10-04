@@ -9,7 +9,7 @@ export class BookmarksService extends BaseService<IAppRequirements> {
   async upsert(bookmark: BookmarkCreatable) {
     return await this.app.repository.upsertBookmark({
       uniqueHash: await this.generateUrlHash(bookmark.href),
-      ...this._normalizeBookmarkCreatable(bookmark),
+      ...bookmark,
     });
   }
 
@@ -18,35 +18,10 @@ export class BookmarksService extends BaseService<IAppRequirements> {
       await Promise.all(
         bookmarks.map(async (bookmark) => ({
           uniqueHash: await this.generateUrlHash(bookmark.href),
-          ...this._normalizeBookmarkCreatable(bookmark),
+          ...bookmark,
         }))
       )
     );
-  }
-
-  _normalizeBookmarkCreatable(bookmark: BookmarkCreatable) {
-    const {
-      ownerId,
-      href,
-      title,
-      extended,
-      tags,
-      visibility,
-      meta,
-      created,
-      modified,
-    } = bookmark;
-    return {
-      ownerId,
-      href,
-      title,
-      extended,
-      tags,
-      visibility,
-      meta,
-      created,
-      modified,
-    };
   }
 
   async update(bookmarkId: string, bookmark: BookmarkUpdatable) {

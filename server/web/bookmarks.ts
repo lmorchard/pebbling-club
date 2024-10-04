@@ -58,6 +58,10 @@ export const BookmarksRouter: FastifyPluginAsync<
 
       const { href } = request.query;
 
+      const existingBookmark = !!href
+        ? (await bookmarks.getByUrl(viewerId, href) || undefined)
+        : undefined;
+
       let unfurlResult;
       if (href) {
         try {
@@ -70,14 +74,22 @@ export const BookmarksRouter: FastifyPluginAsync<
 
       const formData = {
         ...request.query,
-        title: request.query.title || unfurlResult?.title,
-        extended: request.query.extended || unfurlResult?.description,
+        title:
+          existingBookmark?.title || request.query.title || unfurlResult?.title,
+        extended:
+          existingBookmark?.extended ||
+          request.query.extended ||
+          unfurlResult?.description,
+        tags: existingBookmark?.tags
+          ? bookmarks.tagsToFormField(existingBookmark?.tags)
+          : request.query.tags,
       };
 
       return reply.renderTemplate(templateBookmarksNew, {
         csrfToken: reply.generateCsrf(),
         formData,
         unfurlResult,
+        existingBookmark,
       });
     }
   );
@@ -122,8 +134,8 @@ export const BookmarksRouter: FastifyPluginAsync<
         extended: formData.extended,
         tags: bookmarks.formFieldToTags(formData.tags),
         meta: {
-          unfurl: maybeParseJson(formData.unfurl)
-        }
+          unfurl: maybeParseJson(formData.unfurl),
+        },
       };
       const result = await bookmarks.upsert(newBookmark);
 
