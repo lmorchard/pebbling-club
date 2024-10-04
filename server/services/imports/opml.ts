@@ -41,6 +41,8 @@ export async function importOPML(
         title: title || text,
         href: htmlUrl || xmlUrl,
         tags: ["imported:opml"],
+        created: now,
+        modified: now,
         meta: {
           opml: node,
         },

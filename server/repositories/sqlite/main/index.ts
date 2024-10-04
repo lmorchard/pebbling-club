@@ -245,45 +245,43 @@ export class SqliteRepository
   }
 
   async _upsertOneBookmark(
-    bookmark: BookmarkCreatable & { uniqueHash: string },
+    bookmark: BookmarkCreatableWithHash,
     now: number,
     connection: Knex.Knex
   ): Promise<Bookmark> {
-    // Destructure just the expected fields
-    const {
-      uniqueHash,
-      ownerId,
-      href,
-      title,
-      extended,
-      tags,
-      visibility,
-      meta,
-      created = now,
-      modified = now,
-    } = bookmark;
+    const upsertColumns = [
+      "uniqueHash",
+      "ownerId",
+      "href",
+      "title",
+      "extended",
+      "tags",
+      "visibility",
+      "meta",
+      "created",
+      "modified",
+    ] as const;
 
-    const toInsert = {
-      ...bookmark,
-      uniqueHash,
-      ownerId,
-      href,
-      title,
-      extended,
-      visibility,
-      tags: this.serializeTagsColumn(tags),
-      meta: this.serializeMetaColumn(meta),
+    const extracted = upsertColumns.reduce(
+      (acc, key) => ({ ...acc, [key]: bookmark[key] }),
+      {}
+    ) as BookmarkCreatableWithHash;
+
+    const toUpsert = {
       id: uuid(),
-      created,
-      modified,
+      created: now,
+      modified: now,
+      ...extracted,
+      tags: bookmark.tags && this.serializeTagsColumn(bookmark.tags),
+      meta: bookmark.meta && this.serializeMetaColumn(bookmark.meta),
     };
 
     const result = await connection("bookmarks")
-      .insert(toInsert)
+      .insert(toUpsert)
       .onConflict(["ownerId", "uniqueHash"])
       .merge({
-        ...toInsert,
-        meta: connection.raw(`
+        ...toUpsert,
+        meta: bookmark.meta && connection.raw(`
           json_patch(
             iif(json_valid(meta), meta, "{}"),
             excluded.meta
@@ -294,38 +292,56 @@ export class SqliteRepository
     // Hacky attempt at an optimistic update, will probably mismatch a
     // few fields like created if they're not supplied in the original
     const resultBookmark: Bookmark = {
-      ...toInsert,
-      tags,
-      meta,
-      id: toInsert.id,
-      created: new Date(toInsert.created),
-      modified: new Date(toInsert.modified),
+      ...extracted,
+      tags: bookmark.tags,
+      meta: bookmark.meta,
+      id: toUpsert.id,
+      created: new Date(toUpsert.created),
+      modified: new Date(toUpsert.modified),
     };
 
     return resultBookmark;
   }
 
-  async updateBookmark(bookmarkId: string, updates: BookmarkUpdatableWithHash) {
+  async updateBookmark(
+    bookmarkId: string,
+    bookmark: BookmarkUpdatableWithHash
+  ) {
     const now = Date.now();
 
     const original = await this.fetchBookmark(bookmarkId);
     if (!original) throw new Error("item not found");
+
+    const updateColumns = [
+      "uniqueHash",
+      "href",
+      "title",
+      "extended",
+      "visibility",
+      "tags",
+      "meta",
+    ] as const;
+    const updates: BookmarkUpdatableWithHash = updateColumns
+      .filter((key) => key in bookmark && typeof bookmark[key] !== "undefined")
+      .reduce((acc, key) => ({ ...acc, [key]: bookmark[key] }), {});
 
     const result = await this.connection("bookmarks")
       .where({ id: bookmarkId })
       .update({
         ...updates,
         modified: now,
-        tags: this.serializeTagsColumn(updates.tags),
-        meta: this.connection.raw(
-          `
+        tags: updates.tags && this.serializeTagsColumn(updates.tags),
+        meta:
+          updates.meta &&
+          this.connection.raw(
+            `
           json_patch(
             iif(json_valid(meta), meta, "{}"),
             ?
           )
         `,
-          this.serializeMetaColumn(updates.meta)
-        ),
+            this.serializeMetaColumn(updates.meta)
+          ),
       });
     if (!result) throw new Error("item update failed");
 
