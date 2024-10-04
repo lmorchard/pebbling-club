@@ -8,8 +8,8 @@ export type IAppRequirements = {
 export class BookmarksService extends BaseService<IAppRequirements> {
   async upsert(bookmark: BookmarkCreatable) {
     return await this.app.repository.upsertBookmark({
-      ...bookmark,
       uniqueHash: await this.generateUrlHash(bookmark.href),
+      ...bookmark,
     });
   }
 
@@ -17,17 +17,27 @@ export class BookmarksService extends BaseService<IAppRequirements> {
     return await this.app.repository.upsertBookmarksBatch(
       await Promise.all(
         bookmarks.map(async (bookmark) => ({
-          ...bookmark,
           uniqueHash: await this.generateUrlHash(bookmark.href),
+          ...bookmark,
         }))
       )
     );
   }
 
   async update(bookmarkId: string, bookmark: BookmarkUpdatable) {
+    const { href, title, extended, tags, visibility, meta, created, modified } =
+      bookmark;
+    const uniqueHash = href && await this.generateUrlHash(href || "");
     return await this.app.repository.updateBookmark(bookmarkId, {
-      ...bookmark,
-      uniqueHash: await this.generateUrlHash(bookmark.href || ""),
+      uniqueHash,
+      href,
+      title,
+      extended,
+      tags,
+      visibility,
+      meta,
+      created,
+      modified,
     });
   }
 
@@ -293,7 +303,7 @@ export const NewBookmarkQuerystringSchema = {
     },
     next: {
       type: "string",
-    }
+    },
   },
 } as const;
 
@@ -323,6 +333,9 @@ export const NewBookmarkSchema = {
       type: "string",
     },
     tags: {
+      type: "string",
+    },
+    unfurl: {
       type: "string",
     },
     visibility: {

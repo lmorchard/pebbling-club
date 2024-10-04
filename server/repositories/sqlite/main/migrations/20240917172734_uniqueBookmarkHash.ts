@@ -3,6 +3,7 @@ import { SqliteRepository } from "..";
 import { BaseApp } from "../../../../app";
 import { IApp } from "../../../../app/types";
 import {
+  Bookmark,
   BookmarksService,
   IBookmarksRepository,
 } from "../../../../services/bookmarks";
@@ -24,7 +25,7 @@ export async function up(knex: Knex): Promise<void> {
     });
   };
 
-  const rows = knex.select(["id", "href"]).from("bookmarks").stream();
+  const rows = knex<Bookmark>("bookmarks").select(["id", "href"]).stream();
   for await (const { id, href } of rows) {
     const uniqueHash = await app.bookmarks.generateUrlHash(href);
     updates.push({ id, uniqueHash });

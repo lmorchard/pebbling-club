@@ -17,12 +17,14 @@ import templateBookmarksClose from "./templates/bookmarks/close";
 import { IBaseRouterOptions } from "./types";
 import { addValidationError, FormValidationError } from "./utils/forms";
 import { ProfileService } from "../services/profiles";
-import { profile } from "console";
+import { UnfurlService } from "../services/unfurl";
+import { maybeParseJson } from "./utils/json";
 
 export interface IBookmarksRouterOptions extends IBaseRouterOptions {
   services: {
     profiles: ProfileService;
     bookmarks: BookmarksService;
+    unfurl: UnfurlService;
   };
 }
 
@@ -37,7 +39,7 @@ const BookmarkUrlParamsSchema = {
 export const BookmarksRouter: FastifyPluginAsync<
   IBookmarksRouterOptions
 > = async (server, options) => {
-  const { bookmarks, profiles } = options.services;
+  const { bookmarks, profiles, unfurl } = options.services;
 
   server.get<{
     Querystring: FromSchema<typeof NewBookmarkQuerystringSchema>;
@@ -54,9 +56,40 @@ export const BookmarksRouter: FastifyPluginAsync<
       const viewerId = request.user?.id;
       if (!viewerId) throw Boom.forbidden(`cannot create bookmark`);
 
+      const { href } = request.query;
+
+      const existingBookmark = !!href
+        ? (await bookmarks.getByUrl(viewerId, href) || undefined)
+        : undefined;
+
+      let unfurlResult;
+      if (href) {
+        try {
+          unfurlResult = await unfurl.fetchMetadata(href, { timeout: 10000 });
+          reply.log.info({ msg: "unfurl", unfurlResult });
+        } catch (err) {
+          reply.log.warn({ msg: "unfurl failed", err });
+        }
+      }
+
+      const formData = {
+        ...request.query,
+        title:
+          existingBookmark?.title || request.query.title || unfurlResult?.title,
+        extended:
+          existingBookmark?.extended ||
+          request.query.extended ||
+          unfurlResult?.description,
+        tags: existingBookmark?.tags
+          ? bookmarks.tagsToFormField(existingBookmark?.tags)
+          : request.query.tags,
+      };
+
       return reply.renderTemplate(templateBookmarksNew, {
         csrfToken: reply.generateCsrf(),
-        formData: request.query,
+        formData,
+        unfurlResult,
+        existingBookmark,
       });
     }
   );
@@ -77,8 +110,8 @@ export const BookmarksRouter: FastifyPluginAsync<
 
       let validationError = request.validationError as FormValidationError;
       let formData = request.body;
-      const { href } = formData;
 
+      const { href } = formData;
       if (href && !validator.isURL(href)) {
         validationError = addValidationError(validationError, {
           instancePath: "/href",
@@ -100,11 +133,16 @@ export const BookmarksRouter: FastifyPluginAsync<
         title: formData.title!,
         extended: formData.extended,
         tags: bookmarks.formFieldToTags(formData.tags),
+        meta: {
+          unfurl: maybeParseJson(formData.unfurl),
+        },
       };
       const result = await bookmarks.upsert(newBookmark);
 
       if (formData.next == "same") {
         return reply.redirect(href!);
+      } else if (formData.next == "profile") {
+        return reply.redirect(`/u/${request.user!.username}`);
       } else if (formData.next == "close") {
         return reply.renderTemplate(templateBookmarksClose);
       }
