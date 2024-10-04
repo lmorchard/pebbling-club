@@ -44,7 +44,7 @@ export class TestApp extends BaseApp implements IApp {
 
   async deinit() {
     await super.deinit();
-    //await rimraf(this.config.get("sqliteDatabasePath"));
+    await rimraf(this.config.get("sqliteDatabasePath"));
   }
 }
 
