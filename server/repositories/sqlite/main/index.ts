@@ -269,9 +269,9 @@ export class SqliteRepository
 
     const toUpsert = {
       id: uuid(),
-      created: now,
-      modified: now,
       ...extracted,
+      created: extracted.created || now,
+      modified: extracted.modified || now,
       tags: bookmark.tags && this.serializeTagsColumn(bookmark.tags),
       meta: bookmark.meta && this.serializeMetaColumn(bookmark.meta),
     };
