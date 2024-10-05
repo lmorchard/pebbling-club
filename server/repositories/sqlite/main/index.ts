@@ -3,8 +3,6 @@ import { v4 as uuid } from "uuid";
 import { IKnexConnectionOptions, IKnexRepository } from "../../knex";
 import {
   Bookmark,
-  BookmarkUpdatable,
-  BookmarkCreatable,
   IBookmarksRepository,
   TagCount,
   BookmarkCreatableWithHash,
@@ -281,7 +279,9 @@ export class SqliteRepository
       .onConflict(["ownerId", "uniqueHash"])
       .merge({
         ...toUpsert,
-        meta: bookmark.meta && connection.raw(`
+        meta:
+          bookmark.meta &&
+          connection.raw(`
           json_patch(
             iif(json_valid(meta), meta, "{}"),
             excluded.meta
@@ -303,15 +303,48 @@ export class SqliteRepository
     return resultBookmark;
   }
 
-  async updateBookmark(
-    bookmarkId: string,
-    bookmark: BookmarkUpdatableWithHash
-  ) {
+  async updateBookmark(bookmark: BookmarkUpdatableWithHash): Promise<Bookmark> {
     const now = Date.now();
 
-    const original = await this.fetchBookmark(bookmarkId);
+    const original = await this.fetchBookmark(bookmark.id);
     if (!original) throw new Error("item not found");
 
+    const result = await this._updateOneBookmark(
+      bookmark,
+      original,
+      now,
+      this.connection
+    );
+    // TODO: this is ugly because I'm lazy and updateBookmarksBatch returns partial, but this method actually does return Bookmark
+    return result as Bookmark;
+  }
+
+  async updateBookmarksBatch(
+    bookmarks: BookmarkUpdatableWithHash[]
+  ): Promise<Partial<Bookmark>[]> {
+    // TODO: do a batch fetch of bookmarks to be updated to support returning optimistic updates?
+    const now = Date.now();
+    const results: Partial<Bookmark>[] = [];
+    await this.connection.transaction(async (trx) => {
+      for (const bookmark of bookmarks) {
+        const result = await this._updateOneBookmark(
+          bookmark,
+          undefined,
+          now,
+          trx
+        );
+        results.push(result);
+      }
+    });
+    return results;
+  }
+
+  async _updateOneBookmark(
+    bookmark: BookmarkUpdatableWithHash,
+    original: Bookmark | undefined,
+    now: number,
+    connection: Knex.Knex
+  ): Promise<Partial<Bookmark>> {
     const updateColumns = [
       "uniqueHash",
       "href",
@@ -321,12 +354,17 @@ export class SqliteRepository
       "tags",
       "meta",
     ] as const;
-    const updates: BookmarkUpdatableWithHash = updateColumns
-      .filter((key) => key in bookmark && typeof bookmark[key] !== "undefined")
-      .reduce((acc, key) => ({ ...acc, [key]: bookmark[key] }), {});
+    const updates: BookmarkUpdatableWithHash = {
+      id: bookmark.id,
+      ...updateColumns
+        .filter(
+          (key) => key in bookmark && typeof bookmark[key] !== "undefined"
+        )
+        .reduce((acc, key) => ({ ...acc, [key]: bookmark[key] }), {}),
+    };
 
-    const result = await this.connection("bookmarks")
-      .where({ id: bookmarkId })
+    const result = await connection("bookmarks")
+      .where({ id: updates.id })
       .update({
         ...updates,
         modified: now,
@@ -347,9 +385,8 @@ export class SqliteRepository
 
     // Hacky attempt at an optimistic update
     const resultBookmark = {
-      ...original,
+      ...(original || {}),
       ...updates,
-      id: bookmarkId,
       modified: new Date(now),
     };
     return resultBookmark;

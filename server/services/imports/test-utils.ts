@@ -22,7 +22,7 @@ export const commonImportTest = async (
       ...bookmark,
       meta: { customData: true },
     };
-    await bookmarks.update(bookmark.id, updated);
+    await bookmarks.update(updated);
   }
 
   const importedCount2 = await importFn();

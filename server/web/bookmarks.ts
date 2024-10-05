@@ -5,6 +5,7 @@ import validator from "validator";
 import {
   BookmarkCreatable,
   BookmarksService,
+  BookmarkUpdatable,
   NewBookmarkQuerystringSchema,
   NewBookmarkSchema,
 } from "../services/bookmarks";
@@ -59,7 +60,7 @@ export const BookmarksRouter: FastifyPluginAsync<
       const { href } = request.query;
 
       const existingBookmark = !!href
-        ? (await bookmarks.getByUrl(viewerId, href) || undefined)
+        ? (await bookmarks.getByUrl(viewerId, href)) || undefined
         : undefined;
 
       let unfurlResult;
@@ -205,14 +206,15 @@ export const BookmarksRouter: FastifyPluginAsync<
       const { href, title, extended, visibility } = request.body;
       const tags = bookmarks.formFieldToTags(request.body.tags);
 
-      const updateData = {
+      const updateData: BookmarkUpdatable = {
+        id: bookmark.id,
         href,
         title,
         extended,
         tags,
       };
 
-      const result = await bookmarks.update(bookmark.id, updateData);
+      const result = await bookmarks.update(updateData);
       return reply.redirect(`/bookmarks/${result.id}`);
     }
   );
