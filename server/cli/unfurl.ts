@@ -37,20 +37,25 @@ export default class CliUnfurl extends CliAppModule<IAppRequirements> {
       .description("backfull unfurl data in bulk for a user")
       .option("--force", "force fetch metadata even if it's cached")
       .option("--batch <size>", "batch size for unfurl")
-      .action(async (username: string, options: { force: boolean, batch: number }) => {
-        const profile = await profiles.getByUsername(username);
-        if (!profile?.id) {
-          log.error({ msg: "profile does not exist", username });
-          return;
+      .action(
+        async (
+          username: string,
+          options: { force: boolean; batch: string }
+        ) => {
+          const profile = await profiles.getByUsername(username);
+          if (!profile?.id) {
+            log.error({ msg: "profile does not exist", username });
+            return;
+          }
+
+          await unfurl.backfillMetadataForBookmarks({
+            ownerId: profile.id,
+            forceFetch: options.force,
+            batchSize: parseInt(options.batch),
+          });
+
+          process.exit();
         }
-
-        await unfurl.backfillMetadataForBookmarks({
-          ownerId: profile.id,
-          forceFetch: options.force,
-          batchSize: options.batch,
-        });
-
-        process.exit();
-      });
+      );
   }
 }
