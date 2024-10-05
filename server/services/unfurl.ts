@@ -248,8 +248,8 @@ export class UnfurlService extends AppModule<IAppRequirements> {
       offset += batchSize;
 
       // Pause between fetching batches of bookmarks to let queues drain
-      await unfurlQueue.onEmpty();
-      await updateQueue.onEmpty();
+      await unfurlQueue.onIdle();
+      await updateQueue.onIdle();
     }
 
     // Commit the final incomplete batch.
@@ -258,6 +258,7 @@ export class UnfurlService extends AppModule<IAppRequirements> {
     // Wait until the queues have entirely finished
     await unfurlQueue.onIdle();
     await updateQueue.onIdle();
+    
     clearInterval(statusInterval);
   }
 }
