@@ -2,7 +2,11 @@ import { IApp } from "../app/types";
 import { AppModule } from "../app/modules";
 import metascraper from "metascraper";
 import { FetchService } from "./fetch";
-import { BookmarksService, BookmarkWithPermissions } from "./bookmarks";
+import {
+  BookmarksService,
+  BookmarkUpdatableWithHash,
+  BookmarkWithPermissions,
+} from "./bookmarks";
 import PQueue from "p-queue";
 
 export const configSchema = {};
@@ -111,7 +115,7 @@ export class UnfurlService extends AppModule<IAppRequirements> {
 
   async backfillMetadataForBookmarks({
     ownerId,
-    batchSize = 32,
+    batchSize = 64,
     unfurlTimeout = 10000,
     forceFetch = false,
   }: {
@@ -134,10 +138,21 @@ export class UnfurlService extends AppModule<IAppRequirements> {
     let offset = 0;
     let total: null | number = null;
 
+    const startTime = Date.now();
+
     const statusInterval = setInterval(() => {
+      const now = Date.now();
+      const duration = now - startTime;
+      const durationPerItem = duration / offset;
+      const estimateEndDuration = total ? total * durationPerItem : 0;
+
       log.info({
         msg: "queue",
         progress: total && ((offset / total) * 100).toFixed(2),
+        secondsRemaining: total && ((estimateEndDuration - duration) / 1000).toFixed(2),
+        duration,
+        durationPerItem: durationPerItem.toFixed(2),
+        estimateEndDuration: estimateEndDuration.toFixed(2),
         offset,
         batchSize,
         total,
@@ -150,68 +165,76 @@ export class UnfurlService extends AppModule<IAppRequirements> {
       });
     }, 1000);
 
+    type UnfurlResult =
+      | UnfurlMetadata
+      | {
+          failed?: boolean;
+          failedAt?: number;
+          failedError?: any;
+        };
+
+    const enqueueUnfurl = async (item: BookmarkWithPermissions) => {
+      const url = item.href;
+      unfurlQueue
+        .add(async () => {
+          log.trace({ msg: "unfurling", url });
+          return await this.fetchMetadata(url, {
+            timeout: unfurlTimeout,
+          });
+        })
+        .then((unfurlResult) => {
+          log.trace({ msg: "unfurled", url });
+          enqueueUpdate(item, unfurlResult!);
+        })
+        .catch((err) => {
+          log.trace({ msg: "unfurl failed", url, err });
+          enqueueUpdate(item, {
+            failed: true,
+            failedAt: Date.now(),
+            failedError: err.toString(),
+          });
+        });
+    };
+
+    const batchBuffer: BookmarkUpdatableWithHash[] = [];
+
+    const enqueueUpdate = async (
+      item: BookmarkWithPermissions,
+      unfurlResult: UnfurlResult
+    ) => {
+      batchBuffer.push({
+        id: item.id,
+        meta: { unfurl: unfurlResult },
+      });
+      if (batchBuffer.length >= batchSize) {
+        enqueueCommitUpdateBatch();
+      }
+    };
+
+    const enqueueCommitUpdateBatch = async (size: number = batchSize) => {
+      const batch = batchBuffer.splice(0, size);
+      updateQueue.add(async () => {
+        try {
+          log.trace({ msg: "commit start", size });
+          await bookmarks.updateBatch(batch);
+          log.trace({ msg: "commit", size });
+        } catch (err) {
+          log.warn({ msg: "commit failed", err });
+        }
+      });
+      log.trace({ msg: "commit enqueued", size });
+    };
+
     while (total == null || offset < total) {
       log.trace({ msg: "fetching bookmarks", offset, batchSize });
+
       const result = await bookmarks.listForOwner(
         ownerId,
         ownerId,
         batchSize,
         offset
       );
-      if (!result) break;
-
-      total = result.total;
-
-      type UnfurlResult =
-        | UnfurlMetadata
-        | {
-            failed?: boolean;
-            failedAt?: number;
-            failedError?: any;
-          };
-
-      const enqueueUnfurl = async (item: BookmarkWithPermissions) => {
-        const url = item.href;
-        unfurlQueue
-          .add(async () => {
-            log.trace({ msg: "unfurling", url });
-            return await this.fetchMetadata(url, {
-              timeout: unfurlTimeout,
-            });
-          })
-          .then((unfurlResult) => {
-            log.trace({ msg: "unfurled", url });
-            enqueueUpdate(item, unfurlResult!);
-          })
-          .catch((err) => {
-            log.trace({ msg: "unfurl failed", url, err });
-            enqueueUpdate(item, {
-              failed: true,
-              failedAt: Date.now(),
-              failedError: err.toString(),
-            });
-          });
-      };
-
-      const enqueueUpdate = async (
-        item: BookmarkWithPermissions,
-        unfurlResult: UnfurlResult
-      ) => {
-        const url = item.href;
-        updateQueue.add(async () => {
-          try {
-            log.trace({ msg: "updating", url });
-            await bookmarks.update(item.id, {
-              meta: {
-                unfurl: unfurlResult,
-              },
-            });
-            log.trace({ msg: "updated", url });
-          } catch (err) {
-            log.trace({ msg: "update failed", url, err });
-          }
-        });
-      };
+      if (!result || result.items.length === 0) break;
 
       for (const item of result.items) {
         if (item.meta?.unfurl && !forceFetch) {
@@ -221,11 +244,16 @@ export class UnfurlService extends AppModule<IAppRequirements> {
         enqueueUnfurl(item);
       }
 
+      total = result.total;
       offset += batchSize;
 
-      // Pause between fetching batches of bookmarks to let unfurl queue drain
+      // Pause between fetching batches of bookmarks to let queues drain
       await unfurlQueue.onEmpty();
+      await updateQueue.onEmpty();
     }
+
+    // Commit the final incomplete batch.
+    await enqueueCommitUpdateBatch();
 
     // Wait until the queues have entirely finished
     await unfurlQueue.onIdle();

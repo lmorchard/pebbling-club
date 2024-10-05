@@ -78,7 +78,8 @@ describe("services/bookmarks", () => {
         ...bookmarkData,
       });
 
-      const updated = await app.bookmarks.update(bookmark.id, {
+      const updated = await app.bookmarks.update({
+        id: bookmark.id,
         title: "Updated",
       });
       assert.equal(updated.title, "Updated");
@@ -93,7 +94,6 @@ describe("services/bookmarks", () => {
       assert.equal(fetched.tags?.length, bookmarkData.tags.length);
     });
   });
-
 });
 
 const TEST_URLS = {

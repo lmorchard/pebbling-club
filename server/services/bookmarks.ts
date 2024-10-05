@@ -24,21 +24,25 @@ export class BookmarksService extends BaseService<IAppRequirements> {
     );
   }
 
-  async update(bookmarkId: string, bookmark: BookmarkUpdatable) {
-    const { href, title, extended, tags, visibility, meta, created, modified } =
-      bookmark;
-    const uniqueHash = href && await this.generateUrlHash(href || "");
-    return await this.app.repository.updateBookmark(bookmarkId, {
+  async update(bookmark: BookmarkUpdatable) {
+    const uniqueHash =
+      bookmark.href && (await this.generateUrlHash(bookmark.href || ""));
+    return await this.app.repository.updateBookmark({
+      ...bookmark,
       uniqueHash,
-      href,
-      title,
-      extended,
-      tags,
-      visibility,
-      meta,
-      created,
-      modified,
     });
+  }
+
+  async updateBatch(bookmarks: BookmarkUpdatable[]) {
+    return await this.app.repository.updateBookmarksBatch(
+      await Promise.all(
+        bookmarks.map(async (bookmark) => ({
+          uniqueHash:
+            bookmark.href && (await this.generateUrlHash(bookmark.href)),
+          ...bookmark,
+        }))
+      )
+    );
   }
 
   async delete(bookmarkId: string) {
@@ -225,15 +229,11 @@ export type BookmarkCreatable = Omit<Bookmark, "id" | "uniqueHash">;
 
 export type BookmarkCreatableWithHash = Omit<Bookmark, "id">;
 
-export type BookmarkUpdatable = Omit<
-  Partial<Bookmark>,
-  "id" | "ownerId" | "unqueHash"
->;
+export type BookmarkUpdatable = Pick<Bookmark, "id"> &
+  Omit<Partial<Bookmark>, "id" | "ownerId" | "uniqueHash">;
 
-export type BookmarkUpdatableWithHash = Omit<
-  Partial<Bookmark>,
-  "id" | "ownerId"
->;
+export type BookmarkUpdatableWithHash = Pick<Bookmark, "id"> &
+  Omit<Partial<Bookmark>, "id" | "ownerId">;
 
 export type BookmarkPermissions = {
   viewerId: string | undefined;
@@ -253,10 +253,10 @@ export interface IBookmarksRepository {
   upsertBookmarksBatch(
     bookmarks: BookmarkCreatableWithHash[]
   ): Promise<Bookmark[]>;
-  updateBookmark(
-    bookmarkId: string,
-    bookmark: BookmarkUpdatableWithHash
-  ): Promise<Bookmark>;
+  updateBookmark(bookmark: BookmarkUpdatableWithHash): Promise<Bookmark>;
+  updateBookmarksBatch(
+    bookmark: BookmarkUpdatableWithHash[]
+  ): Promise<Partial<Bookmark>[]>;
   deleteBookmark(bookmarkId: string): Promise<boolean>;
   fetchBookmark(bookmarkId: string): Promise<Bookmark | null>;
   fetchBookmarkByOwnerAndUrl(

@@ -20,7 +20,7 @@ export const configSchema = {
     doc: "maximum number of web fetches to perform in parallel",
     env: "FETCH_MAX_CONCURRENCY",
     format: Number,
-    default: 32,
+    default: 64,
   },
   userAgent: {
     doc: "User-Agent header to send with fetch requests.",
