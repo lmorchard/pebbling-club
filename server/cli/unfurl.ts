@@ -51,7 +51,7 @@ export default class CliUnfurl extends CliAppModule<IAppRequirements> {
           await unfurl.backfillMetadataForBookmarks({
             ownerId: profile.id,
             forceFetch: options.force,
-            batchSize: parseInt(options.batch),
+            batchSize: parseInt(options.batch || "32"),
           });
 
           process.exit();
