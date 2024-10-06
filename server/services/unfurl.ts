@@ -1,7 +1,8 @@
 import { IApp } from "../app/types";
 import { AppModule } from "../app/modules";
-import metascraper from "metascraper";
+import createMetascraper from "metascraper";
 import { FetchService } from "./fetch";
+import axios from "axios";
 import {
   BookmarksService,
   BookmarkUpdatableWithHash,
@@ -22,39 +23,9 @@ export class UnfurlError extends Error {}
 export type UnfurlMetadata = {
   cached?: boolean;
   cachedAt?: number;
-} & metascraper.Metadata;
+} & createMetascraper.Metadata;
 
 export class UnfurlService extends AppModule<IAppRequirements> {
-  metascraper: metascraper.Metascraper;
-
-  constructor(app: IApp & IAppRequirements) {
-    super(app);
-
-    this.metascraper = metascraper([
-      require("metascraper-author")(),
-      require("metascraper-date")(),
-      require("metascraper-description")(),
-      require("metascraper-image")(),
-      require("metascraper-logo")(),
-      require("metascraper-logo-favicon")(),
-      require("metascraper-publisher")(),
-      require("metascraper-title")(),
-      require("metascraper-url")(),
-      require("metascraper-feed")(),
-      require("metascraper-iframe")(),
-      require("metascraper-lang")(),
-      require("metascraper-amazon")(),
-      require("metascraper-instagram")(),
-      require("metascraper-soundcloud")(),
-      require("metascraper-spotify")(),
-      // require("metascraper-youtube")(),
-    ]);
-  }
-
-  async init() {
-    const { config } = this.app;
-  }
-
   async fetchMetadata(
     url: string,
     options: {
@@ -74,18 +45,39 @@ export class UnfurlService extends AppModule<IAppRequirements> {
       lastHeaders = {},
     } = options;
 
-    const cachedMetadata = await unfurlRepository.fetchUnfurlMetadata(url);
-    if (cachedMetadata) return cachedMetadata;
+    if (!forceFetch) {
+      const cachedMetadata = await unfurlRepository.fetchUnfurlMetadata(url);
+      if (cachedMetadata) return cachedMetadata;
+    }
 
-    const { metascraper } = this;
+    const metascraper = createMetascraper([
+      require("metascraper-author")(),
+      require("metascraper-date")(),
+      require("metascraper-description")(),
+      require("metascraper-image")(),
+      require("metascraper-logo")(),
+      require("metascraper-logo-favicon")(),
+      require("metascraper-publisher")(),
+      require("metascraper-title")(),
+      require("metascraper-url")(),
+      require("metascraper-feed")(),
+      require("metascraper-iframe")(),
+      require("metascraper-lang")(),
+      require("metascraper-amazon")(),
+      require("metascraper-instagram")(),
+      require("metascraper-soundcloud")(),
+      require("metascraper-spotify")(),
+      // require("metascraper-youtube")(),
+    ]);
 
-    const { response } = await fetch.fetchResource({
-      url,
-      accept: "text/html",
+    const response = await axios.get<string>(url, {
+      responseType: "text",
       timeout,
-      forceFetch,
-      skipCache: skipFetchCache,
-      lastHeaders,
+      maxBodyLength: 1024 * 512,
+      maxContentLength: 1024 * 512,
+      headers: {
+        accept: "text/html",
+      },
     });
 
     if (response.status !== 200) {
@@ -93,7 +85,7 @@ export class UnfurlService extends AppModule<IAppRequirements> {
     }
 
     // TODO: might need more per-domain hacks here?
-    const rules: metascraper.Rules[] = [];
+    const rules: createMetascraper.Rules[] = [];
     /*
     if (/patreon\.com/.test(url)) {
       // This seems like a "cheat" to get around cloudflare? Maybe a bad idea
@@ -101,7 +93,7 @@ export class UnfurlService extends AppModule<IAppRequirements> {
     }
     */
 
-    const html = await response.text();
+    const html = response.data;
     let metadata = await metascraper({ html, url, rules });
 
     // If the page is a Cloudflare "Just a moment..." page, just return the URL
@@ -110,7 +102,9 @@ export class UnfurlService extends AppModule<IAppRequirements> {
       metadata = { url };
     }
 
-    return await unfurlRepository.upsertUnfurlMetadata(url, metadata);
+    return forceFetch
+      ? metadata
+      : await unfurlRepository.upsertUnfurlMetadata(url, metadata);
   }
 
   async backfillMetadataForBookmarks({
@@ -149,7 +143,8 @@ export class UnfurlService extends AppModule<IAppRequirements> {
       log.info({
         msg: "queue",
         progress: total && ((offset / total) * 100).toFixed(2),
-        secondsRemaining: total && ((estimateEndDuration - duration) / 1000).toFixed(2),
+        secondsRemaining:
+          total && ((estimateEndDuration - duration) / 1000).toFixed(2),
         duration,
         durationPerItem: durationPerItem.toFixed(2),
         estimateEndDuration: estimateEndDuration.toFixed(2),
@@ -248,8 +243,8 @@ export class UnfurlService extends AppModule<IAppRequirements> {
       offset += batchSize;
 
       // Pause between fetching batches of bookmarks to let queues drain
-      await unfurlQueue.onIdle();
-      await updateQueue.onIdle();
+      await unfurlQueue.onEmpty();
+      await updateQueue.onEmpty();
     }
 
     // Commit the final incomplete batch.
@@ -258,7 +253,7 @@ export class UnfurlService extends AppModule<IAppRequirements> {
     // Wait until the queues have entirely finished
     await unfurlQueue.onIdle();
     await updateQueue.onIdle();
-    
+
     clearInterval(statusInterval);
   }
 }
