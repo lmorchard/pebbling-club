@@ -7,12 +7,12 @@ import {
 } from "../../utils/forms";
 import { BookmarkWithPermissions, NewBookmarkQuerystringSchema } from "../../../services/bookmarks";
 import { FromSchema } from "json-schema-to-ts";
-import { UnfurlMetadata } from "../../../services/unfurl";
+import { UnfurlResult } from "../../../services/unfurl";
 
 export interface Props {
   csrfToken: string;
   formData?: FromSchema<typeof NewBookmarkQuerystringSchema>;
-  unfurlResult?: UnfurlMetadata;
+  unfurlResult?: UnfurlResult;
   existingBookmark?: BookmarkWithPermissions;
   validationError?: FormValidationError;
   actionButtonTitle?: string;

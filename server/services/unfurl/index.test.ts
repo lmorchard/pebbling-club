@@ -1,15 +1,15 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "assert";
 import { rimraf } from "rimraf";
-import { UnfurlService, UnfurlMetadata } from "./unfurl";
-import { BaseApp } from "../app";
-import { IApp } from "../app/types";
-import SqliteFetchRepository from "../repositories/sqlite/fetch";
-import { FetchService } from "./fetch";
-import SqliteUnfurlRepository from "../repositories/sqlite/unfurl";
-import { applyFetchMock } from "../utils/test";
-import { BookmarksService } from "./bookmarks";
-import { SqliteRepository } from "../repositories/sqlite/main";
+import { UnfurlService, UnfurlResult } from ".";
+import { BaseApp } from "../../app";
+import { IApp } from "../../app/types";
+import SqliteFetchRepository from "../../repositories/sqlite/fetch";
+import { FetchService } from "../fetch";
+import SqliteUnfurlRepository from "../../repositories/sqlite/unfurl";
+import { applyFetchMock } from "../../utils/test";
+import { BookmarksService } from "../bookmarks";
+import { SqliteRepository } from "../../repositories/sqlite/main";
 
 describe("services/unfurl", () => {
   describe("fetchMetadata", () => {
@@ -85,7 +85,7 @@ export class TestApp extends BaseApp implements IApp {
 type TestResources = {
   headers: Record<string, string>;
   body: string;
-  metadata: UnfurlMetadata;
+  metadata: UnfurlResult;
 };
 
 const TEST_RESOURCES: Record<string, TestResources> = {

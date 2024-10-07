@@ -2,12 +2,12 @@ import { html } from "../../utils/html";
 import { layout, LayoutProps } from "../layout";
 import { field, FormData, FormValidationError } from "../../utils/forms";
 import partialBookmarkForm from "../partials/bookmarkForm";
-import { UnfurlMetadata } from "../../../services/unfurl";
+import { UnfurlResult } from "../../../services/unfurl";
 import { BookmarkWithPermissions } from "@/services/bookmarks";
 
 export interface Props extends LayoutProps {
   formData?: FormData;
-  unfurlResult?: UnfurlMetadata;
+  unfurlResult?: UnfurlResult;
   existingBookmark?: BookmarkWithPermissions,
   validationError?: FormValidationError;
 }

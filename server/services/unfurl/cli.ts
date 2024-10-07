@@ -1,8 +1,8 @@
 import { Command } from "commander";
-import { CliAppModule } from "../app/modules";
-import { UnfurlService } from "../services/unfurl";
-import { BookmarksService } from "../services/bookmarks";
-import { ProfileService } from "../services/profiles";
+import { CliAppModule } from "../../app/modules";
+import { UnfurlService } from ".";
+import { BookmarksService } from "../bookmarks";
+import { ProfileService } from "../profiles";
 
 export type IAppRequirements = {
   bookmarks: BookmarksService;
@@ -35,12 +35,25 @@ export default class CliUnfurl extends CliAppModule<IAppRequirements> {
       .command("backfill")
       .argument("<username>", "username")
       .description("backfull unfurl data in bulk for a user")
-      .option("--force", "force fetch metadata even if it's cached")
+      .option("--force-fetch", "force fetch metadata even if it's cached")
+      .option(
+        "--force-update",
+        "force update metadata even if it's already backfilled"
+      )
+      .option(
+        "--skip-update-on-error",
+        "skip updating bookmark if error encountered on unfurl"
+      )
       .option("--batch <size>", "batch size for unfurl")
       .action(
         async (
           username: string,
-          options: { force: boolean; batch: string }
+          options: {
+            forceFetch: boolean;
+            forceUpdate: boolean;
+            skipUpdateOnError: boolean;
+            batch: string;
+          }
         ) => {
           const profile = await profiles.getByUsername(username);
           if (!profile?.id) {
@@ -50,8 +63,10 @@ export default class CliUnfurl extends CliAppModule<IAppRequirements> {
 
           await unfurl.backfillMetadataForBookmarks({
             ownerId: profile.id,
-            forceFetch: options.force,
-            batchSize: parseInt(options.batch || "32"),
+            forceFetch: options.forceFetch,
+            forceUpdate: options.forceUpdate,
+            skipUpdateOnError: options.skipUpdateOnError,
+            batchSize: options.batch ? parseInt(options.batch) : undefined,
           });
 
           process.exit();
