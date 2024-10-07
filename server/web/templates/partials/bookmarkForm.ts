@@ -39,7 +39,10 @@ export default ({
         })}
         ${f("Tags", "tags", { autofocus: !!formData?.href })}
         ${existingBookmark ? html`<span class="previously-saved">Previously saved at ${existingBookmark.created?.toISOString()}</span>` : ""}
-        <textarea hidden rows="24" name="unfurl">${JSON.stringify(unfurlResult, null, '  ')}</textarea>
+        <details>
+          <summary>Unfurl data</summary>
+          <textarea style="width: 100%" rows="24" name="unfurl">${JSON.stringify(unfurlResult, null, '  ')}</textarea>
+        </details>
         <section class="actions">
           <button type="submit">${actionButtonTitle}</button>
         </section>
