@@ -5,7 +5,10 @@ import {
   FormData,
   FormValidationError,
 } from "../../utils/forms";
-import { BookmarkWithPermissions, NewBookmarkQuerystringSchema } from "../../../services/bookmarks";
+import {
+  BookmarkWithPermissions,
+  NewBookmarkQuerystringSchema,
+} from "../../../services/bookmarks";
 import { FromSchema } from "json-schema-to-ts";
 import { UnfurlResult } from "../../../services/unfurl";
 
@@ -28,7 +31,7 @@ export default ({
 }: Props) => {
   const f = field({ formData, validationError });
   return html`
-    <section>
+    <pc-bookmark-form>
       <form action="" method="post">
         <input type="hidden" name="_csrf" value="${csrfToken}" />
         <input type="hidden" name="next" value="${formData?.next}" />
@@ -38,15 +41,20 @@ export default ({
           type: textarea({ rows: 5 }),
         })}
         ${f("Tags", "tags", { autofocus: !!formData?.href })}
-        ${existingBookmark ? html`<span class="previously-saved">Previously saved at ${existingBookmark.created?.toISOString()}</span>` : ""}
-        <details>
-          <summary>Unfurl data</summary>
-          <textarea style="width: 100%" rows="24" name="unfurl">${JSON.stringify(unfurlResult, null, '  ')}</textarea>
+        ${existingBookmark
+          ? html`<span class="previously-saved"
+              >Previously saved at
+              ${existingBookmark.created?.toISOString()}</span
+            >`
+          : ""}
+        <details class="unfurl-data">
+          <summary><span>Unfurl</span> <button class="refresh">Refresh</button></summary>
+          <textarea rows="24" name="unfurl">${JSON.stringify(unfurlResult, null, "  ")}</textarea>
         </details>
         <section class="actions">
           <button type="submit">${actionButtonTitle}</button>
         </section>
       </form>
-    </section>
+    </pc-bookmark-form>
   `;
 };

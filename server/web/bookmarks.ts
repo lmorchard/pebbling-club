@@ -151,6 +151,35 @@ export const BookmarksRouter: FastifyPluginAsync<
     }
   );
 
+  const UnfurlUrlQuerystringSchema = {
+    type: "object",
+    properties: {
+      href: { type: "string" },
+    },
+    required: ["href"],
+  } as const;
+
+  server.get<{
+    Querystring: FromSchema<typeof UnfurlUrlQuerystringSchema>;
+  }>(
+    "/bookmarks/unfurl",
+    {
+      schema: { querystring: UnfurlUrlQuerystringSchema },
+      attachValidation: true,
+      preHandler: RequirePasswordAuth,
+    },
+    async (request, reply) => {
+      const { href } = request.query;
+      reply.log.debug({ msg: "unfurl", href, params: request.params });
+      try {
+        const unfurlResult = await unfurl.fetchMetadata(href);
+        return reply.send(unfurlResult);
+      } catch (err: any) {
+        return reply.send({ failed: true, err: "" + err });
+      }
+    }
+  );
+
   server.get<{
     Params: FromSchema<typeof BookmarkUrlParamsSchema>;
   }>(
