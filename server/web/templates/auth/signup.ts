@@ -11,6 +11,7 @@ export default ({ formData, validationError, ...locals }: Props) => {
   const f = field({ formData, validationError });
   return layout({
     ...locals,
+    title: "Sign up",
     content: html`
       <h1>Sign up</h1>
       <section>

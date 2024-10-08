@@ -1,7 +1,7 @@
 import { Profile } from "../../services/profiles";
 import { html, TemplateContent } from "../utils/html";
 import { ITemplateProps } from "../utils/templates";
-import Page from "./page";
+import Page, { PageProps } from "./page";
 
 export interface LayoutProps extends ITemplateProps {
   user?: Profile;
@@ -12,10 +12,12 @@ export const layout = ({
   content,
   user,
   siteUrl,
-}: { content: TemplateContent } & LayoutProps) => {
+  ...pageProps
+}: { content: TemplateContent } & LayoutProps & PageProps) => {
   const newUrl = new URL("/new", siteUrl!).toString();
 
   return Page({
+    ...pageProps,
     content: html`
       <header class="site">
         <section class="masthead">

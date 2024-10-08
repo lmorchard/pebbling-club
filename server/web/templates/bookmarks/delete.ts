@@ -10,6 +10,7 @@ export interface Props extends LayoutProps {
 export default ({ bookmark, profile, csrfToken, ...locals }: Props) => {
   return layout({
     ...locals,
+    title: "Delete Bookmark",
     content: html`
       <section>
         ${partialBookmark({ bookmark, profile, readOnly: true })}

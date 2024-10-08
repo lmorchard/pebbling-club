@@ -17,6 +17,7 @@ export default ({ formData, unfurlResult, existingBookmark, validationError, ...
   const f = field({ formData, validationError });
   return layout({
     ...locals,
+    title: "New Bookmark",
     content: html`
       <section>
         ${partialBookmarkForm({ csrfToken, formData, unfurlResult, existingBookmark, validationError })}

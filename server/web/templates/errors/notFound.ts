@@ -15,6 +15,7 @@ export default ({ error, ...locals }: Props) => {
   }
   return layout({
     ...locals,
+    title: "Not Found",
     content: html`
       <h1>Not Found</h1>
       ${errorMessage}

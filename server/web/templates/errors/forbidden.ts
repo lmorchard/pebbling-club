@@ -13,6 +13,7 @@ export default ({ error, ...locals }: Props) => {
   }
   return layout({
     ...locals,
+    title: "Forbidden",
     content: html`
       <h1>Forbidden</h1>
       ${errorMessage}

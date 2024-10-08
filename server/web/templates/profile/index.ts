@@ -27,6 +27,7 @@ export default ({
 }: Props) => {
   return layout({
     ...locals,
+    title: profile.username,
     content: html`
       <section class="profile">
         <section class="bookmarks">
