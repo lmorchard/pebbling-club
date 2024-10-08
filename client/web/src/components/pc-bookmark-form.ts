@@ -33,9 +33,16 @@ export default class PCBookmarkFormElement extends LitElement {
     this.refreshButton = this.querySelector(".unfurl-data button.refresh");
     if (this.refreshButton) {
       this.refreshButton.innerHTML = "";
-      this.refreshButton.addEventListener("click", handleUnfurlRefresh, {
-        signal,
-      });
+      this.refreshButton.addEventListener(
+        "click",
+        (ev) => {
+          ev.preventDefault();
+          handleUnfurlRefresh();
+        },
+        {
+          signal,
+        }
+      );
     }
 
     this.urlField = this.querySelector("input[name=href]");
