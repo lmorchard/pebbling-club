@@ -101,9 +101,9 @@ export default class BaseSqliteKnexRepository extends AppModule {
     const { config } = this.app;
 
     // Cribbing some notes from here https://phiresky.github.io/blog/2020/sqlite-performance-tuning/
+    // PRAGMA mmap_size = ${config.get("sqliteDatabaseMmapSize")};
     const statements = `
       PRAGMA busy_timeout = ${config.get("sqliteDatabaseBusyTimeout")};
-      PRAGMA mmap_size = ${config.get("sqliteDatabaseMmapSize")};
       PRAGMA journal_mode = WAL;
       PRAGMA synchronous = normal;
       PRAGMA temp_store = memory;

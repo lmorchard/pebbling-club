@@ -22,7 +22,7 @@ import CliBookmarks from "./cli/bookmarks";
 import CliFeeds from "./cli/feeds";
 import CliDb from "./cli/db";
 import CliFetch from "./cli/fetch";
-import CliUnfurl from "./cli/unfurl";
+import CliUnfurl from "./services/unfurl/cli";
 
 export class MainCliApp extends BaseCliApp {
   // TODO: make repository instances switchable via config
@@ -56,6 +56,7 @@ export class MainCliApp extends BaseCliApp {
       this.imports,
       this.fetch,
       this.feeds,
+      this.unfurl,
       this.webServer,
       new CliDb(this),
       new CliProfiles(this),
