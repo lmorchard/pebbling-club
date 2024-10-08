@@ -2,12 +2,15 @@ import { Profile } from "../../services/profiles";
 import { html, TemplateContent } from "../utils/html";
 import { ITemplateProps } from "../utils/templates";
 
-export interface PageProps extends ITemplateProps {}
+export interface PageProps extends ITemplateProps {
+  title?: string
+}
 
-export default ({ content }: { content: TemplateContent } & PageProps) => {
+export default ({ title, content }: { content: TemplateContent } & PageProps) => {
   return html`
     <html>
       <head>
+        <title>${title && `${title} - `}Pebbling Club 🐧🪨</title>
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
         <meta
           name="viewport"

@@ -16,6 +16,7 @@ export default ({ formData, validationError, ...locals }: Props) => {
   const f = field({ formData, validationError });
   return layout({
     ...locals,
+    title: "Login",
     content: html`
       <h1>Login</h1>
       ${locals.messages}

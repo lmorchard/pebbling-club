@@ -13,7 +13,8 @@ export default ({ formData, validationError, ...locals }: Props) => {
   const f = field({ formData, validationError });
   return layout({
     ...locals,
-    content: html`
+    title: "Edit Bookmark",
+    content: html`'
       <section>
         ${partialBookmarkForm({
           csrfToken,
