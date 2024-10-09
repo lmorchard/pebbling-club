@@ -27,82 +27,73 @@ export default ({
     <pc-bookmark>
       <div class="bookmark h-entry">
         <div class="bookmark-thumbnail">
-          ${unfurl?.image
-            ? html` <img src="${unfurl.image}" /> `
-            : linkSvg}
+          ${unfurl?.image ? html` <img src="${unfurl.image}" /> ` : linkSvg}
         </div>
-        <div class="bookmark-content">
-          <div class="header">
-            <a class="p-name u-url" href="${bookmark.href}"
-              >${bookmark.title}</a
-            >
-          </div>
+        
+        <div class="header">
+          <a class="p-name u-url" href="${bookmark.href}">${bookmark.title}</a>
+        </div>
 
-          <div class="href">
-            <a href="${bookmark.href}">${bookmark.href}</a>
-          </div>
+        <div class="href">
+          <a href="${bookmark.href}">${bookmark.href}</a>
+        </div>
 
-          ${bookmark.extended &&
-          html`<div class="p-summary">${bookmark.extended}</div>`}
-          ${iframeUrl &&
+        ${bookmark.extended &&
+        html`<div class="p-summary">${bookmark.extended}</div>`}
+        ${iframeUrl &&
+        html`
+          <iframe
+            style="width: 100%"
+            width="400"
+            height="400"
+            src="${iframeUrl}"
+          ></iframe>
+        `}
+
+        <div class="meta">
+          ${!readOnly &&
+          bookmark.canEdit &&
           html`
-            <iframe
-              style="width: 100%"
-              width="400"
-              height="400"
-              src="${iframeUrl}"
-            ></iframe>
+            <div class="actions">
+              <a href="/bookmarks/${bookmark.id}/edit">Edit</a>
+              <a href="/bookmarks/${bookmark.id}/delete">Delete</a>
+              <!-- <span class="moar-actions"></span> -->
+            </div>
           `}
-
-          <div class="meta">
-            ${!readOnly &&
-            bookmark.canEdit &&
-            html`
-              <div class="actions">
-                <a href="/bookmarks/${bookmark.id}/edit">Edit</a>
-                <a href="/bookmarks/${bookmark.id}/delete">Delete</a>
-                <!-- <span class="moar-actions"></span> -->
-              </div>
-            `}
-            <time
-              class="dt-published"
-              title="${created.toISOString()}"
-              datetime="${created.toISOString()}"
+          <time
+            class="dt-published"
+            title="${created.toISOString()}"
+            datetime="${created.toISOString()}"
+          >
+            <a href="/bookmarks/${bookmark.id}">${created.toISOString()}</a>
+          </time>
+          ${!hideAuthor &&
+          html`
+            <a class="p-author" href="/u/${profile.username}"
+              >${profile.username}</a
             >
-              <a href="/bookmarks/${bookmark.id}">${created.toISOString()}</a>
-            </time>
-            ${!hideAuthor &&
-            html`
-              <a class="p-author" href="/u/${profile.username}"
-                >${profile.username}</a
-              >
-            `}
-            ${bookmark.tags?.length &&
-            html`
-              <div class="tags">
-                ${bookmark.tags?.map((tag) =>
-                  profile
-                    ? html`
-                        <a
-                          href="/u/${profile.username}/t/${tag}"
-                          rel="category tag"
-                          class="p-category"
-                          >${tag}</a
-                        >
-                      `
-                    : html`
-                        <a
-                          href="/t/${tag}"
-                          rel="category tag"
-                          class="p-category"
-                          >${tag}</a
-                        >
-                      `
-                )}
-              </div>
-            `}
-          </div>
-          <!-- <div class="render-root"></div> -->
+          `}
+          ${bookmark.tags?.length &&
+          html`
+            <div class="tags">
+              ${bookmark.tags?.map((tag) =>
+                profile
+                  ? html`
+                      <a
+                        href="/u/${profile.username}/t/${tag}"
+                        rel="category tag"
+                        class="p-category"
+                        >${tag}</a
+                      >
+                    `
+                  : html`
+                      <a href="/t/${tag}" rel="category tag" class="p-category"
+                        >${tag}</a
+                      >
+                    `
+              )}
+            </div>
+          `}
         </div>
       </div>
     </pc-bookmark>
