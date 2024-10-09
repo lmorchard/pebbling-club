@@ -2,22 +2,23 @@
   --bookmark-thumbnail-size: 72px;
 }
 
-.bookmarks.h-feed {
-  list-style-type: none;
-  display: flex;
-  flex-direction: column;
-  row-gap: 2em;
-  margin: 0;
-  padding: 1em 0;
+.bookmark.h-entry {
+  display: grid;
+  column-gap: var(--column-gap);
+  grid-template-columns:
+    [full-start thumbnail-start] var(--bookmark-thumbnail-size)
+    [thumbnail-end main-start] auto
+    [main-end full-end]
 }
 
-.bookmark.h-entry {
-  display: flex;
-  flex-direction: row;
-  column-gap: var(--column-gap);
+.bookmark.h-entry > * {
+  grid-column: main;
 }
 
 .bookmark.h-entry .bookmark-thumbnail {
+  grid-column: thumbnail;
+  grid-row: 1 / 10;
+
   flex-grow: 0;
   flex-shrink: 0;
   flex-basis: var(--bookmark-thumbnail-size);
@@ -97,7 +98,7 @@
   /* content: "\1FBCA"; */
   content: "\1F3F7";
   /* content: "\002317"; */
-  padding-right: 0.125em;
+  padding-right: 0.25em;
 }
 
 .bookmark.h-entry .p-category {

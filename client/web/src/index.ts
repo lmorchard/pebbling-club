@@ -6,6 +6,8 @@ import "./components/pc-bookmark.ts";
 import "./components/pc-bookmark-list.ts";
 import "./components/pc-bookmark-form.ts";
 
+import "./css/mobile-overrides.css";
+
 async function init() {
   console.log("READY.");
 }

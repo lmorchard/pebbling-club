@@ -42,6 +42,7 @@ export const layout = ({
                     <span>${user.username}</span>
                   </summary>
                   <div>
+                    <a href="/new">+ New</a>
                     <a href="/u/${user.username}">Profile</a>
                     <a href="/settings">Settings</a>
                     <a
