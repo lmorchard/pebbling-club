@@ -8,7 +8,9 @@ export default class PCBookmarkFormElement extends LitElement {
   urlField?: HTMLInputElement | null;
   titleField?: HTMLInputElement | null;
   descriptionField?: HTMLTextAreaElement | null;
+  submitButton?: HTMLButtonElement | null;
 
+  autoSubmitDelay = 500;
   isUnfurlLoading = false;
 
   refreshButtonTemplate = (props: this) =>
@@ -17,6 +19,7 @@ export default class PCBookmarkFormElement extends LitElement {
   static get properties() {
     return {
       isUnfurlLoading: { type: Boolean },
+      autoSubmitDelay: { type: Number }
     };
   }
 
@@ -26,9 +29,19 @@ export default class PCBookmarkFormElement extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    const { signal } = this.disconnectAbortSignal;
 
+    const { signal } = this.disconnectAbortSignal;
+    const commonEventOptions = { signal };
     const handleUnfurlRefresh = this.onUnfurlRefresh.bind(this);
+
+    this.submitButton = this.querySelector("button[type=submit]");
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("submit") === "auto") {
+      setTimeout(() => {
+        if (this.submitButton) this.submitButton.click();
+      }, this.autoSubmitDelay);
+    }
 
     this.refreshButton = this.querySelector(".unfurl-data button.refresh");
     if (this.refreshButton) {
@@ -39,9 +52,7 @@ export default class PCBookmarkFormElement extends LitElement {
           ev.preventDefault();
           handleUnfurlRefresh();
         },
-        {
-          signal,
-        }
+        commonEventOptions
       );
     }
 
@@ -50,7 +61,7 @@ export default class PCBookmarkFormElement extends LitElement {
       this.urlField.addEventListener(
         "change",
         delayFn(handleUnfurlRefresh, 100),
-        { signal }
+        commonEventOptions
       );
     }
 

@@ -174,11 +174,14 @@ export default class Server extends CliAppModule<IAppRequirements> {
 
   async setupSessions(server: FastifyInstance) {
     const { config } = this.app;
+
     server.register(FastifySecureSession, {
-      // TODO: get from config!
       key: Buffer.from(config.get("sessionKey"), "hex"),
       expiry: config.get("sessionMaxAge"),
-      cookie: { path: "/" },
+      cookie: {
+        path: "/",
+        sameSite: "strict",
+      },
     });
   }
 

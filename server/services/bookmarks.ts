@@ -304,6 +304,9 @@ export const NewBookmarkQuerystringSchema = {
     next: {
       type: "string",
     },
+    submit: {
+      type: "string",
+    }
   },
 } as const;
 

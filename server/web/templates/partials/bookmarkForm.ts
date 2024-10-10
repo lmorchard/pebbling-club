@@ -44,11 +44,15 @@ export default ({
         ${existingBookmark
           ? html`<span class="previously-saved"
               >Previously saved at
-              ${existingBookmark.created?.toISOString()}</span
+              <a href="/bookmarks/${existingBookmark.id}"
+                >${existingBookmark.created?.toISOString()}</a
+              ></span
             >`
           : ""}
         <details class="unfurl-data">
-          <summary><span>Unfurl</span> <button class="refresh">Refresh</button></summary>
+          <summary>
+            <span>Unfurl</span> <button class="refresh">Refresh</button>
+          </summary>
           <textarea rows="24" name="unfurl">${JSON.stringify(unfurlResult, null, "  ")}</textarea>
         </details>
         <section class="actions">
