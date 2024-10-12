@@ -19,7 +19,7 @@ export default ({ formData, unfurlResult, existingBookmark, validationError, ...
     ...locals,
     title: "New Bookmark",
     content: html`
-      <section>
+      <section class="bookmark-new">
         ${partialBookmarkForm({ csrfToken, formData, unfurlResult, existingBookmark, validationError })}
       </section>
     `,

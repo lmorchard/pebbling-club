@@ -12,7 +12,7 @@ export default ({ bookmark, profile, ...locals }: Props) => {
     ...locals,
     title: `${bookmark.title} - View Bookmark`,
     content: html`
-      <section>
+      <section class="bookmark-view">
         ${partialBookmark({ bookmark, profile })}
       </section>
     `,

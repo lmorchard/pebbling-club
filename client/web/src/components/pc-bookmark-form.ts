@@ -13,8 +13,12 @@ export default class PCBookmarkFormElement extends LitElement {
   autoSubmitDelay = 500;
   isUnfurlLoading = false;
 
-  refreshButtonTemplate = (props: this) =>
-    html`Refresh ${props.isUnfurlLoading ? html`(loading)` : null}`;
+  refreshButtonOriginalContent?: string;
+
+  refreshButtonTemplate = (props: this) => html`
+    ${props.refreshButtonOriginalContent}
+    ${props.isUnfurlLoading ? html`(loading)` : null}
+  `;
 
   static get properties() {
     return {
@@ -43,8 +47,10 @@ export default class PCBookmarkFormElement extends LitElement {
       }, this.autoSubmitDelay);
     }
 
-    this.refreshButton = this.querySelector(".unfurl-data button.refresh");
+    this.refreshButton = this.querySelector(".unfurl-data .refresh");
     if (this.refreshButton) {
+      this.refreshButtonOriginalContent =
+        this.refreshButton.textContent || "Refresh";
       this.refreshButton.innerHTML = "";
       this.refreshButton.addEventListener(
         "click",
