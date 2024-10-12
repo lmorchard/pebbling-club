@@ -180,7 +180,7 @@ export default class Server extends CliAppModule<IAppRequirements> {
       expiry: config.get("sessionMaxAge"),
       cookie: {
         path: "/",
-        sameSite: "strict",
+        sameSite: "lax",
       },
     });
   }
