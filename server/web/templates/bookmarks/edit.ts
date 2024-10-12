@@ -14,8 +14,8 @@ export default ({ formData, validationError, ...locals }: Props) => {
   return layout({
     ...locals,
     title: "Edit Bookmark",
-    content: html`'
-      <section>
+    content: html`
+      <section class="bookmark-edit">
         ${partialBookmarkForm({
           csrfToken,
           formData,

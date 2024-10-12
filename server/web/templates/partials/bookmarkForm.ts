@@ -51,12 +51,13 @@ export default ({
           : ""}
         <details class="unfurl-data">
           <summary>
-            <span>Unfurl</span> <button class="refresh">Refresh</button>
+            <span>Unfurl data</span>
           </summary>
+          <a href="#" class="refresh">Refresh unfurl data</a>
           <textarea rows="24" name="unfurl">${JSON.stringify(unfurlResult, null, "  ")}</textarea>
         </details>
         <section class="actions">
-          <button type="submit">${actionButtonTitle}</button>
+          <button default type="submit">${actionButtonTitle}</button>
         </section>
       </form>
     </pc-bookmark-form>

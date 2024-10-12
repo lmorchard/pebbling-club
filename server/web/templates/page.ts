@@ -7,7 +7,7 @@ export interface PageProps extends ITemplateProps {
 }
 
 export default ({ title, content }: { content: TemplateContent } & PageProps) => {
-  return html`
+  return html`<!DOCTYPE html>
     <html>
       <head>
         <title>${title && `${title} - `}Pebbling Club 🐧🪨</title>
