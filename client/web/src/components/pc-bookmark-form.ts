@@ -4,6 +4,7 @@ import "./pc-bookmark-form.css";
 
 export default class PCBookmarkFormElement extends LitElement {
   disconnectAbortSignal = new AbortController();
+  
   refreshButton?: HTMLElement | null;
   urlField?: HTMLInputElement | null;
   titleField?: HTMLInputElement | null;
@@ -100,10 +101,10 @@ export default class PCBookmarkFormElement extends LitElement {
             this.querySelector(".unfurl-data textarea");
           if (unfurlDataField) {
             const data = await resp.json();
-            if (this.titleField) {
+            if (this.titleField && !this.titleField.value) {
               this.titleField.value = data.title;
             }
-            if (this.descriptionField) {
+            if (this.descriptionField && !this.descriptionField.value) {
               this.descriptionField.value = data.description;
             }
             unfurlDataField.value = JSON.stringify(data, null, 2);
