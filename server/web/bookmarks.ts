@@ -207,7 +207,8 @@ export const BookmarksRouter: FastifyPluginAsync<
       return reply.renderTemplate(templateBookmarksEdit, {
         csrfToken: reply.generateCsrf(),
         formData,
-      });
+        existingBookmark: bookmark,
+        });
     }
   );
 

@@ -8,11 +8,17 @@ import { BookmarkWithPermissions } from "@/services/bookmarks";
 export interface Props extends LayoutProps {
   formData?: FormData;
   unfurlResult?: UnfurlResult;
-  existingBookmark?: BookmarkWithPermissions,
+  existingBookmark?: BookmarkWithPermissions;
   validationError?: FormValidationError;
 }
 
-export default ({ formData, unfurlResult, existingBookmark, validationError, ...locals }: Props) => {
+export default ({
+  formData,
+  unfurlResult,
+  existingBookmark,
+  validationError,
+  ...locals
+}: Props) => {
   const { csrfToken } = locals;
   const f = field({ formData, validationError });
   return layout({
@@ -20,7 +26,13 @@ export default ({ formData, unfurlResult, existingBookmark, validationError, ...
     title: "New Bookmark",
     content: html`
       <section class="bookmark-new">
-        ${partialBookmarkForm({ csrfToken, formData, unfurlResult, existingBookmark, validationError })}
+        ${partialBookmarkForm({
+          csrfToken,
+          formData,
+          unfurlResult,
+          existingBookmark,
+          validationError,
+        })}
       </section>
     `,
   });

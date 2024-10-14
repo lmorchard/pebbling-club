@@ -17,38 +17,24 @@
   .bookmarks.h-feed {
     row-gap: 2.5em;
   }
+  .bookmark.h-entry {
+    display: grid;
+    column-gap: var(--column-gap * 0.75);
+    row-gap: calc(var(--column-gap) * 0.5);    
+  }  
+  .bookmark.h-entry .meta {
+    column-gap: var(--column-gap * 0.75);
+    row-gap: calc(var(--column-gap) * 0.5);    
+  }
   .bookmark.h-entry > * {
-    grid-column: full;
+    grid-column: full;    
   }
   .bookmark.h-entry .bookmark-thumbnail {
     width: var(--bookmark-thumbnail-size);
     grid-column: full;
   }
-  .bookmark.h-entry .header {
-    grid-column: main;
-    grid-row: 1;
-  }
-  .bookmark.h-entry .p-name {
-    font-size: 1.125em;
-  }
-  .bookmark.h-entry .href {
-    grid-column: main;
-    grid-row: 2;
-    margin-top: 0.5em;
-  }
   .bookmark.h-entry .p-summary {
-    margin: 0.5em 0 0.5em 0;
+    margin: 0;
     padding: 0.25em 0 0.25em 1em;
-  }
-  .bookmark.h-entry .meta {
-    flex-wrap: wrap;
-    row-gap: 1em;
-  }
-  .bookmark.h-entry .tags {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    column-gap: 0.75em;
-    row-gap: 0.5em;
   }
 }

@@ -11,39 +11,39 @@ form label {
 }
 
 @media (min-width: 1024px) {
-  form label {
+  form > label {
     display: grid;
     column-gap: var(--column-gap);
     grid-template-columns:
       [label] 1fr
       [field] 11fr;
   }
-  form label span.label {
+  form > label span.label {
     grid-column: label;
   }
-  form label input, form label textarea {
+  form > label input, form label textarea {
     grid-column: field;
   }
 }
 
-form label span.error {
+form > label span.error {
   color: red;
 }
 
-form section {
+form > section {
   display: flex;
   flex-direction: column;
   row-gap: 0.25em;
 }
 
-form section.actions {
+form > section.actions {
   margin-top: 0.75em;
   display: flex;
   flex-direction: row;
   gap: 0.25em;
 }
 
-form section.actions button {
+form > section.actions button {
   padding: 0.5em;
   cursor: pointer;
 }
