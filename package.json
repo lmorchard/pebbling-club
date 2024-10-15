@@ -15,7 +15,7 @@
     "lint:client:web": "tsc --project client/web/tsconfig.json --noEmit",
     "test": "glob -c \"tsx --tsconfig ./server/tsconfig.json --no-warnings --test\" \"./server/**/*.test.ts\"",
     "test:watch": "glob -c \"tsx --tsconfig ./server/tsconfig.json --no-warnings --watch --test\" \"./server/**/*.test.ts\"",
-    "dev": "npm-run-all --parallel dev:serve test:watch build:watch",
+    "dev": "npm-run-all --parallel dev:serve build:watch",
     "dev:serve": "nodemon --watch server --ext 'js,ts' --exec 'tsx  --tsconfig ./server/tsconfig.json -- ./server/index.ts --force-pretty-logs serve'",
     "manage": "tsx --tsconfig ./server/tsconfig.json ./server/index.ts",
     "migrate": "npm run manage db migrate"
@@ -40,6 +40,7 @@
     "ajv-errors": "^3.0.0",
     "axios": "^1.7.7",
     "browserless": "^10.6.0",
+    "classnames": "^2.5.1",
     "commander": "^12.1.0",
     "common": "./common",
     "convict": "^6.2.4",
