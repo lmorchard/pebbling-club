@@ -1,0 +1,21 @@
+pc-bookmark-attachment {
+  display: contents;
+}
+
+.bookmark.h-entry pc-bookmark-attachment-set.hide {
+  display: none;
+}
+
+.bookmark.h-entry pc-bookmark-attachment-set.hide-tabs pc-bookmark-attachment details summary {
+  display: none;
+}
+
+.bookmark.h-entry pc-bookmark-attachment-set.vertical {
+  grid-column: 1 / -1;
+}
+
+.bookmark.h-entry pc-bookmark-attachment-set.vertical pc-bookmark-attachment details summary {
+  margin-left: 0.5em;
+  padding: 0.5em;
+  font-size: 0.9em;
+}

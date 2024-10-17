@@ -17,10 +17,19 @@ export interface IProfilesRouterOptions extends IBaseRouterOptions {}
 export const ProfilesRouter: FastifyPluginAsync<
   IProfilesRouterOptions
 > = async (fastify, options) => {
-  function parseLimitOffset(query: { limit?: string; offset?: string }) {
+  type BookmarkListOptions = {
+    limit?: string;
+    offset?: string;
+    show?: string;
+    open?: string;
+  };
+
+  function parseBookmarkListOptions(query: BookmarkListOptions) {
     const limit = parseInt((query.limit as string) || "50", 10);
     const offset = parseInt((query.offset as string) || "0", 10);
-    return { limit, offset };
+    const show = query.show ? query.show.split(",") : undefined;
+    const open = query.open ? query.open : undefined;
+    return { limit, offset, show, open };
   }
 
   fastify.decorateRequest("profile", null);
@@ -41,10 +50,10 @@ export const ProfilesRouter: FastifyPluginAsync<
 
   fastify.get<{
     Params: { username: string };
-    Querystring: { limit?: string; offset?: string };
+    Querystring: BookmarkListOptions;
   }>("/:username", async (request, reply) => {
     const { bookmarks } = options.server.app;
-    const { limit, offset } = parseLimitOffset(request.query);
+    const { limit, offset, show, open } = parseBookmarkListOptions(request.query);
     const viewerId = request.user?.id;
 
     const profile = request.profile as Profile;
@@ -56,6 +65,8 @@ export const ProfilesRouter: FastifyPluginAsync<
       profile,
       limit,
       offset,
+      showAttachments: show,
+      openAttachment: open,
       tagCounts: request.tagCounts!,
       total: bookmarksTotal,
       bookmarks: bookmarksItems,
@@ -64,11 +75,11 @@ export const ProfilesRouter: FastifyPluginAsync<
 
   fastify.get<{
     Params: { username: string; tags: string };
-    Querystring: { limit?: string; offset?: string };
+    Querystring: BookmarkListOptions;
   }>("/:username/t/:tags", async (request, reply) => {
     const { bookmarks } = options.server.app;
     const { tags } = request.params;
-    const { limit, offset } = parseLimitOffset(request.query);
+    const { limit, offset, show, open } = parseBookmarkListOptions(request.query);
     const viewerId = request.user?.id;
 
     const profile = request.profile as Profile;
@@ -87,6 +98,8 @@ export const ProfilesRouter: FastifyPluginAsync<
       profile,
       limit,
       offset,
+      showAttachments: show,
+      openAttachment: open,
       tagCounts: request.tagCounts!,
       total: bookmarksTotal,
       bookmarks: bookmarksItems,

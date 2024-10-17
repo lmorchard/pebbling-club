@@ -24,49 +24,61 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
     }
   });
 
-  const FeedsGetQuerystringSchema = {
+  const FeedsGetBatchQuerystringSchema = {
     type: "object",
     properties: {
-      url: { type: "string" },
+      url: {
+        type: "array",
+        items: { type: "string" },
+      },
     },
     required: ["url"],
   } as const;
-  
+
   server.get<{
-    Querystring: FromSchema<typeof FeedsGetQuerystringSchema>;
+    Querystring: FromSchema<typeof FeedsGetBatchQuerystringSchema>;
   }>(
     "/get",
     {
       schema: {
-        querystring: FeedsGetQuerystringSchema,
+        querystring: FeedsGetBatchQuerystringSchema,
       },
+      preHandler: async (request, reply) => {
+        // Expose this endpoint to unauth'd users
+        return;
+      }      
     },
     async (request, reply) => {
-      const { url } = request.query;
-      // TODO: accept options in query params
-      try {
-        const result = await feeds.get(url);
-        return reply.status(200).send(result);
-      } catch (err: any) {
-        if ("code" in err) {
-          if (err.code === "ENOTFOUND") {
-            return reply.status(404).send("feed not found");
+      const { url: urls } = request.query;
+
+      const results = await Promise.all(
+        urls.map(async (url) => {
+          try {
+            const fetched = await feeds.get(url, {
+              // options to ensure this is a pure read for GET
+              autodiscover: false,
+              update: false,
+            });
+            return { url, success: true, fetched };
+          } catch (err: any) {
+            return { url, success: false, err };
           }
-        }
-        return reply.status(500).send(err.message);
-      }
+        })
+      );
+
+      return reply.status(200).send(results);
     }
   );
 
-  const GetBatchSchema = {
+  const PostBatchSchema = {
     type: "object",
     properties: {
       urls: {
         type: "array",
         items: {
           type: "string",
-        }
-      }
+        },
+      },
     },
     required: ["urls"],
   } as const;
@@ -77,24 +89,26 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
     "/get",
     {
       schema: {
-        body: GetBatchSchema
-      }
+        body: PostBatchSchema,
+      },
     },
     async (request, reply) => {
       const { urls } = request.body;
 
-      const results = await Promise.all(urls.map(async (url) => {
-        try {
-          const fetched = await feeds.get(url);
-          return { url, success: true, fetched };
-        } catch (err: any) {
-          return { url, success: false, err };
-        }
-      }));
+      const results = await Promise.all(
+        urls.map(async (url) => {
+          try {
+            const fetched = await feeds.get(url, { update: true });
+            return { url, success: true, fetched };
+          } catch (err: any) {
+            return { url, success: false, err };
+          }
+        })
+      );
 
       return reply.status(200).send(results);
     }
-  )
+  );
 
   const FeedsDiscoverQuerystringSchema = {
     type: "object",
@@ -103,7 +117,7 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
     },
     required: ["url"],
   } as const;
-  
+
   server.get<{
     Querystring: FromSchema<typeof FeedsDiscoverQuerystringSchema>;
   }>(
@@ -125,7 +139,7 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
             return reply.status(404).send("feed not found");
           }
         }
-        reply.log.error({ msg: "discover failed", err});
+        reply.log.error({ msg: "discover failed", err });
         return reply.status(500).send({ msg: "discover failed", err });
       }
     }
@@ -138,8 +152,8 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
         type: "array",
         items: {
           type: "string",
-        }
-      }
+        },
+      },
     },
     required: ["urls"],
   } as const;
@@ -150,22 +164,24 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
     "/discover",
     {
       schema: {
-        body: DiscoverBatchSchema
-      }
+        body: DiscoverBatchSchema,
+      },
     },
     async (request, reply) => {
       const { urls } = request.body;
 
-      const results = await Promise.all(urls.map(async (url) => {
-        try {
-          const discovered = await feeds.autodiscover(url);
-          return { url, success: true, discovered };
-        } catch (err: any) {
-          return { url, success: false, err };
-        }
-      }));
+      const results = await Promise.all(
+        urls.map(async (url) => {
+          try {
+            const discovered = await feeds.autodiscover(url);
+            return { url, success: true, discovered };
+          } catch (err: any) {
+            return { url, success: false, err };
+          }
+        })
+      );
 
       return reply.status(200).send(results);
     }
-  )
+  );
 };

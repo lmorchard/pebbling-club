@@ -5,11 +5,10 @@ import BatchQueue from "../utils/batch-queue";
 import "./pc-feed.css";
 
 export default class PCFeedElement extends LitElement {
-  disconnectAbortSignal = new AbortController();
-
   url?: string;
   isLoading?: boolean;
   feed?: any;
+  disconnectAbortSignal?: AbortController;
 
   static get properties() {
     return {
@@ -25,14 +24,30 @@ export default class PCFeedElement extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+
     manager.register(this);
-    manager.updateFeed(this);
+    this.disconnectAbortSignal = new AbortController();
+    const { signal } = this.disconnectAbortSignal;
+
+    // React to bookmark attachment tab group visibility changes
+    this.closest("details")?.addEventListener(
+      "toggle",
+      (ev) => this.requestUpdate(),
+      { signal }
+    );
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.disconnectAbortSignal.abort();
+    this.disconnectAbortSignal!.abort();
     manager.unregister(this);
+  }
+
+  updated() {
+    if (typeof this.feed === "undefined" && this.checkVisibility()) {
+      // Update feed if we're visible and haven't yet
+      manager.updateFeed(this);
+    }
   }
 
   render() {
@@ -91,12 +106,14 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
   }
 
   async fetchFeedBatch(batch: FetchFeedQueueJob[]): Promise<void> {
-    const urls = batch.map(({ url }) => url);
+    const params = new URLSearchParams();
+    for (const { url } of batch) {
+      params.append("url", url);
+    }
 
-    const response = await fetch("/feeds/get", {
-      method: "POST",
+    const response = await fetch(`/feeds/get?${params.toString()}`, {
+      method: "GET",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ urls }),
     });
 
     if (response.status !== 200) {
