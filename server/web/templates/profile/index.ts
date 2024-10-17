@@ -21,7 +21,7 @@ export interface Props extends LayoutProps {
 export default ({
   profile,
   bookmarks,
-  showAttachments = ["notes", "feed", "embed", "unfurl"],
+  showAttachments = ["notes", "embed", "feed"],
   openAttachment,
   tagCounts,
   total,
