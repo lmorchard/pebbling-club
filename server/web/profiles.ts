@@ -56,6 +56,9 @@ export const ProfilesRouter: FastifyPluginAsync<
     const { limit, offset, show, open } = parseBookmarkListOptions(request.query);
     const viewerId = request.user?.id;
 
+    const { "cache-control": cacheControlHeader } = request.headers;
+    const forceRefresh = cacheControlHeader === "no-cache";
+
     const profile = request.profile as Profile;
 
     const { total: bookmarksTotal, items: bookmarksItems } =
