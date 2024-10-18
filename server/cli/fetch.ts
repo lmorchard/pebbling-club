@@ -18,14 +18,15 @@ export default class CliFetch extends CliAppModule<IAppRequirements> {
       .command("get <url>")
       .description("attempt to fetch a given URL")
       .action(async (url) => {
-        const { response, meta } = await fetch.fetchResource({ url });
-        const { status, statusText, headers } = response;
+        const response = await fetch.fetchResource({ url });
+        const { status, headers, cached, cachedAt, body } = response;
         this.log.info({
           msg: "get",
-          meta,
           status,
-          statusText,
-          headers: headers.raw(),
+          cached,
+          cachedAt,
+          headers,
+          body: await body?.text(),
         });
       });
 

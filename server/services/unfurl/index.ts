@@ -2,7 +2,6 @@ import { AppModule } from "../../app/modules";
 import createMetascraper from "metascraper";
 import { FetchService } from "../fetch";
 import PQueue from "p-queue";
-import axios from "axios";
 import {
   BookmarksService,
   BookmarkUpdatableWithHash,
@@ -127,7 +126,7 @@ export class UnfurlService extends AppModule<IAppRequirements> {
     url: string,
     options: FetchMetadataOptions = {}
   ): Promise<UnfurlResult> {
-    const { config, unfurlRepository } = this.app;
+    const { config, unfurlRepository, fetch } = this.app;
     const { metascraper } = this;
     const {
       forceFetch = false,
@@ -158,24 +157,24 @@ export class UnfurlService extends AppModule<IAppRequirements> {
     const result: UnfurlResult = { expires: now + maxage };
 
     try {
-      const response = await axios.get<string>(url, {
-        responseType: "text",
+      const response = await fetch.fetchResource({
+        url,
+        accept: "application/rss+xml, text/rss+xml, text/xml",
+        maxResponseSize: config.get("unfurlMaxContentLength"),
         timeout,
-        maxContentLength: config.get("unfurlMaxContentLength"),
-        headers: {
-          accept: "text/html",
-        },
+        forceFetch,
+        enableCache: forceFetch,
       });
 
       const { status, headers } = response;
-      const contentLength = headers["Content-Length"]?.toString();
+      const contentLength = headers?.["Content-Length"]?.toString();
       Object.assign(result, { status, contentLength });
 
-      if (response.status !== 200) {
+      const html = await response.body?.text();
+      if (response.status !== 200 || !html) {
         throw Error(`fetch status not 200 OK`);
       }
 
-      const html = response.data;
       result.bodyLength = html.length;
 
       // TODO: need more per-domain hacks here
