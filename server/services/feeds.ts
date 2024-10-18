@@ -290,9 +290,10 @@ export class FeedsService extends AppModule<IAppRequirements> {
 
       const { response } = await fetch.fetchResource({
         url,
-        lastHeaders,
+        lastHeaders: forceFetch ? {} : lastHeaders,
         timeout,
         forceFetch,
+        skipCache: forceFetch,
       });
       if (!response) {
         throw new FeedPollError("no response", null, feedUpdates, []);
