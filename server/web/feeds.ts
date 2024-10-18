@@ -1,6 +1,6 @@
 import { IBaseRouterOptions } from "./types";
 import Boom from "@hapi/boom";
-import { FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { FeedsService } from "../services/feeds";
 import { FromSchema } from "json-schema-to-ts";
 
@@ -18,11 +18,14 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
     services: { feeds },
   } = options;
 
-  server.addHook("preHandler", async (request, reply) => {
+  const requireAuth = async (
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) => {
     if (!request.isAuthenticated()) {
       throw Boom.forbidden("feed access requires authentication");
     }
-  });
+  };
 
   const FeedsGetBatchQuerystringSchema = {
     type: "object",
@@ -46,7 +49,7 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
       preHandler: async (request, reply) => {
         // Expose this endpoint to unauth'd users
         return;
-      }      
+      },
     },
     async (request, reply) => {
       const { url: urls } = request.query;
@@ -79,26 +82,30 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
           type: "string",
         },
       },
+      forceFetch: {
+        type: "boolean",
+      },
     },
     required: ["urls"],
   } as const;
 
   server.post<{
-    Body: FromSchema<typeof DiscoverBatchSchema>;
+    Body: FromSchema<typeof PostBatchSchema>;
   }>(
     "/get",
     {
       schema: {
         body: PostBatchSchema,
       },
+      preHandler: requireAuth,
     },
     async (request, reply) => {
-      const { urls } = request.body;
+      const { urls, forceFetch = false } = request.body;
 
       const results = await Promise.all(
         urls.map(async (url) => {
           try {
-            const fetched = await feeds.get(url, { update: true });
+            const fetched = await feeds.get(url, { update: true, forceFetch });
             return { url, success: true, fetched };
           } catch (err: any) {
             return { url, success: false, err };
@@ -166,6 +173,7 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
       schema: {
         body: DiscoverBatchSchema,
       },
+      preHandler: requireAuth,
     },
     async (request, reply) => {
       const { urls } = request.body;

@@ -53,6 +53,8 @@ export const ProfilesRouter: FastifyPluginAsync<
     Querystring: BookmarkListOptions;
   }>("/:username", async (request, reply) => {
     const { bookmarks } = options.server.app;
+    const { "cache-control": cacheControlHeader } = request.headers;
+    const forceRefresh = cacheControlHeader === "no-cache";
     const { limit, offset, show, open } = parseBookmarkListOptions(request.query);
     const viewerId = request.user?.id;
 
@@ -63,6 +65,7 @@ export const ProfilesRouter: FastifyPluginAsync<
 
     return reply.renderTemplate(templateProfileIndex, {
       profile,
+      forceRefresh,
       limit,
       offset,
       showAttachments: show,
@@ -78,6 +81,8 @@ export const ProfilesRouter: FastifyPluginAsync<
     Querystring: BookmarkListOptions;
   }>("/:username/t/:tags", async (request, reply) => {
     const { bookmarks } = options.server.app;
+    const { "cache-control": cacheControlHeader } = request.headers;
+    const forceRefresh = cacheControlHeader === "no-cache";
     const { tags } = request.params;
     const { limit, offset, show, open } = parseBookmarkListOptions(request.query);
     const viewerId = request.user?.id;
@@ -96,6 +101,7 @@ export const ProfilesRouter: FastifyPluginAsync<
     // TODO: use a different template? allow per-user annotation / description of tag
     return reply.renderTemplate(templateProfileIndex, {
       profile,
+      forceRefresh,
       limit,
       offset,
       showAttachments: show,

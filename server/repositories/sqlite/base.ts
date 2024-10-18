@@ -3,12 +3,14 @@ import { constants as fsConstants } from "fs";
 import path from "path";
 import Knex from "knex";
 import { mkdirp } from "mkdirp";
-import { v4 as uuid } from "uuid";
 import sqlite3 from "sqlite3";
+import PQueue from "p-queue";
 import { AppModule } from "../../app/modules";
 
 export default class BaseSqliteKnexRepository extends AppModule {
   _connection?: Knex.Knex<any, unknown[]>;
+
+  queue = new PQueue({ concurrency: 1 });
 
   async init() {
     await this.maybeInitializeDatabase();
@@ -17,7 +19,11 @@ export default class BaseSqliteKnexRepository extends AppModule {
   async deinit() {
     if (this._connection) this._connection.destroy();
   }
-  
+
+  async enqueue<T>(fn: () => PromiseLike<T>): Promise<T> {
+    return this.queue.add(fn, { throwOnTimeout: true });
+  }
+
   async maybeInitializeDatabase() {
     const { log } = this;
     const { config } = this.app;
@@ -70,7 +76,7 @@ export default class BaseSqliteKnexRepository extends AppModule {
       ) => {
         this.connectionAfterCreate(conn)
           .then(() => done(null))
-          .catch(done)
+          .catch(done);
       },
     };
 

@@ -35,14 +35,26 @@ export default ({
     content: html`
       <section class="profile">
         <section class="bookmarks">
-          ${partialPaginator({ total, limit, offset, showAttachments, openAttachment })}
+          ${partialPaginator({
+            total,
+            limit,
+            offset,
+            showAttachments,
+            openAttachment,
+          })}
           ${partialBookmarkList({
             bookmarks,
             profile,
             showAttachments,
             openAttachment,
           })}
-          ${partialPaginator({ total, limit, offset, showAttachments, openAttachment })}
+          ${partialPaginator({
+            total,
+            limit,
+            offset,
+            showAttachments,
+            openAttachment,
+          })}
         </section>
         <section class="tagCounts">
           <ul>

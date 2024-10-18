@@ -1,23 +1,48 @@
+import _ from "lodash";
 import { Profile } from "../../services/profiles";
-import { html, TemplateContent } from "../utils/html";
+import { html, unescaped, TemplateContent } from "../utils/html";
 import { ITemplateProps } from "../utils/templates";
 import Page, { PageProps } from "./page";
 
 export interface LayoutProps extends ITemplateProps {
   user?: Profile;
+  forceRefresh?: boolean;
   siteUrl?: string;
 }
 
 export const layout = ({
   content,
   user,
+  forceRefresh,
   siteUrl,
+  htmlHead: htmlHeadIn,
   ...pageProps
 }: { content: TemplateContent } & LayoutProps & PageProps) => {
   const newUrl = new URL("/new", siteUrl!).toString();
 
   return Page({
     ...pageProps,
+    htmlHead: html`
+      ${htmlHeadIn}
+      ${
+        user &&
+        html`
+        <script type="application/json" id="user">${_.pick(user, [
+          "username",
+          "bio",
+          "avatar",
+        ])}</script>
+      `
+      }
+      ${
+        forceRefresh &&
+        html`
+        <script type="application/json" id="forceRefresh">${{
+          forceRefresh: true,
+        }}</script>
+      `
+      }
+    `,
     content: html`
       <header class="site">
         <section class="masthead">
@@ -34,8 +59,9 @@ export const layout = ({
               <span class="slider"></span>
             </label>
           </theme-selector>
-          ${user
-            ? html`
+          ${
+            user
+              ? html`
                 <a class="newBookmark" href="/new">+ New</a>
                 <details class="autoclose">
                   <summary>
@@ -55,7 +81,7 @@ export const layout = ({
                   </div>
                 </details>
               `
-            : html`
+              : html`
                 <details class="autoclose">
                   <summary>Welcome!</summary>
                   <div>
@@ -63,7 +89,8 @@ export const layout = ({
                     <a href="/login">Login</a>
                   </div>
                 </details>
-              `}
+              `
+          }
         </nav>
       </header>
 

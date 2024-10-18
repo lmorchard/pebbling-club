@@ -19,7 +19,7 @@ const htmlValue = (
   } else if (Array.isArray(value)) {
     return value.map(htmlValue).join("");
   } else if (typeof value === "object") {
-    return htmlValue(JSON.stringify(value, null, "  "));
+    return JSON.stringify(value, null, "  ");
   }
   return escapeHtml(value);
 };
