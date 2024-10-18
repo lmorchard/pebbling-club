@@ -48,7 +48,7 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
       preHandler: async (request, reply) => {
         // Expose this endpoint to unauth'd users
         return;
-      }      
+      },
     },
     async (request, reply) => {
       const { url: urls } = request.query;
@@ -81,12 +81,15 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
           type: "string",
         },
       },
+      forceFetch: {
+        type: "boolean",
+      },
     },
     required: ["urls"],
   } as const;
 
   server.post<{
-    Body: FromSchema<typeof DiscoverBatchSchema>;
+    Body: FromSchema<typeof PostBatchSchema>;
   }>(
     "/get",
     {
@@ -95,12 +98,12 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
       },
     },
     async (request, reply) => {
-      const { urls } = request.body;
+      const { urls, forceFetch = false } = request.body;
 
       const results = await Promise.all(
         urls.map(async (url) => {
           try {
-            const fetched = await feeds.get(url, { update: true, forceFetch: true });
+            const fetched = await feeds.get(url, { update: true, forceFetch });
             return { url, success: true, fetched };
           } catch (err: any) {
             return { url, success: false, err };
