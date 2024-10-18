@@ -93,6 +93,8 @@ export default class PCFeedElement extends LitElement {
 }
 
 export class PCFeedElementManager extends ElementManager<PCFeedElement> {
+  usePost: boolean | undefined;
+
   idPrefix = "pc-feed";
 
   fetchFeedQueue = new BatchQueue<FetchFeedQueueJob>({
@@ -100,21 +102,35 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
     onBatch: this.fetchFeedBatch.bind(this),
   });
 
+  constructor({ usePost = false }: { usePost?: boolean }) {
+    super();
+    this.usePost = usePost;
+  }
+
   async updateFeed(element: PCFeedElement) {
     element.isLoading = true;
     this.fetchFeedQueue.push({ element, url: element.url! });
   }
 
   async fetchFeedBatch(batch: FetchFeedQueueJob[]): Promise<void> {
-    const params = new URLSearchParams();
-    for (const { url } of batch) {
-      params.append("url", url);
-    }
+    let response: Response;
 
-    const response = await fetch(`/feeds/get?${params.toString()}`, {
-      method: "GET",
-      headers: { "content-type": "application/json" },
-    });
+    if (this.usePost) {
+      response = await fetch(`/feeds/get`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ urls: batch.map((job) => job.url) }),
+      });
+    } else {
+      const params = new URLSearchParams();
+      for (const { url } of batch) {
+        params.append("url", url);
+      }
+      response = await fetch(`/feeds/get?${params.toString()}`, {
+        method: "GET",
+        headers: { "content-type": "application/json" },
+      });
+    }
 
     if (response.status !== 200) {
       throw Error(`feed fetch failed ${response.status}`);
@@ -139,6 +155,6 @@ interface FetchFeedQueueJob {
   url: string;
 }
 
-export const manager = new PCFeedElementManager();
+export const manager = new PCFeedElementManager({ usePost: true });
 
 customElements.define("pc-feed", PCFeedElement);

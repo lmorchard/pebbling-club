@@ -18,11 +18,13 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
     services: { feeds },
   } = options;
 
+  /*
   server.addHook("preHandler", async (request, reply) => {
     if (!request.isAuthenticated()) {
       throw Boom.forbidden("feed access requires authentication");
     }
   });
+  */
 
   const FeedsGetBatchQuerystringSchema = {
     type: "object",
@@ -98,7 +100,7 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
       const results = await Promise.all(
         urls.map(async (url) => {
           try {
-            const fetched = await feeds.get(url, { update: true });
+            const fetched = await feeds.get(url, { update: true, forceFetch: true });
             return { url, success: true, fetched };
           } catch (err: any) {
             return { url, success: false, err };
