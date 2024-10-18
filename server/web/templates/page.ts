@@ -3,10 +3,15 @@ import { html, TemplateContent } from "../utils/html";
 import { ITemplateProps } from "../utils/templates";
 
 export interface PageProps extends ITemplateProps {
-  title?: string
+  title?: string;
+  htmlHead?: TemplateContent;
 }
 
-export default ({ title, content }: { content: TemplateContent } & PageProps) => {
+export default ({
+  title,
+  htmlHead,
+  content,
+}: { content: TemplateContent } & PageProps) => {
   return html`<!DOCTYPE html>
     <html>
       <head>
@@ -18,6 +23,7 @@ export default ({ title, content }: { content: TemplateContent } & PageProps) =>
         />
         <link rel="stylesheet" href="/index.css" />
         <script type="module" src="/index.js"></script>
+        ${htmlHead}
       </head>
       <body>
         <details-closer>

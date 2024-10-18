@@ -47,11 +47,13 @@ export default class SqliteFeedsRepository
       for (let idx = 0; idx < discoveries.length; idx++) {
         const { href: feedUrl, type, rel, title } = discoveries[idx];
         const toUpsert = { url, feedUrl, type, rel, title, priority: idx };
-        const result = await trx("FeedDiscoveries")
-          .insert(toUpsert)
-          .onConflict(["url", "feedUrl"])
-          .merge()
-          .returning("id");
+        const result = await this.enqueue(() =>
+          trx("FeedDiscoveries")
+            .insert(toUpsert)
+            .onConflict(["url", "feedUrl"])
+            .merge()
+            .returning("id")
+        );
         results.push(result[0].id);
       }
     });
@@ -78,11 +80,13 @@ export default class SqliteFeedsRepository
       url,
       metadata: this._serializeMetadataColumn(metadata),
     };
-    const result = await this.connection("Feeds")
-      .insert(toUpsert)
-      .onConflict("url")
-      .merge(toUpsert)
-      .returning("id");
+    const result = await this.enqueue(() =>
+      this.connection("Feeds")
+        .insert(toUpsert)
+        .onConflict("url")
+        .merge(toUpsert)
+        .returning("id")
+    );
     return result[0].id;
   }
 
@@ -108,30 +112,33 @@ export default class SqliteFeedsRepository
     const now = Date.now();
     const feedId = feed.id;
     const results: string[] = [];
-    await this.connection.transaction(async (trx) => {
-      for (const item of items) {
-        const { guid, link, title, description, summary } = item;
-        const toUpdate = {
-          link,
-          title,
-          description,
-          summary,
-          lastSeenAt: now,
-        };
-        const toInsert = {
-          ...toUpdate,
-          feedId,
-          guid,
-          firstSeenAt: now,
-        };
-        const result = await trx("FeedItems")
-          .insert(toInsert)
-          .onConflict("guid")
-          .merge(toUpdate)
-          .returning("id");
-        results.push(result[0].id);
-      }
-    });
+    await this.enqueue(() =>
+      this.connection.transaction(async (trx) => {
+        for (const item of items) {
+          const { guid, link, title, description, summary, date } = item;
+          const toUpdate = {
+            link,
+            title,
+            description,
+            summary,
+            date: date?.toISOString(),
+            lastSeenAt: now,
+          };
+          const toInsert = {
+            ...toUpdate,
+            feedId,
+            guid,
+            firstSeenAt: now,
+          };
+          const result = await trx("FeedItems")
+            .insert(toInsert)
+            .onConflict("guid")
+            .merge(toUpdate)
+            .returning("id");
+          results.push(result[0].id);
+        }
+      })
+    );
     return results;
   }
 
@@ -146,7 +153,7 @@ export default class SqliteFeedsRepository
       .offset(offset);
     return {
       total: result.length,
-      items: result,
+      items: this._rowsToFeedItems(result),
     };
   }
 
@@ -158,6 +165,13 @@ export default class SqliteFeedsRepository
     const feed = await this.fetchFeedByUrl(url);
     if (!feed) return { total: 0, items: [] };
     return this.fetchItemsForFeed(feed.id, limit, offset);
+  }
+
+  _rowsToFeedItems(rows: any[]) {
+    return rows.map((row) => ({
+      ...row,
+      date: row.date ? new Date(row.date) : null,
+    }));
   }
 
   _serializeMetadataColumn(meta = {}) {

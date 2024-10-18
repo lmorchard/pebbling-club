@@ -8,6 +8,7 @@ export default class PCFeedElement extends LitElement {
   url?: string;
   isLoading?: boolean;
   feed?: any;
+  error?: any;
   disconnectAbortSignal?: AbortController;
 
   static get properties() {
@@ -44,7 +45,11 @@ export default class PCFeedElement extends LitElement {
   }
 
   updated() {
-    if (typeof this.feed === "undefined" && this.checkVisibility()) {
+    if (
+      typeof this.feed === "undefined" &&
+      typeof this.error === "undefined" &&
+      this.checkVisibility()
+    ) {
       // Update feed if we're visible and haven't yet
       manager.updateFeed(this);
     }
@@ -60,6 +65,10 @@ export default class PCFeedElement extends LitElement {
 
     if (this.isLoading) {
       return html`(loading)`;
+    }
+
+    if (this.error) {
+      return html`${JSON.stringify(this.error)}`;
     }
 
     const items = this.feed?.items?.items;
@@ -79,7 +88,7 @@ export default class PCFeedElement extends LitElement {
 
     return html`
       <ul class="items">
-        ${sortedItems.slice(0, 15).map(
+        ${sortedItems.slice(0, 25).map(
           (item: any) => html`
             <li class="item">
               <time dt="${item.date.toISOString()}">${item.date.toLocaleString()}</time>
@@ -93,6 +102,9 @@ export default class PCFeedElement extends LitElement {
 }
 
 export class PCFeedElementManager extends ElementManager<PCFeedElement> {
+  usePost: boolean;
+  forceRefresh: boolean;
+
   idPrefix = "pc-feed";
 
   fetchFeedQueue = new BatchQueue<FetchFeedQueueJob>({
@@ -100,21 +112,46 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
     onBatch: this.fetchFeedBatch.bind(this),
   });
 
+  constructor({
+    usePost = false,
+    forceRefresh = false,
+  }: {
+    usePost?: boolean;
+    forceRefresh?: boolean;
+  }) {
+    super();
+    this.usePost = usePost;
+    this.forceRefresh = forceRefresh;
+  }
+
   async updateFeed(element: PCFeedElement) {
     element.isLoading = true;
     this.fetchFeedQueue.push({ element, url: element.url! });
   }
 
   async fetchFeedBatch(batch: FetchFeedQueueJob[]): Promise<void> {
-    const params = new URLSearchParams();
-    for (const { url } of batch) {
-      params.append("url", url);
-    }
+    const { forceRefresh } = this;
+    let response: Response;
 
-    const response = await fetch(`/feeds/get?${params.toString()}`, {
-      method: "GET",
-      headers: { "content-type": "application/json" },
-    });
+    if (this.usePost) {
+      response = await fetch(`/feeds/get`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          forceFetch: forceRefresh,
+          urls: batch.map((job) => job.url),
+        }),
+      });
+    } else {
+      const params = new URLSearchParams();
+      for (const { url } of batch) {
+        params.append("url", url);
+      }
+      response = await fetch(`/feeds/get?${params.toString()}`, {
+        method: "GET",
+        headers: { "content-type": "application/json" },
+      });
+    }
 
     if (response.status !== 200) {
       throw Error(`feed fetch failed ${response.status}`);
@@ -127,6 +164,8 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
           element.isLoading = false;
           if (result.success) {
             element.feed = result.fetched;
+          } else {
+            element.error = result.err;
           }
         }
       }
@@ -139,6 +178,13 @@ interface FetchFeedQueueJob {
   url: string;
 }
 
-export const manager = new PCFeedElementManager();
+// HACK: accessing this header data should probably be in a central context
+const userJson = document.head.querySelector("script#user");
+const forceRefreshJson = document.head.querySelector("script#forceRefresh");
+export const manager = new PCFeedElementManager({
+  // Use POST feed fetch only for logged in user
+  usePost: !!userJson,
+  forceRefresh: !!forceRefreshJson,
+});
 
 customElements.define("pc-feed", PCFeedElement);

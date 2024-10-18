@@ -42,6 +42,7 @@ export class FeedsService extends AppModule<IAppRequirements> {
     options: FeedPollOptions & {
       autodiscover?: boolean;
       update?: boolean;
+      forceFetch?: boolean;
       limit?: number;
       offset?: number;
     } = {}
