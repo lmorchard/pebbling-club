@@ -4,6 +4,11 @@ import { IBaseRouterOptions } from "./types";
 import { FastifyPluginAsync } from "fastify";
 import { Profile } from "../services/profiles";
 import { TagCount } from "../services/bookmarks";
+import {
+  BookmarkListOptions,
+  parseBookmarkListOptions,
+  parseRefreshHeaders,
+} from "./utils/routes";
 
 declare module "fastify" {
   export interface FastifyRequest {
@@ -17,21 +22,6 @@ export interface IProfilesRouterOptions extends IBaseRouterOptions {}
 export const ProfilesRouter: FastifyPluginAsync<
   IProfilesRouterOptions
 > = async (fastify, options) => {
-  type BookmarkListOptions = {
-    limit?: string;
-    offset?: string;
-    show?: string;
-    open?: string;
-  };
-
-  function parseBookmarkListOptions(query: BookmarkListOptions) {
-    const limit = parseInt((query.limit as string) || "50", 10);
-    const offset = parseInt((query.offset as string) || "0", 10);
-    const show = query.show ? query.show.split(",") : undefined;
-    const open = query.open ? query.open : undefined;
-    return { limit, offset, show, open };
-  }
-
   fastify.decorateRequest("profile", null);
 
   fastify.addHook<{
@@ -53,9 +43,10 @@ export const ProfilesRouter: FastifyPluginAsync<
     Querystring: BookmarkListOptions;
   }>("/:username", async (request, reply) => {
     const { bookmarks } = options.server.app;
-    const { "cache-control": cacheControlHeader } = request.headers;
-    const forceRefresh = cacheControlHeader === "no-cache";
-    const { limit, offset, show, open } = parseBookmarkListOptions(request.query);
+    const { forceRefresh } = parseRefreshHeaders(request);
+    const { limit, offset, show, open } = parseBookmarkListOptions(
+      request.query
+    );
     const viewerId = request.user?.id;
 
     const profile = request.profile as Profile;
@@ -81,12 +72,13 @@ export const ProfilesRouter: FastifyPluginAsync<
     Querystring: BookmarkListOptions;
   }>("/:username/t/:tags", async (request, reply) => {
     const { bookmarks } = options.server.app;
-    const { "cache-control": cacheControlHeader } = request.headers;
-    const forceRefresh = cacheControlHeader === "no-cache";
+    const { forceRefresh } = parseRefreshHeaders(request);
+    const { limit, offset, show, open } = parseBookmarkListOptions(
+      request.query
+    );
     const { tags } = request.params;
-    const { limit, offset, show, open } = parseBookmarkListOptions(request.query);
-    const viewerId = request.user?.id;
 
+    const viewerId = request.user?.id;
     const profile = request.profile as Profile;
 
     const { total: bookmarksTotal, items: bookmarksItems } =
