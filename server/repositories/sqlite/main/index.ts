@@ -71,7 +71,7 @@ export type TagItem = {
 };
 
 type IAppRequirements = {
-  feedsRepository: FeedsRepository;
+  feedsRepository?: FeedsRepository;
 };
 
 export class SqliteRepository
@@ -567,22 +567,17 @@ export class SqliteRepository
 
   _constrainBookmarksQueryByTag(query: Knex.Knex.QueryBuilder, tags: string[]) {
     for (const name of tags) {
-      query.whereIn("id", function () {
+      query.whereIn("bookmarks.id", function () {
         this.select("bookmarksId").from("tags").where({ name });
       });
     }
   }
 
-  feedsDatabaseAttached = false;
-
   async _attachFeedsDatabase() {
-    if (this.feedsDatabaseAttached) return;
-    this.feedsDatabaseAttached = true;
-
     const { log } = this;
     const { feedsRepository } = this.app;
     // HACK: Knex doesn't export Sqlite3ConnectionConfig type?
-    const { filename } = feedsRepository.knexConnectionOptions() as {
+    const { filename } = feedsRepository!.knexConnectionOptions() as {
       filename: string;
     };
     await this.connection.raw(`ATTACH DATABASE ? AS Feeds`, filename);
@@ -590,7 +585,7 @@ export class SqliteRepository
   }
 
   async _orderBookmarksQuery(query: Knex.Knex.QueryBuilder, order?: string) {
-    if (order === "feed") {
+    if (order === "feed" && this.app.feedsRepository) {
       await this._attachFeedsDatabase();
       query
         .joinRaw(
