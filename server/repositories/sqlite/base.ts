@@ -7,7 +7,9 @@ import sqlite3 from "sqlite3";
 import PQueue from "p-queue";
 import { AppModule } from "../../app/modules";
 
-export default class BaseSqliteKnexRepository extends AppModule {
+export default class BaseSqliteKnexRepository<
+  IAppRequirements = {}
+> extends AppModule<IAppRequirements> {
   _connection?: Knex.Knex<any, unknown[]>;
 
   queue = new PQueue({ concurrency: 1 });

@@ -316,15 +316,20 @@ export class FeedsService extends AppModule<IAppRequirements> {
       } else {
         let { stream, charset } = normalizeFeedCharset(response, feed);
         const { meta, items } = await parseFeedStream(stream, url);
+        let newestItemDate: Date | undefined = feedUpdates.newestItemDate;
 
         for (let rawItem of items.slice(0, config.get("feedPollMaxItems"))) {
           const { link, title, description, summary } = rawItem;
+          
+          const date = itemDate(rawItem);
+          if (!newestItemDate || date > newestItemDate) newestItemDate = date;
+
           const item: FeedItem = {
             link,
             title,
             summary,
             description: description || summary,
-            date: itemDate(rawItem),
+            date,
             guid: itemGuid(rawItem),
             metadata: {
               itemMeta: rawItem,
@@ -336,6 +341,7 @@ export class FeedsService extends AppModule<IAppRequirements> {
         Object.assign(feedUpdates, {
           title: meta.title,
           link: meta.link,
+          newestItemDate,
         });
 
         Object.assign(feedUpdates.metadata!, {
@@ -547,6 +553,7 @@ export type Feed = {
   disabled?: boolean;
   title?: string;
   link?: string;
+  newestItemDate?: Date;
   metadata?: {
     lastFetched?: number;
     lastParsed?: number;

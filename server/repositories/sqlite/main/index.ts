@@ -14,6 +14,7 @@ import {
   IProfilesRepository,
 } from "../../../services/profiles";
 import { IPasswordsRepository } from "../../../services/passwords";
+import FeedsRepository from "../feeds";
 import BaseSqliteKnexRepository from "../base";
 import path from "path";
 
@@ -69,8 +70,12 @@ export type TagItem = {
   name: string;
 };
 
+type IAppRequirements = {
+  feedsRepository: FeedsRepository;
+};
+
 export class SqliteRepository
-  extends BaseSqliteKnexRepository
+  extends BaseSqliteKnexRepository<IAppRequirements>
   implements
     IBookmarksRepository,
     IPasswordsRepository,
@@ -423,9 +428,11 @@ export class SqliteRepository
   async listBookmarksForOwner(
     ownerId: string,
     limit: number,
-    offset: number
+    offset: number,
+    order?: string
   ): Promise<{ total: number; items: Bookmark[] }> {
     const query = this.connection("bookmarks").where({ ownerId });
+    await this._orderBookmarksQuery(query, order);
     return this._paginateBookmarksQuery(query, limit, offset);
   }
 
@@ -433,20 +440,24 @@ export class SqliteRepository
     ownerId: string,
     tags: string[],
     limit: number,
-    offset: number
+    offset: number,
+    order?: string
   ): Promise<{ total: number; items: Bookmark[] }> {
     const query = this.connection("bookmarks").where({ ownerId });
     this._constrainBookmarksQueryByTag(query, tags);
+    await this._orderBookmarksQuery(query, order);
     return this._paginateBookmarksQuery(query, limit, offset);
   }
 
   async listBookmarksByTags(
     tags: string[],
     limit: number,
-    offset: number
+    offset: number,
+    order?: string
   ): Promise<{ total: number; items: Bookmark[] }> {
     const query = this.connection("bookmarks");
     this._constrainBookmarksQueryByTag(query, tags);
+    await this._orderBookmarksQuery(query, order);
     return this._paginateBookmarksQuery(query, limit, offset);
   }
 
@@ -559,6 +570,36 @@ export class SqliteRepository
       query.whereIn("id", function () {
         this.select("bookmarksId").from("tags").where({ name });
       });
+    }
+  }
+
+  feedsDatabaseAttached = false;
+
+  async _attachFeedsDatabase() {
+    if (this.feedsDatabaseAttached) return;
+    this.feedsDatabaseAttached = true;
+
+    const { log } = this;
+    const { feedsRepository } = this.app;
+    // HACK: Knex doesn't export Sqlite3ConnectionConfig type?
+    const { filename } = feedsRepository.knexConnectionOptions() as {
+      filename: string;
+    };
+    await this.connection.raw(`ATTACH DATABASE ? AS Feeds`, filename);
+    log.trace({ msg: "attached feeds database" });
+  }
+
+  async _orderBookmarksQuery(query: Knex.Knex.QueryBuilder, order?: string) {
+    if (order === "feed") {
+      await this._attachFeedsDatabase();
+      query
+        .joinRaw(
+          `
+            LEFT JOIN Feeds.Feeds
+            ON Feeds.Feeds.url = json_extract(meta, "$.unfurl.feed")
+          `
+        )
+        .orderBy("feeds.Feeds.newestItemDate", "desc");
     }
   }
 }

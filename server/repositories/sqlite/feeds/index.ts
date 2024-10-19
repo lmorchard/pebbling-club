@@ -74,10 +74,11 @@ export default class SqliteFeedsRepository
   }
 
   async upsertFeed(feed: Feed): Promise<string> {
-    const { title, url, metadata } = feed;
+    const { title, url, newestItemDate, metadata } = feed;
     const toUpsert = {
       title,
       url,
+      newestItemDate: newestItemDate && newestItemDate.toISOString(),
       metadata: this._serializeMetadataColumn(metadata),
     };
     const result = await this.enqueue(() =>
@@ -95,6 +96,7 @@ export default class SqliteFeedsRepository
     if (!result) return null;
     return {
       ...result,
+      newestItemDate: result.newestItemDate && new Date(result.newestItemDate),
       metadata: this._deserializeMetadataColumn(result.metadata),
     };
   }
@@ -104,6 +106,7 @@ export default class SqliteFeedsRepository
     if (!result) return null;
     return {
       ...result,
+      newestItemDate: result.newestItemDate && new Date(result.newestItemDate),
       metadata: this._deserializeMetadataColumn(result.metadata),
     };
   }

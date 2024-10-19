@@ -5,6 +5,7 @@ export type BookmarkListOptions = {
   offset?: string;
   show?: string;
   open?: string;
+  order?: string;
 };
 
 export function parseBookmarkListOptions(query: BookmarkListOptions) {
@@ -12,7 +13,8 @@ export function parseBookmarkListOptions(query: BookmarkListOptions) {
   const offset = parseInt((query.offset as string) || "0", 10);
   const show = query.show ? query.show.split(",") : undefined;
   const open = query.open ? query.open : undefined;
-  return { limit, offset, show, open };
+  const order = query.order ? query.order : undefined;
+  return { limit, offset, show, open, order };
 }
 
 export function parseRefreshHeaders(request: FastifyRequest) {
