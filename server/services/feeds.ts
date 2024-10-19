@@ -1,10 +1,8 @@
 import crypto from "crypto";
 import iconv from "iconv-lite";
-import { Response } from "node-fetch";
 import FeedParser, { Meta, Item } from "feedparser";
 import { WritableStream as HTMLWritableStream } from "htmlparser2/lib/WritableStream";
-import { IApp } from "../app/types";
-import { FetchService } from "./fetch";
+import { FetchResponse, FetchService } from "./fetch";
 import { AppModule } from "../app/modules";
 
 export const configSchema = {
@@ -107,7 +105,7 @@ export class FeedsService extends AppModule<IAppRequirements> {
     }
 
     const controller = new AbortController();
-    const { response } = await fetch.fetchResource({ url, controller });
+    const response = await fetch.fetchResource({ url, controller });
     if (!response || response.status !== 200) {
       throw new FeedAutodiscoverError(
         "failed to fetch resource",
@@ -116,8 +114,8 @@ export class FeedsService extends AppModule<IAppRequirements> {
       );
     }
 
-    const contentTypeHeader = response.headers.get("content-type");
-    if (contentTypeHeader) {
+    const contentTypeHeader = response.headers?.["content-type"];
+    if (typeof contentTypeHeader === "string") {
       const parts = contentTypeHeader.split(";");
       if (parts.length) {
         const contentType = parts[0];
@@ -288,12 +286,13 @@ export class FeedsService extends AppModule<IAppRequirements> {
         return;
       }
 
-      const { response } = await fetch.fetchResource({
+      const response = await fetch.fetchResource({
         url,
+        accept: "application/rss+xml, text/rss+xml, text/xml",
         lastHeaders: forceFetch ? {} : lastHeaders,
         timeout,
         forceFetch,
-        skipCache: forceFetch,
+        enableCache: forceFetch,
       });
       if (!response) {
         throw new FeedPollError("no response", null, feedUpdates, []);
@@ -302,14 +301,12 @@ export class FeedsService extends AppModule<IAppRequirements> {
       Object.assign(feedUpdates.metadata!, {
         lastFetched: Date.now(),
         lastStatus: response.status,
-        lastStatusText: response.statusText,
-        lastHeaders: response.headers.raw(),
+        lastHeaders: response.headers,
       });
 
       log.debug({
         msg: "Fetched feed",
         status: response.status,
-        statusText: response.statusText,
         ...logCommon,
       });
 
@@ -472,9 +469,9 @@ const parseFeedStream = (stream: NodeJS.ReadableStream, url: string) =>
     stream.pipe(parser);
   });
 
-function normalizeFeedCharset(response: Response, feed: Feed) {
+function normalizeFeedCharset(response: FetchResponse, feed: Feed) {
   const charset = detectCharsetFromFeed(response, feed);
-  let stream = response.body;
+  let stream: NodeJS.ReadableStream = response.body!;
   if (!stream) {
     throw new Error("Response body missing");
   }
@@ -486,9 +483,9 @@ function normalizeFeedCharset(response: Response, feed: Feed) {
   return { stream, charset };
 }
 
-function detectCharsetFromFeed(response: Response, feed: Feed) {
-  const contentType = response.headers.get("content-type");
-  const contentTypeParams = getContentTypeParams(contentType || "");
+function detectCharsetFromFeed(response: FetchResponse, feed: Feed) {
+  const contentType = "" + response.headers?.["content-type"];
+  const contentTypeParams = getContentTypeParams(contentType);
   let charset: string | undefined = contentTypeParams.charset;
 
   if (!charset && feed.metadata?.charset) {

@@ -1,17 +1,25 @@
-import fetch, { Response } from "node-fetch";
+import * as Undici from "undici";
 import PQueue from "p-queue";
 import { IApp } from "../app/types";
 import { AppModule } from "../app/modules";
+import { IncomingHttpHeaders } from "undici/types/header";
+import BodyReadable from "undici/types/readable";
 
 export const configSchema = {
   fetchTimeout: {
-    doc: "timeout in milliseconds for fetching a resource.",
+    doc: "timeout in milliseconds for fetching a resource",
     env: "FETCH_TIMEOUT",
     format: Number,
     default: 10000,
   },
+  fetchEnableCache: {
+    doc: "whether to enable cache for resource fetches",
+    env: "FETCH_ENABLE_CACHE",
+    format: Boolean,
+    default: true,
+  },
   fetchCacheMaxage: {
-    doc: "timeout in milliseconds for fetching a resource.",
+    doc: "timeout in milliseconds for fetching a resource",
     env: "FETCH_CACHE_MAXAGE",
     format: Number,
     default: 1000 * 60 * 15,
@@ -22,6 +30,12 @@ export const configSchema = {
     format: Number,
     default: 64,
   },
+  fetchMaxResponseSize: {
+    doc: "maximum acceptable response size in bytes",
+    env: "FETCH_MAX_RESPONSE_SIZE",
+    format: Number,
+    default: 1024 * 1024 * 2, // 2MB
+  },
   userAgent: {
     doc: "User-Agent header to send with fetch requests.",
     format: String,
@@ -30,10 +44,11 @@ export const configSchema = {
 };
 
 export interface IFetchRepository {
-  upsertResponse(url: string | URL, response: Response): Promise<Response>;
-  fetchResponse(
-    url: string | URL
-  ): Promise<{ response: Response; cachedAt: number } | undefined>;
+  upsertResponse(
+    url: string | URL,
+    response: FetchResponse
+  ): Promise<FetchResponse>;
+  fetchResponse(url: string | URL): Promise<FetchResponseFromCache | undefined>;
   clearCachedResponses(): Promise<void>;
 }
 
@@ -43,20 +58,24 @@ export type FetchOptions = {
   maxage?: number;
   lastHeaders?: Record<string, string>;
   timeout?: number;
+  maxResponseSize?: number;
   forceFetch?: boolean;
   userAgent?: string;
   accept?: string;
   controller?: AbortController;
-  skipCache?: boolean;
+  enableCache?: boolean;
 };
 
-export type FetchResponse = {
-  response: Response;
-  meta: {
-    cached: boolean;
-    cachedAt?: number;
-  };
-};
+export interface FetchResponse {
+  status: number;
+  headers?: IncomingHttpHeaders;
+  body?: BodyReadable;
+}
+
+export interface FetchResponseFromCache extends FetchResponse {
+  cached?: boolean;
+  cachedAt?: number;
+}
 
 export class FetchError extends Error {
   constructor(message: string) {
@@ -87,43 +106,38 @@ export class FetchService extends AppModule<IAppRequirements> {
     await this.app.fetchRepository.clearCachedResponses();
   }
 
-  async fetchResource(options: FetchOptions): Promise<FetchResponse> {
-    const result = await this.fetchQueue.add(async () =>
-      this.fetchResourceImmediately(options)
+  async fetchResource(options: FetchOptions): Promise<FetchResponseFromCache> {
+    return this.fetchQueue.add(
+      async () => this.fetchResourceImmediately(options),
+      { throwOnTimeout: true }
     );
-    if (result) return result;
-    throw new FetchError("queued fetch failed");
   }
 
   async fetchResourceImmediately({
     url,
     headers,
     lastHeaders = {},
+    accept = "text/html",
+    forceFetch = false,
+    controller = new AbortController(),
+    userAgent = this.app.config.get("userAgent"),
     maxage = this.app.config.get("fetchCacheMaxage"),
     timeout = this.app.config.get("fetchTimeout"),
-    forceFetch = false,
-    userAgent = this.app.config.get("userAgent"),
-    accept = "application/rss+xml, text/rss+xml, text/xml",
-    controller = new AbortController(),
-    skipCache,
-  }: FetchOptions): Promise<FetchResponse> {
+    maxResponseSize = this.app.config.get("fetchMaxResponseSize"),
+    enableCache = this.app.config.get("fetchEnableCache"),
+  }: FetchOptions): Promise<FetchResponseFromCache> {
     const { log } = this;
 
-    if (!skipCache) {
+    if (enableCache) {
       const cachedResponse = await this.app.fetchRepository.fetchResponse(url);
       if (cachedResponse) {
-        const { response, cachedAt } = cachedResponse;
         const now = Date.now();
+        const { cachedAt = now } = cachedResponse;
         const age = now - cachedAt;
-        const logCommon = {
-          age,
-          maxage,
-          cachedAt,
-          now,
-        };
+        const logCommon = { url, age };
         if (age < maxage) {
           log.trace({ msg: "Using cached response", ...logCommon });
-          return { response, meta: { cached: true, cachedAt } };
+          return { ...cachedResponse, cached: true };
         } else {
           log.trace({ msg: "Cached response too old", ...logCommon });
         }
@@ -133,50 +147,54 @@ export class FetchService extends AppModule<IAppRequirements> {
     // Set up an abort timeout - we're not waiting forever
     const abortTimeout = setTimeout(() => controller.abort(), timeout);
 
-    const fetchOptions = {
-      signal: controller.signal,
-      method: "GET",
-      headers: {
-        "user-agent": userAgent,
-        accept,
-        ...headers,
-      } as Record<string, string>,
+    const requestHeaders: Record<string, string> = {
+      "user-agent": userAgent,
+      accept,
+      ...headers,
     };
 
-    // Set up some headers for conditional GET so we can see
-    // some of those sweet 304 Not Modified responses
     if (!forceFetch) {
-      if (lastHeaders.etag) {
-        fetchOptions.headers["If-None-Match"] = lastHeaders.etag;
-      }
-      if (lastHeaders["last-modified"]) {
-        fetchOptions.headers["If-Modified-Match"] =
-          lastHeaders["last-modified"];
-      }
+      // Set up some headers for conditional GET so we can see
+      // some of those sweet 304 Not Modified responses
+      if (lastHeaders.etag) requestHeaders["If-None-Match"] = lastHeaders.etag;
+      if (lastHeaders["last-modified"])
+        requestHeaders["If-Modified-Match"] = lastHeaders["last-modified"];
     }
 
     try {
-      // Finally, fire off the GET request for the feed resource.
       log.trace({ msg: "start fetchResource", url });
-      const response = await fetch(url, fetchOptions);
-      log.trace({ msg: "end fetchResource", url, status: response.status });
+      const responseData = await Undici.request(url, {
+        method: "GET",
+        headers: requestHeaders,
+        throwOnError: true,
+        headersTimeout: timeout,
+        bodyTimeout: timeout,
+        signal: controller.signal,
+        dispatcher: new Undici.Agent({
+          maxResponseSize,
+        }),
+      });
       clearTimeout(abortTimeout);
-      return {
-        response: skipCache
-          ? response
-          : await this.app.fetchRepository.upsertResponse(url, response),
-        meta: { cached: false },
+      log.trace({
+        msg: "end fetchResource",
+        url,
+        status: responseData.statusCode,
+      });
+
+      const { statusCode, headers, body } = responseData;
+      const response = {
+        status: statusCode,
+        headers,
+        body,
       };
+
+      return !enableCache
+        ? response
+        : this.app.fetchRepository.upsertResponse(url, response);
     } catch (error: any) {
       clearTimeout(abortTimeout);
       if (error.type === "aborted") {
-        return {
-          response: await this.app.fetchRepository.upsertResponse(
-            url,
-            new Response(null, { status: 408, statusText: "timeout" })
-          ),
-          meta: { cached: false },
-        };
+        return { status: 408 };
       }
       log.debug({ msg: "Fetch failed", err: error });
       throw error;

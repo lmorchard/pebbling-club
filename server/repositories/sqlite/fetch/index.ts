@@ -2,8 +2,14 @@ import { IKnexConnectionOptions, IKnexRepository } from "../../knex";
 import BaseSqliteKnexRepository from "../base";
 import path from "path";
 import Knex from "knex";
-import { IFetchRepository } from "../../../services/fetch";
-import { Response, BodyInit, ResponseInit, HeadersInit } from "node-fetch";
+import {
+  IFetchRepository,
+  FetchResponse,
+  FetchResponseFromCache,
+} from "../../../services/fetch";
+import BodyReadable from "undici/types/readable";
+// @ts-ignore
+import { Readable as BodyReadableImpl } from "undici/lib/api/readable";
 
 export const configSchema = {
   sqliteFetchDatabaseName: {
@@ -34,55 +40,68 @@ export default class SqliteFetchRepository
 
   async upsertResponse(
     url: string | URL,
-    response: Response
-  ): Promise<Response> {
+    response: FetchResponse
+  ): Promise<FetchResponse> {
     const { log } = this;
-    const { status, statusText } = response;
-
     log.trace({ msg: "upsertResponse", url: url.toString() });
 
-    const body = Buffer.from(await response.arrayBuffer());
+    const { status, headers, body } = response;
+    if (!body) throw new Error("no body in response");
+
+    const bodyData = await body.arrayBuffer();
 
     const toUpsert = {
       url: url.toString(),
       status,
-      statusText,
-      headers: JSON.stringify(Array.from(response.headers.entries())),
-      body,
-      cachedAt: Date.now()
+      headers: JSON.stringify(headers),
+      body: Buffer.from(bodyData),
+      cachedAt: Date.now(),
     };
-    const result = await this.connection("FetchCache")
+
+    await this.connection("FetchCache")
       .insert(toUpsert)
       .onConflict("url")
       .merge(toUpsert)
       .returning("id");
-    return new Response(toUpsert.body, {
+
+    return {
       status,
-      statusText,
-      headers: response.headers.entries(),
-    });
+      headers,
+      body: this._bodyReadableFromBuffer(toUpsert.body),
+    };
   }
 
   async fetchResponse(
     url: string | URL
-  ): Promise<{ response: Response; cachedAt: number } | undefined> {
+  ): Promise<FetchResponseFromCache | undefined> {
     const result = await this.connection("FetchCache")
       .where({ url: url.toString() })
       .first();
     if (!result) return;
-    const { status, statusText, headers, cachedAt } = result;
-    const response = new Response(result.body, {
+
+    const { status, headers, cachedAt } = result;
+
+    return {
       status,
-      statusText,
       headers: JSON.parse(headers),
-    });
-    return { response, cachedAt };
+      body: this._bodyReadableFromBuffer(result.body),
+      cachedAt,
+      cached: true,
+    };
+  }
+
+  _bodyReadableFromBuffer(data: Buffer) {
+    const body = new BodyReadableImpl({
+      // TODO: supply content-type and content-length here? 
+    }) as BodyReadable;
+    body.push(data);
+    body.push(null);
+    return body;
   }
 
   async clearCachedResponses(): Promise<void> {
     return await this.connection("FetchCache").delete();
   }
-
 }
 
 export interface FetchCacheRecord {
