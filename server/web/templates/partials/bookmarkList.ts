@@ -7,16 +7,16 @@ export interface Props {
   bookmarks: BookmarkWithPermissions[];
   profile: Profile;
   hideAuthor?: boolean;
-  showAttachments?: string[];
-  openAttachment?: string;
+  show?: string[];
+  open?: string;
 }
 
 export default ({
   bookmarks,
   profile,
   hideAuthor = true,
-  showAttachments = ["notes", "feed", "embed", "unfurl"],
-  openAttachment,
+  show = ["notes", "feed", "embed", "unfurl"],
+  open,
 }: Props) => html`
   <pc-bookmark-list>
     <ul class="bookmarks h-feed">
@@ -27,8 +27,8 @@ export default ({
               bookmark,
               profile,
               hideAuthor,
-              showAttachments,
-              openAttachment,
+              show,
+              open,
             })}
           </li>`
       )}

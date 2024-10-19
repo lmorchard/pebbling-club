@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { BaseService } from "./base";
+import { parseSince } from "../utils/since";
 
 export type IAppRequirements = {
   repository: IBookmarksRepository;
@@ -72,13 +73,11 @@ export class BookmarksService extends BaseService<IAppRequirements> {
   async listForOwner(
     viewerId: string | undefined,
     ownerId: string,
-    limit: number,
-    offset: number
+    options: BookmarksListOptions
   ) {
     const { total, items } = await this.app.repository.listBookmarksForOwner(
       ownerId,
-      limit,
-      offset
+      this._convertBookmarksListOptions(options)
     );
     return {
       total,
@@ -90,15 +89,13 @@ export class BookmarksService extends BaseService<IAppRequirements> {
     viewerId: string | undefined,
     ownerId: string,
     tags: string[],
-    limit: number,
-    offset: number
+    options: BookmarksListOptions
   ) {
     const { total, items } =
       await this.app.repository.listBookmarksForOwnerByTags(
         ownerId,
         tags,
-        limit,
-        offset
+        this._convertBookmarksListOptions(options)
       );
     return {
       total,
@@ -109,18 +106,23 @@ export class BookmarksService extends BaseService<IAppRequirements> {
   async listByTags(
     viewerId: string | undefined,
     tags: string[],
-    limit: number,
-    offset: number
+    options: BookmarksListOptions
   ) {
     const { total, items } = await this.app.repository.listBookmarksByTags(
       tags,
-      limit,
-      offset
+      this._convertBookmarksListOptions(options)
     );
     return {
       total,
       items: await this.annotateBookmarksWithPermissions(viewerId, items),
     };
+  }
+
+  _convertBookmarksListOptions(
+    options: BookmarksListOptions
+  ): BookmarksRepositoryListOptions {
+    const { limit, offset, order, since } = options;
+    return { limit, offset, order, since: parseSince(since) };
   }
 
   async listTagsForOwner(ownerId: string, limit: number, offset: number) {
@@ -265,19 +267,16 @@ export interface IBookmarksRepository {
   ): Promise<Bookmark | null>;
   listBookmarksForOwner(
     ownerId: string,
-    limit: number,
-    offset: number
+    options: BookmarksRepositoryListOptions
   ): Promise<{ total: number; items: Bookmark[] }>;
   listBookmarksForOwnerByTags(
     ownerId: string,
     tags: string[],
-    limit: number,
-    offset: number
+    options: BookmarksRepositoryListOptions
   ): Promise<{ total: number; items: Bookmark[] }>;
   listBookmarksByTags(
     tags: string[],
-    limit: number,
-    offset: number
+    options: BookmarksRepositoryListOptions
   ): Promise<{ total: number; items: Bookmark[] }>;
   listTagsForOwner(
     ownerId: string,
@@ -286,67 +285,16 @@ export interface IBookmarksRepository {
   ): Promise<TagCount[]>;
 }
 
-export const NewBookmarkQuerystringSchema = {
-  type: "object",
-  properties: {
-    href: {
-      type: "string",
-    },
-    title: {
-      type: "string",
-    },
-    extended: {
-      type: "string",
-    },
-    tags: {
-      type: "string",
-    },
-    next: {
-      type: "string",
-    },
-    submit: {
-      type: "string",
-    }
-  },
-} as const;
+export interface BookmarksListOptions {
+  limit: number;
+  offset: number;
+  order?: string;
+  since?: string;
+}
 
-export const NewBookmarkSchema = {
-  type: "object",
-  properties: {
-    next: {
-      type: "string",
-    },
-    href: {
-      type: "string",
-      minLength: 1,
-      errorMessage: {
-        type: "URL required",
-        minLength: "URL required",
-      },
-    },
-    title: {
-      type: "string",
-      minLength: 1,
-      errorMessage: {
-        type: "Title required",
-        minLength: "Title required",
-      },
-    },
-    extended: {
-      type: "string",
-    },
-    tags: {
-      type: "string",
-    },
-    unfurl: {
-      type: "string",
-    },
-    visibility: {
-      type: "string",
-      enum: ["public", "private"],
-      errorMessage: {
-        enum: "Invalid visibility",
-      },
-    },
-  },
-} as const;
+export interface BookmarksRepositoryListOptions {
+  limit: number;
+  offset: number;
+  order?: string;
+  since?: Date;
+}

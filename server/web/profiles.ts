@@ -5,10 +5,11 @@ import { FastifyPluginAsync } from "fastify";
 import { Profile } from "../services/profiles";
 import { TagCount } from "../services/bookmarks";
 import {
-  BookmarkListOptions,
+  ListBookmarksQuerystringOptions,
   parseBookmarkListOptions,
   parseRefreshHeaders,
 } from "./utils/routes";
+import bookmark from "./templates/partials/bookmark";
 
 declare module "fastify" {
   export interface FastifyRequest {
@@ -40,27 +41,22 @@ export const ProfilesRouter: FastifyPluginAsync<
 
   fastify.get<{
     Params: { username: string };
-    Querystring: BookmarkListOptions;
+    Querystring: ListBookmarksQuerystringOptions;
   }>("/:username", async (request, reply) => {
     const { bookmarks } = options.server.app;
     const { forceRefresh } = parseRefreshHeaders(request);
-    const { limit, offset, show, open } = parseBookmarkListOptions(
-      request.query
-    );
+    const bookmarkListOptions = parseBookmarkListOptions(request.query);
     const viewerId = request.user?.id;
 
     const profile = request.profile as Profile;
 
     const { total: bookmarksTotal, items: bookmarksItems } =
-      await bookmarks.listForOwner(viewerId, profile.id, limit, offset);
+      await bookmarks.listForOwner(viewerId, profile.id, bookmarkListOptions);
 
     return reply.renderTemplate(templateProfileIndex, {
+      ...bookmarkListOptions,
       profile,
       forceRefresh,
-      limit,
-      offset,
-      showAttachments: show,
-      openAttachment: open,
       tagCounts: request.tagCounts!,
       total: bookmarksTotal,
       bookmarks: bookmarksItems,
@@ -69,13 +65,11 @@ export const ProfilesRouter: FastifyPluginAsync<
 
   fastify.get<{
     Params: { username: string; tags: string };
-    Querystring: BookmarkListOptions;
+    Querystring: ListBookmarksQuerystringOptions;
   }>("/:username/t/:tags", async (request, reply) => {
     const { bookmarks } = options.server.app;
     const { forceRefresh } = parseRefreshHeaders(request);
-    const { limit, offset, show, open } = parseBookmarkListOptions(
-      request.query
-    );
+    const bookmarkListOptions = parseBookmarkListOptions(request.query);
     const { tags } = request.params;
 
     const viewerId = request.user?.id;
@@ -86,18 +80,14 @@ export const ProfilesRouter: FastifyPluginAsync<
         viewerId,
         profile.id,
         tags.split(/[\+ ]+/g),
-        limit,
-        offset
+        bookmarkListOptions
       );
 
     // TODO: use a different template? allow per-user annotation / description of tag
     return reply.renderTemplate(templateProfileIndex, {
+      ...bookmarkListOptions,
       profile,
       forceRefresh,
-      limit,
-      offset,
-      showAttachments: show,
-      openAttachment: open,
       tagCounts: request.tagCounts!,
       total: bookmarksTotal,
       bookmarks: bookmarksItems,

@@ -9,8 +9,8 @@ export interface Props {
   profile: Profile;
   readOnly?: boolean;
   hideAuthor?: boolean;
-  showAttachments?: string[];
-  openAttachment?: string;
+  show?: string[];
+  open?: string;
 }
 
 export default (props: Props) => {
@@ -106,8 +106,8 @@ export default (props: Props) => {
 
 function buildAttachments({
   bookmark,
-  openAttachment: openAttachmentIn,
-  showAttachments = [],
+  open: openAttachmentIn,
+  show: showAttachments = [],
 }: Props) {
   // Filter out any attachments that don't have a formatter
   const validShowAttachments = showAttachments.filter(
@@ -192,7 +192,7 @@ const attachmentFormatters: Record<string, AttachmentFormatter> = {
       };
   },
   feed: (bookmark) => {
-    const feedUrl = bookmark.meta?.unfurl?.feed;
+    const feedUrl = bookmark.meta?.unfurl?.feed || bookmark.meta?.opml?.xmlUrl;
     if (feedUrl)
       return {
         name: "feed",
@@ -219,6 +219,15 @@ const attachmentFormatters: Record<string, AttachmentFormatter> = {
         name: "unfurl",
         title: "Unfurl",
         content: html`<textarea rows="15" style="width: 90%">${unfurl}</textarea>`,
+      };
+  },
+  opml: (bookmark) => {
+    const opml = bookmark.meta?.opml;
+    if (opml)
+      return {
+        name: "opml",
+        title: "OPML",
+        content: html`<textarea rows="8" style="width: 90%">${opml}</textarea>`,
       };
   },
 };

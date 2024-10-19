@@ -46,6 +46,7 @@ export default class PCFeedElement extends LitElement {
 
   updated() {
     if (
+      !this.isLoading &&
       typeof this.feed === "undefined" &&
       typeof this.error === "undefined" &&
       this.checkVisibility()
@@ -88,14 +89,16 @@ export default class PCFeedElement extends LitElement {
 
     return html`
       <ul class="items">
-        ${sortedItems.slice(0, 25).map(
+        ${sortedItems.slice(0, 100).map(
           (item: any) => html`
             <li class="item">
               <time dt="${item.date.toISOString()}">${item.date.toLocaleString()}</time>
-              <a href="${item.link}">${item.title || "(untitled)"}</a>
+              <a target="_blank" href="${item.link}">
+                ${item.title || "(untitled)"}
+              </a>
             </li>
           `
-        )}        
+        )}
       </ul>
     `;
   }
@@ -104,6 +107,9 @@ export default class PCFeedElement extends LitElement {
 export class PCFeedElementManager extends ElementManager<PCFeedElement> {
   usePost: boolean;
   forceRefresh: boolean;
+
+  // TODO: work out how to specify since on a per-feed basis
+  since?: string | null;
 
   idPrefix = "pc-feed";
 
@@ -115,16 +121,20 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
   constructor({
     usePost = false,
     forceRefresh = false,
+    since,
   }: {
     usePost?: boolean;
     forceRefresh?: boolean;
+    since?: string | null;
   }) {
     super();
     this.usePost = usePost;
     this.forceRefresh = forceRefresh;
+    this.since = since;
   }
 
   async updateFeed(element: PCFeedElement) {
+    if (element.isLoading) return;
     element.isLoading = true;
     this.fetchFeedQueue.push({ element, url: element.url! });
   }
@@ -138,14 +148,16 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          forceFetch: forceRefresh,
+          update: forceRefresh,
+          since: this.since,
           urls: batch.map((job) => job.url),
         }),
       });
     } else {
       const params = new URLSearchParams();
+      if (this.since) params.set("since", this.since);
       for (const { url } of batch) {
-        params.append("url", url);
+        params.append("urls", url);
       }
       response = await fetch(`/feeds/get?${params.toString()}`, {
         method: "GET",
@@ -176,15 +188,21 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
 interface FetchFeedQueueJob {
   element: PCFeedElement;
   url: string;
+  since?: string;
 }
 
 // HACK: accessing this header data should probably be in a central context
 const userJson = document.head.querySelector("script#user");
 const forceRefreshJson = document.head.querySelector("script#forceRefresh");
+
+// TODO: should accept ?since as an attribute or parameter in pc-feed or parent element?
+const queryParams = new URLSearchParams(location.search);
+
 export const manager = new PCFeedElementManager({
   // Use POST feed fetch only for logged in user
-  usePost: !!userJson,
+  usePost: !!userJson && !!forceRefreshJson,
   forceRefresh: !!forceRefreshJson,
+  since: queryParams.get("since"),
 });
 
 customElements.define("pc-feed", PCFeedElement);

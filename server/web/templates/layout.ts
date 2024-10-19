@@ -1,7 +1,6 @@
 import _ from "lodash";
 import { Profile } from "../../services/profiles";
-import { html, unescaped, TemplateContent } from "../utils/html";
-import { ITemplateProps } from "../utils/templates";
+import { html, unescaped, TemplateContent, ITemplateProps } from "../utils/html";
 import Page, { PageProps } from "./page";
 
 export interface LayoutProps extends ITemplateProps {

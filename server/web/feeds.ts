@@ -18,10 +18,7 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
     services: { feeds },
   } = options;
 
-  const requireAuth = async (
-    request: FastifyRequest,
-    reply: FastifyReply
-  ) => {
+  const requireAuth = async (request: FastifyRequest, reply: FastifyReply) => {
     if (!request.isAuthenticated()) {
       throw Boom.forbidden("feed access requires authentication");
     }
@@ -30,12 +27,13 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
   const FeedsGetBatchQuerystringSchema = {
     type: "object",
     properties: {
-      url: {
+      urls: {
         type: "array",
         items: { type: "string" },
       },
+      since: { type: "string" },
     },
-    required: ["url"],
+    required: ["urls"],
   } as const;
 
   server.get<{
@@ -46,76 +44,58 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
       schema: {
         querystring: FeedsGetBatchQuerystringSchema,
       },
-      preHandler: async (request, reply) => {
-        // Expose this endpoint to unauth'd users
-        return;
-      },
     },
     async (request, reply) => {
-      const { url: urls } = request.query;
-
-      const results = await Promise.all(
-        urls.map(async (url) => {
-          try {
-            const fetched = await feeds.get(url, {
-              // options to ensure this is a pure read for GET
-              autodiscover: false,
-              update: false,
-            });
-            return { url, success: true, fetched };
-          } catch (err: any) {
-            return { url, success: false, err };
-          }
-        })
-      );
-
+      const { urls, since } = request.query;
+      const results = await fetchFeedsBatch({ urls, since });
       return reply.status(200).send(results);
     }
   );
 
-  const PostBatchSchema = {
-    type: "object",
+  const FeedsPostBatchBodySchema = {
+    ...FeedsGetBatchQuerystringSchema,
     properties: {
-      urls: {
-        type: "array",
-        items: {
-          type: "string",
-        },
-      },
-      forceFetch: {
-        type: "boolean",
-      },
-    },
-    required: ["urls"],
+      ...FeedsGetBatchQuerystringSchema.properties,
+      update: { type: "boolean" },
+    }
   } as const;
 
   server.post<{
-    Body: FromSchema<typeof PostBatchSchema>;
+    Body: FromSchema<typeof FeedsPostBatchBodySchema>;
   }>(
     "/get",
     {
-      schema: {
-        body: PostBatchSchema,
-      },
+      schema: { body: FeedsPostBatchBodySchema },
       preHandler: requireAuth,
     },
     async (request, reply) => {
-      const { urls, forceFetch = false } = request.body;
-
-      const results = await Promise.all(
-        urls.map(async (url) => {
-          try {
-            const fetched = await feeds.get(url, { update: true, forceFetch });
-            return { url, success: true, fetched };
-          } catch (err: any) {
-            return { url, success: false, err };
-          }
-        })
-      );
-
+      const { urls, since, update } = request.body;
+      const results = await fetchFeedsBatch({ urls, since, update });
       return reply.status(200).send(results);
     }
   );
+
+  async function fetchFeedsBatch({
+    urls,
+    update,
+    since,
+  }: {
+    urls: string[];
+    since?: string;
+    update?: boolean;
+  }) {
+    return await Promise.all(
+      urls.map(async (url) => {
+        try {
+          if (update) await feeds.update({ url });
+          const fetched = await feeds.get(url, { since });
+          return { url, success: true, fetched };
+        } catch (err: any) {
+          return { url, success: false, err };
+        }
+      })
+    );
+  }
 
   const FeedsDiscoverQuerystringSchema = {
     type: "object",
@@ -157,9 +137,7 @@ export const FeedsRouter: FastifyPluginAsync<IFeedsRouterOptions> = async (
     properties: {
       urls: {
         type: "array",
-        items: {
-          type: "string",
-        },
+        items: {type: "string" },
       },
     },
     required: ["urls"],

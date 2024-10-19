@@ -3,8 +3,8 @@ import { html } from "../../utils/html";
 
 export interface Props {
   baseUrl?: string;
-  showAttachments?: string[];
-  openAttachment?: string;
+  show?: string[];
+  open?: string;
   total: number;
   limit: number;
   offset: number;
@@ -12,7 +12,7 @@ export interface Props {
 }
 
 function pageParams(props: Props) {
-  const { limit, offset, showAttachments, openAttachment } = props;
+  const { limit, offset, show: showAttachments, open: openAttachment } = props;
   const params = new URLSearchParams({
     limit: limit.toString(),
     offset: offset.toString(),

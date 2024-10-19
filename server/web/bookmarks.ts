@@ -6,8 +6,6 @@ import {
   BookmarkCreatable,
   BookmarksService,
   BookmarkUpdatable,
-  NewBookmarkQuerystringSchema,
-  NewBookmarkSchema,
 } from "../services/bookmarks";
 import { RequirePasswordAuth } from "./auth";
 import templateBookmarksEdit from "./templates/bookmarks/edit";
@@ -28,14 +26,6 @@ export interface IBookmarksRouterOptions extends IBaseRouterOptions {
     unfurl: UnfurlService;
   };
 }
-
-const BookmarkUrlParamsSchema = {
-  type: "object",
-  properties: {
-    id: { type: "string" },
-  },
-  required: ["id"],
-} as const;
 
 export const BookmarksRouter: FastifyPluginAsync<
   IBookmarksRouterOptions
@@ -208,7 +198,7 @@ export const BookmarksRouter: FastifyPluginAsync<
         csrfToken: reply.generateCsrf(),
         formData,
         existingBookmark: bookmark,
-        });
+      });
     }
   );
 
@@ -321,3 +311,48 @@ export const BookmarksRouter: FastifyPluginAsync<
     }
   );
 };
+
+export const BookmarkUrlParamsSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+  },
+  required: ["id"],
+} as const;
+
+export const NewBookmarkQuerystringSchema = {
+  type: "object",
+  properties: {
+    href: { type: "string" },
+    title: { type: "string" },
+    extended: { type: "string" },
+    tags: { type: "string" },
+    next: { type: "string" },
+    submit: { type: "string" },
+  },
+} as const;
+
+export const NewBookmarkSchema = {
+  type: "object",
+  properties: {
+    next: { type: "string" },
+    href: {
+      type: "string",
+      minLength: 1,
+      errorMessage: { type: "URL required", minLength: "URL required" },
+    },
+    title: {
+      type: "string",
+      minLength: 1,
+      errorMessage: { type: "Title required", minLength: "Title required" },
+    },
+    extended: { type: "string" },
+    tags: { type: "string" },
+    unfurl: { type: "string" },
+    visibility: {
+      type: "string",
+      enum: ["public", "private"],
+      errorMessage: { enum: "Invalid visibility" },
+    },
+  },
+} as const;

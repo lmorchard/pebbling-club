@@ -2,6 +2,12 @@ import escapeHtml from "escape-html";
 
 export type TemplateContent = string | (() => string);
 
+export interface ITemplateProps extends Record<string, any> {}
+
+export type RenderableTemplate<P extends ITemplateProps> = (
+  props: P
+) => TemplateContent;
+
 export const html =
   (strings: TemplateStringsArray, ...values: any[]) =>
   () =>

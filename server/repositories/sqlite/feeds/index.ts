@@ -5,10 +5,12 @@ import {
   FeedExisting,
   FeedItem,
   IFeedsRepository,
+  FeedItemListOptions,
 } from "../../../services/feeds";
 import BaseSqliteKnexRepository from "../base";
 import path from "path";
 import Knex from "knex";
+import { Transform } from "stream";
 
 export const configSchema = {
   sqliteFeedsDatabaseName: {
@@ -74,10 +76,11 @@ export default class SqliteFeedsRepository
   }
 
   async upsertFeed(feed: Feed): Promise<string> {
-    const { title, url, metadata } = feed;
+    const { title, url, newestItemDate, metadata } = feed;
     const toUpsert = {
       title,
       url,
+      newestItemDate: newestItemDate && newestItemDate.toISOString(),
       metadata: this._serializeMetadataColumn(metadata),
     };
     const result = await this.enqueue(() =>
@@ -90,25 +93,43 @@ export default class SqliteFeedsRepository
     return result[0].id;
   }
 
+  fetchAllFeeds(): NodeJS.ReadableStream {
+    const self = this;
+    const feedStream = new Transform({
+      objectMode: true,
+      transform(row, encoding, callback) {
+        this.push(self._rowToFeed(row));
+        callback();
+      },
+    });
+    this.connection("Feeds").pipe(feedStream);
+    return feedStream;
+  }
+
   async fetchFeed(feedId: string): Promise<FeedExisting | null> {
     const result = await this.connection("Feeds").where({ id: feedId }).first();
     if (!result) return null;
-    return {
-      ...result,
-      metadata: this._deserializeMetadataColumn(result.metadata),
-    };
+    return this._rowToFeed(result);
   }
 
   async fetchFeedByUrl(url: string): Promise<FeedExisting | null> {
     const result = await this.connection("Feeds").where({ url }).first();
     if (!result) return null;
+    return this._rowToFeed(result);
+  }
+
+  _rowToFeed(row: any) {
     return {
-      ...result,
-      metadata: this._deserializeMetadataColumn(result.metadata),
+      ...row,
+      newestItemDate: row.newestItemDate && new Date(row.newestItemDate),
+      metadata: this._deserializeMetadataColumn(row.metadata),
     };
   }
 
-  async upsertFeedItemBatch(feed: Feed, items: FeedItem[]): Promise<string[]> {
+  async upsertFeedItemBatch(
+    feed: Feed,
+    items: Partial<FeedItem>[]
+  ): Promise<string[]> {
     const now = Date.now();
     const feedId = feed.id;
     const results: string[] = [];
@@ -121,13 +142,13 @@ export default class SqliteFeedsRepository
             title,
             description,
             summary,
-            date: date?.toISOString(),
             lastSeenAt: now,
           };
           const toInsert = {
             ...toUpdate,
             feedId,
             guid,
+            date: date?.toISOString(),
             firstSeenAt: now,
           };
           const result = await trx("FeedItems")
@@ -142,15 +163,35 @@ export default class SqliteFeedsRepository
     return results;
   }
 
+  async updateFeedNewestItemDate(feedId: string): Promise<void> {
+    await this.connection.raw(
+      `--sql
+        update Feeds set newestItemDate=(
+          select date
+          from FeedItems
+          where feedId=?
+          order by date
+          desc limit 1
+        ) where id=?
+      `,
+      [feedId, feedId]
+    );
+  }
+
   async fetchItemsForFeed(
     feedId: string,
-    limit: number,
-    offset: number
+    options: FeedItemListOptions
   ): Promise<{ total: number; items: FeedItem[] }> {
-    const result = await this.connection("FeedItems")
+    const { limit, offset, order = "date", since } = options;
+    const query = this.connection("FeedItems")
       .where({ feedId })
+      .orderBy("date", "desc")
       .limit(limit)
       .offset(offset);
+    if (since) {
+      query.where("date", ">", since.toISOString());
+    }
+    const result = await query;
     return {
       total: result.length,
       items: this._rowsToFeedItems(result),
@@ -159,12 +200,11 @@ export default class SqliteFeedsRepository
 
   async fetchItemsForFeedUrl(
     url: string,
-    limit: number,
-    offset: number
+    options: FeedItemListOptions
   ): Promise<{ total: number; items: FeedItem[] }> {
     const feed = await this.fetchFeedByUrl(url);
     if (!feed) return { total: 0, items: [] };
-    return this.fetchItemsForFeed(feed.id, limit, offset);
+    return this.fetchItemsForFeed(feed.id, options);
   }
 
   _rowsToFeedItems(rows: any[]) {
