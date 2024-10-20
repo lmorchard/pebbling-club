@@ -573,6 +573,20 @@ export class SqliteRepository
     }
   }
 
+  async _orderBookmarksQuery(query: Knex.Knex.QueryBuilder, order?: string) {
+    if (order === "feed" && this.app.feedsRepository) {
+      await this._attachFeedsDatabase();
+      query
+        .joinRaw(
+          `
+            LEFT JOIN FeedsDB.Feeds
+            ON FeedsDB.Feeds.url = bookmarks.feedUrl
+          `
+        )
+        .orderBy("FeedsDB.Feeds.newestItemDate", "desc");
+    }
+  }
+
   async _attachFeedsDatabase() {
     const { log } = this;
     const { feedsRepository } = this.app;
@@ -580,21 +594,7 @@ export class SqliteRepository
     const { filename } = feedsRepository!.knexConnectionOptions() as {
       filename: string;
     };
-    await this.connection.raw(`ATTACH DATABASE ? AS Feeds`, filename);
+    await this.connection.raw(`ATTACH DATABASE ? AS FeedsDB`, filename);
     log.trace({ msg: "attached feeds database" });
-  }
-
-  async _orderBookmarksQuery(query: Knex.Knex.QueryBuilder, order?: string) {
-    if (order === "feed" && this.app.feedsRepository) {
-      await this._attachFeedsDatabase();
-      query
-        .joinRaw(
-          `
-            LEFT JOIN Feeds.Feeds
-            ON Feeds.Feeds.url = json_extract(meta, "$.unfurl.feed")
-          `
-        )
-        .orderBy("feeds.Feeds.newestItemDate", "desc");
-    }
   }
 }
