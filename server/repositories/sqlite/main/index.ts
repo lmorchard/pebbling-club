@@ -431,7 +431,7 @@ export class SqliteRepository
     offset: number,
     order?: string
   ): Promise<{ total: number; items: Bookmark[] }> {
-    const query = this.connection("bookmarks").where({ ownerId });
+    const query = this._baseListBookmarksQuery().where({ ownerId });
     await this._orderBookmarksQuery(query, order);
     return this._paginateBookmarksQuery(query, limit, offset);
   }
@@ -443,7 +443,7 @@ export class SqliteRepository
     offset: number,
     order?: string
   ): Promise<{ total: number; items: Bookmark[] }> {
-    const query = this.connection("bookmarks").where({ ownerId });
+    const query = this._baseListBookmarksQuery().where({ ownerId });
     this._constrainBookmarksQueryByTag(query, tags);
     await this._orderBookmarksQuery(query, order);
     return this._paginateBookmarksQuery(query, limit, offset);
@@ -455,10 +455,76 @@ export class SqliteRepository
     offset: number,
     order?: string
   ): Promise<{ total: number; items: Bookmark[] }> {
-    const query = this.connection("bookmarks");
+    const query = this._baseListBookmarksQuery();
     this._constrainBookmarksQueryByTag(query, tags);
     await this._orderBookmarksQuery(query, order);
     return this._paginateBookmarksQuery(query, limit, offset);
+  }
+
+  _baseListBookmarksQuery(): Knex.Knex.QueryBuilder {
+    return this.connection("bookmarks").select("bookmarks.*");
+  }
+
+  async _paginateBookmarksQuery(
+    baseQuery: Knex.Knex.QueryBuilder,
+    limit: number,
+    offset: number
+  ) {
+    const [countResult, itemRows] = await Promise.all([
+      baseQuery.clone().count<Record<string, number>>({ count: "*" }).first(),
+      await baseQuery
+        .clone()
+        .orderBy("created", "desc")
+        .limit(limit)
+        .offset(offset),
+    ]);
+
+    if (!countResult) throw new Error("total query failed");
+
+    const total = countResult?.count;
+    const items = itemRows.map((item: BookmarksRow) =>
+      this._mapRowToBookmark(item)
+    );
+
+    return { total, items };
+  }
+
+  _constrainBookmarksQueryByTag(query: Knex.Knex.QueryBuilder, tags: string[]) {
+    for (const name of tags) {
+      query.whereIn("bookmarks.id", function () {
+        this.select("bookmarksId").from("tags").where({ name });
+      });
+    }
+  }
+
+  async _orderBookmarksQuery(query: Knex.Knex.QueryBuilder, order?: string) {
+    if (order === "feed" && this.app.feedsRepository) {
+      await this._attachFeedsDatabase();
+      query
+        .joinRaw(
+          `
+            LEFT JOIN FeedsDB.Feeds
+            ON FeedsDB.Feeds.url = bookmarks.feedUrl
+          `
+        )
+        .orderBy("FeedsDB.Feeds.newestItemDate", "desc");
+    }
+  }
+
+  _feedsDatabaseAttached = false;
+
+  async _attachFeedsDatabase() {
+    if (this._feedsDatabaseAttached) return;
+    this._feedsDatabaseAttached = true;
+
+    const { log } = this;
+    const { feedsRepository } = this.app;
+    // HACK: Knex doesn't export Sqlite3ConnectionConfig type?
+    const { filename } = feedsRepository!.knexConnectionOptions() as {
+      filename: string;
+    };
+    await this.connection.raw(`ATTACH DATABASE ? AS FeedsDB`, filename);
+    log.trace({ msg: "attached feeds database" });
   }
 
   async listTagsForOwner(
@@ -539,62 +605,5 @@ export class SqliteRepository
       created: created.getTime(),
       modified: modified.getTime(),
     };
-  }
-
-  async _paginateBookmarksQuery(
-    baseQuery: Knex.Knex.QueryBuilder,
-    limit: number,
-    offset: number
-  ) {
-    const [countResult, itemRows] = await Promise.all([
-      baseQuery.clone().count<Record<string, number>>({ count: "*" }).first(),
-      await baseQuery
-        .clone()
-        .orderBy("created", "desc")
-        .limit(limit)
-        .offset(offset),
-    ]);
-
-    if (!countResult) throw new Error("total query failed");
-
-    const total = countResult?.count;
-    const items = itemRows.map((item: BookmarksRow) =>
-      this._mapRowToBookmark(item)
-    );
-
-    return { total, items };
-  }
-
-  _constrainBookmarksQueryByTag(query: Knex.Knex.QueryBuilder, tags: string[]) {
-    for (const name of tags) {
-      query.whereIn("bookmarks.id", function () {
-        this.select("bookmarksId").from("tags").where({ name });
-      });
-    }
-  }
-
-  async _orderBookmarksQuery(query: Knex.Knex.QueryBuilder, order?: string) {
-    if (order === "feed" && this.app.feedsRepository) {
-      await this._attachFeedsDatabase();
-      query
-        .joinRaw(
-          `
-            LEFT JOIN FeedsDB.Feeds
-            ON FeedsDB.Feeds.url = bookmarks.feedUrl
-          `
-        )
-        .orderBy("FeedsDB.Feeds.newestItemDate", "desc");
-    }
-  }
-
-  async _attachFeedsDatabase() {
-    const { log } = this;
-    const { feedsRepository } = this.app;
-    // HACK: Knex doesn't export Sqlite3ConnectionConfig type?
-    const { filename } = feedsRepository!.knexConnectionOptions() as {
-      filename: string;
-    };
-    await this.connection.raw(`ATTACH DATABASE ? AS FeedsDB`, filename);
-    log.trace({ msg: "attached feeds database" });
   }
 }

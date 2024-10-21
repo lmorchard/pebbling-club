@@ -231,8 +231,8 @@ export class FeedsService extends AppModule<IAppRequirements> {
     if (!result) return;
 
     const { feed: feedUpdates, items } = result;
-    const feedId = await this.app.feedsRepository.upsertFeed(feedUpdates);
-    const itemIds = await this.app.feedsRepository.upsertFeedItemBatch(
+    const feedId = await repository.upsertFeed(feedUpdates);
+    const itemIds = await repository.upsertFeedItemBatch(
       {
         id: feedId,
         ...feedUpdates,
@@ -246,8 +246,9 @@ export class FeedsService extends AppModule<IAppRequirements> {
   async poll(feed: Feed, options: FeedPollOptions = {}) {
     const {
       log,
-      app: { config, fetch },
+      app: { config, fetch, feedsRepository: repository },
     } = this;
+
     const {
       forceFetch = false,
       timeout = config.get("feedPollTimeout"),
@@ -265,7 +266,8 @@ export class FeedsService extends AppModule<IAppRequirements> {
         ...feed.metadata,
       },
     };
-    const itemsToUpsert = [];
+
+    const itemsToUpsert: Partial<FeedItem>[] = [];
 
     try {
       log.debug({ msg: "Feed poll start", ...logCommon });
@@ -316,26 +318,41 @@ export class FeedsService extends AppModule<IAppRequirements> {
       } else {
         let { stream, charset } = normalizeFeedCharset(response, feed);
         const { meta, items } = await parseFeedStream(stream, url);
+
         let newestItemDate: Date | undefined = feedUpdates.newestItemDate;
+
+        const existingItems = new Set(
+          typeof feed.id === "string"
+            ? await repository.fetchItemGUIDsForFeed(feed.id)
+            : []
+        );
 
         for (let rawItem of items.slice(0, config.get("feedPollMaxItems"))) {
           const { link, title, description, summary } = rawItem;
-          
-          const date = itemDate(rawItem);
-          if (!newestItemDate || date > newestItemDate) newestItemDate = date;
+          const guid = itemGuid(rawItem);
 
-          const item: FeedItem = {
+          const toUpsert = {
+            guid,
             link,
             title,
             summary,
             description: description || summary,
-            date,
-            guid: itemGuid(rawItem),
             metadata: {
               itemMeta: rawItem,
             },
           };
-          itemsToUpsert.push(item);
+
+          if (existingItems.has(guid)) {
+            itemsToUpsert.push({ ...toUpsert });  
+          } else {
+            const date = itemDate(rawItem);
+            if (!newestItemDate || date > newestItemDate) newestItemDate = date;
+  
+            itemsToUpsert.push({
+              ...toUpsert,
+              date,
+            });  
+          }
         }
 
         Object.assign(feedUpdates, {
@@ -396,13 +413,13 @@ export class FeedServiceError extends Error {
 
 export class FeedPollError extends FeedServiceError {
   feed: Feed;
-  items: FeedItem[];
+  items: Partial<FeedItem>[];
 
   constructor(
     message: string,
     originalError: any,
     feed: Feed,
-    items: FeedItem[]
+    items: Partial<FeedItem>[]
   ) {
     super(message, originalError);
     this.feed = feed;
@@ -529,9 +546,10 @@ export interface IFeedsRepository {
   ): Promise<string[]>;
   fetchFeedDiscoveries(url: string): Promise<FeedDiscovered[]>;
   upsertFeed(feed: Feed): Promise<string>;
-  upsertFeedItemBatch(feed: Feed, items: FeedItem[]): Promise<string[]>;
+  upsertFeedItemBatch(feed: Feed, items: Partial<FeedItem>[]): Promise<string[]>;
   fetchFeed(feedId: string): Promise<FeedExisting | null>;
   fetchFeedByUrl(url: string): Promise<FeedExisting | null>;
+  fetchItemGUIDsForFeed(feedId: string): Promise<string[]>;
   fetchItemsForFeed(
     feedId: string,
     limit: number,
@@ -578,6 +596,8 @@ export type FeedItem = {
   description?: string;
   summary?: string;
   date: Date | null;
+  firstSeenAt?: Date | null;
+  lastSeenAt?: Date | null;
   metadata?: {
     itemMeta?: FeedParser.Item;
   };

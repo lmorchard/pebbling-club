@@ -87,12 +87,15 @@ export default class PCFeedElement extends LitElement {
       );
 
     return html`
+      <p>Updated at: <time datetime="${this.feed?.feed.newestItemDate}">${
+        this.feed?.feed.newestItemDate
+      }</time></p>
       <ul class="items">
         ${sortedItems.slice(0, 25).map(
           (item: any) => html`
             <li class="item">
               <time dt="${item.date.toISOString()}">${item.date.toLocaleString()}</time>
-              <a href="${item.link}">${item.title || "(untitled)"}</a>
+              <a href="${item.link}">${item.title || "(untitled)"} (${item.guid})</a>
             </li>
           `
         )}        
@@ -183,7 +186,7 @@ const userJson = document.head.querySelector("script#user");
 const forceRefreshJson = document.head.querySelector("script#forceRefresh");
 export const manager = new PCFeedElementManager({
   // Use POST feed fetch only for logged in user
-  usePost: !!userJson,
+  usePost: !!userJson && !!forceRefreshJson,
   forceRefresh: !!forceRefreshJson,
 });
 

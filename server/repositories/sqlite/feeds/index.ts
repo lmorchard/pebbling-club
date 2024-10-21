@@ -111,7 +111,7 @@ export default class SqliteFeedsRepository
     };
   }
 
-  async upsertFeedItemBatch(feed: Feed, items: FeedItem[]): Promise<string[]> {
+  async upsertFeedItemBatch(feed: Feed, items: Partial<FeedItem>[]): Promise<string[]> {
     const now = Date.now();
     const feedId = feed.id;
     const results: string[] = [];
@@ -168,6 +168,13 @@ export default class SqliteFeedsRepository
     const feed = await this.fetchFeedByUrl(url);
     if (!feed) return { total: 0, items: [] };
     return this.fetchItemsForFeed(feed.id, limit, offset);
+  }
+
+  async fetchItemGUIDsForFeed(feedId: string): Promise<string[]> {
+    const rows = await this.connection("FeedItems")
+      .select("guid")
+      .where({ feedId });
+    return rows.map(({ guid }) => guid);
   }
 
   _rowsToFeedItems(rows: any[]) {

@@ -71,7 +71,7 @@ export default class BaseSqliteKnexRepository<
 
     const pool: Knex.Knex.PoolConfig = {
       min: 1,
-      max: config.get("sqliteDatabaseMaxConnections"),
+      max: 1, // config.get("sqliteDatabaseMaxConnections"),
       afterCreate: (
         conn: sqlite3.Database,
         done: (err: Error | null) => void
