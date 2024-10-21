@@ -44,7 +44,7 @@ export const ProfilesRouter: FastifyPluginAsync<
   }>("/:username", async (request, reply) => {
     const { bookmarks } = options.server.app;
     const { forceRefresh } = parseRefreshHeaders(request);
-    const { limit, offset, show, open } = parseBookmarkListOptions(
+    const { limit, offset, show, open, order } = parseBookmarkListOptions(
       request.query
     );
     const viewerId = request.user?.id;
@@ -52,7 +52,7 @@ export const ProfilesRouter: FastifyPluginAsync<
     const profile = request.profile as Profile;
 
     const { total: bookmarksTotal, items: bookmarksItems } =
-      await bookmarks.listForOwner(viewerId, profile.id, limit, offset);
+      await bookmarks.listForOwner(viewerId, profile.id, limit, offset, order);
 
     return reply.renderTemplate(templateProfileIndex, {
       profile,
@@ -73,7 +73,7 @@ export const ProfilesRouter: FastifyPluginAsync<
   }>("/:username/t/:tags", async (request, reply) => {
     const { bookmarks } = options.server.app;
     const { forceRefresh } = parseRefreshHeaders(request);
-    const { limit, offset, show, open } = parseBookmarkListOptions(
+    const { limit, offset, show, open, order } = parseBookmarkListOptions(
       request.query
     );
     const { tags } = request.params;
@@ -87,7 +87,8 @@ export const ProfilesRouter: FastifyPluginAsync<
         profile.id,
         tags.split(/[\+ ]+/g),
         limit,
-        offset
+        offset,
+        order,
       );
 
     // TODO: use a different template? allow per-user annotation / description of tag

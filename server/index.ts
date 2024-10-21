@@ -26,10 +26,10 @@ import CliUnfurl from "./services/unfurl/cli";
 
 export class MainCliApp extends BaseCliApp {
   // TODO: make repository instances switchable via config
-  repository = new SqliteRepository(this);
   feedsRepository = new SqliteFeedsRepository(this);
   fetchRepository = new SqliteFetchRepository(this);
   unfurlRepository = new SqliteUnfurlRepository(this);
+  repository = new SqliteRepository(this);
 
   passwords = new PasswordService(this);
   profiles = new ProfileService(this);
@@ -46,10 +46,10 @@ export class MainCliApp extends BaseCliApp {
     const app = this;
 
     this.modules.push(
-      this.repository,
       this.feedsRepository,
       this.fetchRepository,
       this.unfurlRepository,
+      this.repository,
       this.passwords,
       this.profiles,
       this.bookmarks,

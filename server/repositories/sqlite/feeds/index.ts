@@ -74,10 +74,11 @@ export default class SqliteFeedsRepository
   }
 
   async upsertFeed(feed: Feed): Promise<string> {
-    const { title, url, metadata } = feed;
+    const { title, url, newestItemDate, metadata } = feed;
     const toUpsert = {
       title,
       url,
+      newestItemDate: newestItemDate && newestItemDate.toISOString(),
       metadata: this._serializeMetadataColumn(metadata),
     };
     const result = await this.enqueue(() =>
@@ -95,6 +96,7 @@ export default class SqliteFeedsRepository
     if (!result) return null;
     return {
       ...result,
+      newestItemDate: result.newestItemDate && new Date(result.newestItemDate),
       metadata: this._deserializeMetadataColumn(result.metadata),
     };
   }
@@ -104,11 +106,12 @@ export default class SqliteFeedsRepository
     if (!result) return null;
     return {
       ...result,
+      newestItemDate: result.newestItemDate && new Date(result.newestItemDate),
       metadata: this._deserializeMetadataColumn(result.metadata),
     };
   }
 
-  async upsertFeedItemBatch(feed: Feed, items: FeedItem[]): Promise<string[]> {
+  async upsertFeedItemBatch(feed: Feed, items: Partial<FeedItem>[]): Promise<string[]> {
     const now = Date.now();
     const feedId = feed.id;
     const results: string[] = [];
@@ -165,6 +168,13 @@ export default class SqliteFeedsRepository
     const feed = await this.fetchFeedByUrl(url);
     if (!feed) return { total: 0, items: [] };
     return this.fetchItemsForFeed(feed.id, limit, offset);
+  }
+
+  async fetchItemGUIDsForFeed(feedId: string): Promise<string[]> {
+    const rows = await this.connection("FeedItems")
+      .select("guid")
+      .where({ feedId });
+    return rows.map(({ guid }) => guid);
   }
 
   _rowsToFeedItems(rows: any[]) {

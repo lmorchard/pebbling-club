@@ -73,12 +73,14 @@ export class BookmarksService extends BaseService<IAppRequirements> {
     viewerId: string | undefined,
     ownerId: string,
     limit: number,
-    offset: number
+    offset: number,
+    order?: string,
   ) {
     const { total, items } = await this.app.repository.listBookmarksForOwner(
       ownerId,
       limit,
-      offset
+      offset,
+      order,
     );
     return {
       total,
@@ -91,14 +93,16 @@ export class BookmarksService extends BaseService<IAppRequirements> {
     ownerId: string,
     tags: string[],
     limit: number,
-    offset: number
+    offset: number,
+    order?: string,
   ) {
     const { total, items } =
       await this.app.repository.listBookmarksForOwnerByTags(
         ownerId,
         tags,
         limit,
-        offset
+        offset,
+        order,
       );
     return {
       total,
@@ -110,12 +114,14 @@ export class BookmarksService extends BaseService<IAppRequirements> {
     viewerId: string | undefined,
     tags: string[],
     limit: number,
-    offset: number
+    offset: number,
+    order?: string,
   ) {
     const { total, items } = await this.app.repository.listBookmarksByTags(
       tags,
       limit,
-      offset
+      offset,
+      order,
     );
     return {
       total,
@@ -266,18 +272,21 @@ export interface IBookmarksRepository {
   listBookmarksForOwner(
     ownerId: string,
     limit: number,
-    offset: number
+    offset: number,
+    order?: string,
   ): Promise<{ total: number; items: Bookmark[] }>;
   listBookmarksForOwnerByTags(
     ownerId: string,
     tags: string[],
     limit: number,
-    offset: number
+    offset: number,
+    order?: string,
   ): Promise<{ total: number; items: Bookmark[] }>;
   listBookmarksByTags(
     tags: string[],
     limit: number,
-    offset: number
+    offset: number,
+    order?: string,
   ): Promise<{ total: number; items: Bookmark[] }>;
   listTagsForOwner(
     ownerId: string,
