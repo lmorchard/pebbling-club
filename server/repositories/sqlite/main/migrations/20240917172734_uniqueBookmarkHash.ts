@@ -53,9 +53,8 @@ export async function down(knex: Knex): Promise<void> {
     table.dropUnique(["ownerId", "uniqueHash"]);
     table.unique(["ownerId", "href"]);
   });
-  await knex.schema.alterTable("bookmarks", (table) => {
-    table.dropColumn("uniqueHash");
-  });
+  // Avoid table.dropColumn, it destroys triggers - https://github.com/knex/knex/issues/6142
+  await knex.schema.raw(`ALTER TABLE bookmarks DROP COLUMN uniqueHash`);
 }
 
 class StubApp extends BaseApp implements IApp {
