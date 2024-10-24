@@ -347,12 +347,10 @@ export class UnfurlService extends AppModule<IAppRequirements> {
     while (total == null || offset < total) {
       log.trace({ msg: "fetching bookmarks", offset, batchSize });
 
-      const result = await bookmarks.listForOwner(
-        ownerId,
-        ownerId,
-        batchSize,
-        offset
-      );
+      const result = await bookmarks.listForOwner(ownerId, ownerId, {
+        limit: batchSize,
+        offset,
+      });
       if (!result || result.items.length === 0) break;
 
       for (const item of result.items) {

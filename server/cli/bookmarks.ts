@@ -86,16 +86,16 @@ export default class CliBookmarks extends CliAppModule<IAppRequirements> {
         viewerId,
         ownerId,
         tags,
-        limit,
-        offset
+        {
+          limit,
+          offset,
+        }
       ));
     } else {
-      ({ total, items } = await bookmarks.listForOwner(
-        viewerId,
-        ownerId,
+      ({ total, items } = await bookmarks.listForOwner(viewerId, ownerId, {
         limit,
-        offset
-      ));
+        offset,
+      }));
     }
 
     log.info({ msg: "Total bookmarks", total });

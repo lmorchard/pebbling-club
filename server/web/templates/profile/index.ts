@@ -9,8 +9,8 @@ import partialPaginator from "../partials/paginator";
 
 export interface Props extends LayoutProps {
   profile: Profile;
-  showAttachments?: string[];
-  openAttachment?: string;
+  show?: string[];
+  open?: string;
   bookmarks: BookmarkWithPermissions[];
   tagCounts: TagCount[];
   limit: number;
@@ -21,8 +21,8 @@ export interface Props extends LayoutProps {
 export default ({
   profile,
   bookmarks,
-  showAttachments = ["notes", "embed", "feed"],
-  openAttachment,
+  show = ["notes", "embed", "feed"],
+  open,
   tagCounts,
   total,
   limit,
@@ -39,21 +39,21 @@ export default ({
             total,
             limit,
             offset,
-            showAttachments,
-            openAttachment,
+            show,
+            open,
           })}
           ${partialBookmarkList({
             bookmarks,
             profile,
-            showAttachments,
-            openAttachment,
+            show,
+            open,
           })}
           ${partialPaginator({
             total,
             limit,
             offset,
-            showAttachments,
-            openAttachment,
+            show,
+            open,
           })}
         </section>
         <section class="tagCounts">

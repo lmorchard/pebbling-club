@@ -1,6 +1,4 @@
-import { Profile } from "../../services/profiles";
-import { html, TemplateContent } from "../utils/html";
-import { ITemplateProps } from "../utils/templates";
+import { html, TemplateContent, ITemplateProps } from "../utils/html";
 
 export interface PageProps extends ITemplateProps {
   title?: string;

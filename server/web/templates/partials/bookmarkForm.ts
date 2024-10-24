@@ -7,10 +7,10 @@ import {
 } from "../../utils/forms";
 import {
   BookmarkWithPermissions,
-  NewBookmarkQuerystringSchema,
 } from "../../../services/bookmarks";
 import { FromSchema } from "json-schema-to-ts";
 import { UnfurlResult } from "../../../services/unfurl";
+import { NewBookmarkQuerystringSchema } from "../../bookmarks";
 
 export interface Props {
   csrfToken: string;

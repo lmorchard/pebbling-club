@@ -37,12 +37,10 @@ export const commonImportTest = async (
     );
   }
 
-  const { total, items } = await bookmarks.listForOwner(
-    profileId,
-    profileId,
-    10,
-    0
-  );
+  const { total, items } = await bookmarks.listForOwner(profileId, profileId, {
+    limit: 10,
+    offset: 0,
+  });
 
   assert.equal(total, 5, "expected total from import");
   assert.equal(items.length, 5, "expected total from import");

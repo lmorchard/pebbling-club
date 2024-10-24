@@ -41,13 +41,19 @@ describe("services/imports", () => {
     const { total, items } = await bookmarks.listForOwner(
       profileId,
       profileId,
-      10,
-      0
+      { limit: 10, offset: 0 }
     );
-  
-    assert.equal(total, TEST_COMBINED_URLS.length, "expected total from import");
-    assert.equal(items.length, TEST_COMBINED_URLS.length, "expected total from import");
 
+    assert.equal(
+      total,
+      TEST_COMBINED_URLS.length,
+      "expected total from import"
+    );
+    assert.equal(
+      items.length,
+      TEST_COMBINED_URLS.length,
+      "expected total from import"
+    );
   });
 });
 

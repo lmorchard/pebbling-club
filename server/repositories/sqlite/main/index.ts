@@ -1,12 +1,15 @@
 import Knex from "knex";
 import { v4 as uuid } from "uuid";
+import parseDuration from "parse-duration";
 import { IKnexConnectionOptions, IKnexRepository } from "../../knex";
 import {
   Bookmark,
   IBookmarksRepository,
+  BookmarksListOptions,
   TagCount,
   BookmarkCreatableWithHash,
   BookmarkUpdatableWithHash,
+  BookmarksRepositoryListOptions,
 } from "../../../services/bookmarks";
 import {
   Profile,
@@ -14,6 +17,7 @@ import {
   IProfilesRepository,
 } from "../../../services/profiles";
 import { IPasswordsRepository } from "../../../services/passwords";
+import FeedsRepository from "../feeds";
 import BaseSqliteKnexRepository from "../base";
 import path from "path";
 
@@ -69,8 +73,12 @@ export type TagItem = {
   name: string;
 };
 
+type IAppRequirements = {
+  feedsRepository?: FeedsRepository;
+};
+
 export class SqliteRepository
-  extends BaseSqliteKnexRepository
+  extends BaseSqliteKnexRepository<IAppRequirements>
   implements
     IBookmarksRepository,
     IPasswordsRepository,
@@ -422,32 +430,31 @@ export class SqliteRepository
 
   async listBookmarksForOwner(
     ownerId: string,
-    limit: number,
-    offset: number
+    options: BookmarksRepositoryListOptions
   ): Promise<{ total: number; items: Bookmark[] }> {
-    const query = this.connection("bookmarks").where({ ownerId });
-    return this._paginateBookmarksQuery(query, limit, offset);
+    return this._listBookmarks(options, async (query) => {
+      query.where({ ownerId });
+    });
   }
 
   async listBookmarksForOwnerByTags(
     ownerId: string,
     tags: string[],
-    limit: number,
-    offset: number
+    options: BookmarksRepositoryListOptions
   ): Promise<{ total: number; items: Bookmark[] }> {
-    const query = this.connection("bookmarks").where({ ownerId });
-    this._constrainBookmarksQueryByTag(query, tags);
-    return this._paginateBookmarksQuery(query, limit, offset);
+    return this._listBookmarks(options, async (query) => {
+      query.where({ ownerId });
+      this._constrainBookmarksQueryByTag(query, tags);
+    });
   }
 
   async listBookmarksByTags(
     tags: string[],
-    limit: number,
-    offset: number
+    options: BookmarksRepositoryListOptions
   ): Promise<{ total: number; items: Bookmark[] }> {
-    const query = this.connection("bookmarks");
-    this._constrainBookmarksQueryByTag(query, tags);
-    return this._paginateBookmarksQuery(query, limit, offset);
+    return this._listBookmarks(options, async (query) => {
+      this._constrainBookmarksQueryByTag(query, tags);
+    });
   }
 
   async listTagsForOwner(
@@ -501,33 +508,45 @@ export class SqliteRepository
     }
   }
 
-  _mapRowToBookmark(row: BookmarksRow | null): Bookmark | null {
-    if (!row) return null;
-    const { tags = "", created, modified, meta = "{}", ...rest } = row;
-    return {
-      ...rest,
-      meta: this.deserializeMetaColumn(meta),
-      tags: this.deserializeTagsColumn(tags),
-      created: new Date(created),
-      modified: new Date(modified),
-    };
+  async _listBookmarks(
+    options: BookmarksRepositoryListOptions,
+    modifierFn: (query: Knex.Knex.QueryBuilder) => Promise<void>
+  ): Promise<{ total: number; items: Bookmark[] }> {
+    const { limit, offset, order, since } = options;
+
+    if (order === "feed") await this._attachFeedsDatabase();
+
+    const query = this._baseListBookmarksQuery();
+    await modifierFn(query);
+    await this._constrainBoomarksQueryByDate(query, order, since);
+    await this._orderBookmarksQuery(query, order);
+    const result = await this._paginateBookmarksQuery(query, limit, offset);
+
+    if (order === "feed") await this._detachFeedsDatabase();
+
+    return result;
   }
 
-  _mapBookmarkToRow(bookmark: Bookmark): BookmarksRow {
-    const {
-      tags = [],
-      created = new Date(),
-      modified = new Date(),
-      meta = {},
-      ...rest
-    } = bookmark;
-    return {
-      ...rest,
-      meta: this.serializeMetaColumn(meta),
-      tags: this.serializeTagsColumn(tags),
-      created: created.getTime(),
-      modified: modified.getTime(),
-    };
+  async _constrainBoomarksQueryByDate(
+    query: Knex.Knex.QueryBuilder,
+    order?: string,
+    sinceDate?: Date
+  ) {
+    if (!sinceDate) return;
+
+    this.log.info({ msg: "since date", sinceDate });
+
+    // TODO: these differences in date format is annoying :(
+    // TODO: separate these into distinct parameters
+    if (order === "feed") {
+      query.where("FeedsDB.Feeds.newestItemDate", ">", sinceDate?.toISOString());
+    } else {
+      query.where("bookmarks.modified", ">", sinceDate?.getTime());
+    }
+  }
+
+  _baseListBookmarksQuery(): Knex.Knex.QueryBuilder {
+    return this.connection("bookmarks").select("bookmarks.*");
   }
 
   async _paginateBookmarksQuery(
@@ -556,9 +575,73 @@ export class SqliteRepository
 
   _constrainBookmarksQueryByTag(query: Knex.Knex.QueryBuilder, tags: string[]) {
     for (const name of tags) {
-      query.whereIn("id", function () {
+      query.whereIn("bookmarks.id", function () {
         this.select("bookmarksId").from("tags").where({ name });
       });
     }
+  }
+
+  async _orderBookmarksQuery(query: Knex.Knex.QueryBuilder, order?: string) {
+    if (order === "feed" && this.app.feedsRepository) {
+      query
+        .joinRaw(
+          `
+            LEFT JOIN FeedsDB.Feeds
+            ON FeedsDB.Feeds.url = bookmarks.feedUrl
+          `
+        )
+        .orderBy("FeedsDB.Feeds.newestItemDate", "desc");
+    }
+  }
+
+  async _attachFeedsDatabase() {
+    const { log } = this;
+    const { feedsRepository } = this.app;
+    if (!feedsRepository) return;
+
+    // HACK: Knex doesn't export Sqlite3ConnectionConfig type?
+    const { filename } = feedsRepository!.knexConnectionOptions() as {
+      filename: string;
+    };
+    await this.connection.raw(`ATTACH DATABASE ? AS FeedsDB`, filename);
+    log.trace({ msg: "attached feeds database" });
+  }
+
+  async _detachFeedsDatabase() {
+    const { log } = this;
+    const { feedsRepository } = this.app;
+    if (!feedsRepository) return;
+
+    await this.connection.raw(`DETACH DATABASE FeedsDB`);
+    log.trace({ msg: "detached feeds database" });
+  }
+
+  _mapRowToBookmark(row: BookmarksRow | null): Bookmark | null {
+    if (!row) return null;
+    const { tags = "", created, modified, meta = "{}", ...rest } = row;
+    return {
+      ...rest,
+      meta: this.deserializeMetaColumn(meta),
+      tags: this.deserializeTagsColumn(tags),
+      created: new Date(created),
+      modified: new Date(modified),
+    };
+  }
+
+  _mapBookmarkToRow(bookmark: Bookmark): BookmarksRow {
+    const {
+      tags = [],
+      created = new Date(),
+      modified = new Date(),
+      meta = {},
+      ...rest
+    } = bookmark;
+    return {
+      ...rest,
+      meta: this.serializeMetaColumn(meta),
+      tags: this.serializeTagsColumn(tags),
+      created: created.getTime(),
+      modified: modified.getTime(),
+    };
   }
 }

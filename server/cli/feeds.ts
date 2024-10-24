@@ -35,6 +35,19 @@ export default class CliFeeds extends CliAppModule<IAppRequirements> {
       .option("-f, --force", "force fetch")
       .description("attempt to poll a feed from a given URL")
       .action(this.commandPoll.bind(this));
+
+    feedsProgram
+      .command("update-all")
+      .option("-f, --force", "force fetch")
+      .description("attempt to update all feeds")
+      .action(this.commandUpdateAll.bind(this));
+  }
+
+  async commandUpdateAll(options: { force?: boolean }) {
+    const { app, log } = this;
+    const { feeds } = app;
+
+    await feeds.updateAll({ forceFetch: options.force });
   }
 
   async commandGet(url: string, options: { force?: boolean }) {

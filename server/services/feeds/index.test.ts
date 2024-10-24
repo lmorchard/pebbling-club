@@ -1,13 +1,14 @@
 import { rimraf } from "rimraf";
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "assert";
-import { BaseApp } from "../app";
-import { IApp } from "../app/types";
-import { FeedsService, IFeedsRepository, Feed, FeedDiscovered } from "./feeds";
-import SqliteFeedsRepository from "../repositories/sqlite/feeds";
-import { FetchService, IFetchRepository } from "./fetch";
-import { applyFetchMock } from "../utils/test";
-import SqliteFetchRepository from "../repositories/sqlite/fetch";
+import { BaseApp } from "../../app";
+import { IApp } from "../../app/types";
+import { FeedsService } from "./index";
+import { IFeedsRepository, Feed, FeedDiscovered } from "./types";
+import SqliteFeedsRepository from "../../repositories/sqlite/feeds";
+import { FetchService, IFetchRepository } from "../fetch";
+import { applyFetchMock } from "../../utils/test";
+import SqliteFetchRepository from "../../repositories/sqlite/fetch";
 
 describe("services/feeds", () => {
   let app: TestApp;
