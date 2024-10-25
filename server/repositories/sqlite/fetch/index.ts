@@ -58,11 +58,13 @@ export default class SqliteFetchRepository
       cachedAt: Date.now(),
     };
 
-    await this.connection("FetchCache")
-      .insert(toUpsert)
-      .onConflict("url")
-      .merge(toUpsert)
-      .returning("id");
+    await this.enqueue(() =>
+      this.connection("FetchCache")
+        .insert(toUpsert)
+        .onConflict("url")
+        .merge(toUpsert)
+        .returning("id")
+    );
 
     return {
       status,
@@ -92,7 +94,7 @@ export default class SqliteFetchRepository
 
   _bodyReadableFromBuffer(data: Buffer) {
     const body = new BodyReadableImpl({
-      // TODO: supply content-type and content-length here? 
+      // TODO: supply content-type and content-length here?
     }) as BodyReadable;
     body.push(data);
     body.push(null);
@@ -100,7 +102,7 @@ export default class SqliteFetchRepository
   }
 
   async clearCachedResponses(): Promise<void> {
-    return await this.connection("FetchCache").delete();
+    return await this.enqueue(() => this.connection("FetchCache").delete());
   }
 }
 

@@ -113,13 +113,15 @@ export class SqliteRepository
     salt: string
   ): Promise<string> {
     const id = uuid();
-    await this.connection("passwords").insert({
-      id,
-      username,
-      profileId,
-      passwordHashed,
-      salt,
-    });
+    await this.enqueue(() =>
+      this.connection("passwords").insert({
+        id,
+        username,
+        profileId,
+        passwordHashed,
+        salt,
+      })
+    );
     return id;
   }
 
@@ -128,13 +130,13 @@ export class SqliteRepository
     passwordHashed: string,
     salt: string
   ) {
-    return await this.connection("passwords")
-      .where("username", username)
-      .update({
+    return await this.enqueue(() =>
+      this.connection("passwords").where("username", username).update({
         username,
         passwordHashed,
         salt,
-      });
+      })
+    );
   }
 
   async getHashedPasswordAndSaltForUsername(
@@ -184,7 +186,9 @@ export class SqliteRepository
   }
 
   async deleteHashedPasswordAndSaltForId(id: string): Promise<string> {
-    return this.connection("passwords").where("id", id).del();
+    return this.enqueue(() =>
+      this.connection("passwords").where("id", id).del()
+    );
   }
 
   async checkIfProfileExistsForUsername(username: string): Promise<boolean> {
@@ -198,22 +202,26 @@ export class SqliteRepository
   async createProfile(profile: Profile): Promise<string> {
     const id = uuid();
     const now = Date.now();
-    await this.connection("profiles").insert({
-      ...profile,
-      id,
-      created: profile.created?.getTime() || now,
-      modified: profile.modified?.getTime() || now,
-    });
+    await this.enqueue(() =>
+      this.connection("profiles").insert({
+        ...profile,
+        id,
+        created: profile.created?.getTime() || now,
+        modified: profile.modified?.getTime() || now,
+      })
+    );
     return id;
   }
 
   async updateProfile(id: string, profile: ProfileEditable): Promise<void> {
-    await this.connection("profiles")
-      .where({ id })
-      .update({
-        ...profile,
-        modified: Date.now(),
-      });
+    await this.enqueue(() =>
+      this.connection("profiles")
+        .where({ id })
+        .update({
+          ...profile,
+          modified: Date.now(),
+        })
+    );
   }
 
   async getProfile(id: string): Promise<Profile> {
@@ -225,15 +233,13 @@ export class SqliteRepository
   }
 
   async deleteProfile(id: string): Promise<void> {
-    return await this.connection("profiles").where({ id }).del();
+    return this.enqueue(() => this.connection("profiles").where({ id }).del());
   }
 
   async upsertBookmark(bookmark: BookmarkCreatableWithHash) {
     const now = Date.now();
-    const result = await this._upsertOneBookmark(
-      bookmark,
-      now,
-      this.connection
+    const result = await this.enqueue(() =>
+      this._upsertOneBookmark(bookmark, now, this.connection)
     );
     return result;
   }
@@ -241,12 +247,14 @@ export class SqliteRepository
   async upsertBookmarksBatch(bookmarks: BookmarkCreatableWithHash[]) {
     const now = Date.now();
     const results: Bookmark[] = [];
-    await this.connection.transaction(async (trx) => {
-      for (const bookmark of bookmarks) {
-        const result = await this._upsertOneBookmark(bookmark, now, trx);
-        results.push(result);
-      }
-    });
+    await this.enqueue(() =>
+      this.connection.transaction(async (trx) => {
+        for (const bookmark of bookmarks) {
+          const result = await this._upsertOneBookmark(bookmark, now, trx);
+          results.push(result);
+        }
+      })
+    );
     return results;
   }
 
@@ -317,11 +325,8 @@ export class SqliteRepository
     const original = await this.fetchBookmark(bookmark.id);
     if (!original) throw new Error("item not found");
 
-    const result = await this._updateOneBookmark(
-      bookmark,
-      original,
-      now,
-      this.connection
+    const result = await this.enqueue(() =>
+      this._updateOneBookmark(bookmark, original, now, this.connection)
     );
     // TODO: this is ugly because I'm lazy and updateBookmarksBatch returns partial, but this method actually does return Bookmark
     return result as Bookmark;
@@ -333,17 +338,19 @@ export class SqliteRepository
     // TODO: do a batch fetch of bookmarks to be updated to support returning optimistic updates?
     const now = Date.now();
     const results: Partial<Bookmark>[] = [];
-    await this.connection.transaction(async (trx) => {
-      for (const bookmark of bookmarks) {
-        const result = await this._updateOneBookmark(
-          bookmark,
-          undefined,
-          now,
-          trx
-        );
-        results.push(result);
-      }
-    });
+    await this.enqueue(() =>
+      this.connection.transaction(async (trx) => {
+        for (const bookmark of bookmarks) {
+          const result = await this._updateOneBookmark(
+            bookmark,
+            undefined,
+            now,
+            trx
+          );
+          results.push(result);
+        }
+      })
+    );
     return results;
   }
 
@@ -401,9 +408,9 @@ export class SqliteRepository
   }
 
   async deleteBookmark(bookmarkId: string) {
-    const result = await this.connection("bookmarks")
-      .where({ id: bookmarkId })
-      .del();
+    const result = await this.enqueue(() =>
+      this.connection("bookmarks").where({ id: bookmarkId }).del()
+    );
     return result > 0;
   }
 
@@ -539,7 +546,11 @@ export class SqliteRepository
     // TODO: these differences in date format is annoying :(
     // TODO: separate these into distinct parameters
     if (order === "feed") {
-      query.where("FeedsDB.Feeds.newestItemDate", ">", sinceDate?.toISOString());
+      query.where(
+        "FeedsDB.Feeds.newestItemDate",
+        ">",
+        sinceDate?.toISOString()
+      );
     } else {
       query.where("bookmarks.modified", ">", sinceDate?.getTime());
     }
