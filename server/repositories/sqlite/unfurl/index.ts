@@ -42,11 +42,13 @@ export default class SqliteUnfurlRepository
       cachedAt,
       metadata: this._serializeMetadataColumn(metadata),
     };
-    const result = await this.connection("UnfurlCache")
-      .insert(toUpsert)
-      .onConflict("url")
-      .merge()
-      .returning("id");
+    const result = await this.enqueue(() =>
+      this.connection("UnfurlCache")
+        .insert(toUpsert)
+        .onConflict("url")
+        .merge()
+        .returning("id")
+    );
     return metadata;
   }
 
