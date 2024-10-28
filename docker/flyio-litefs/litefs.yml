@@ -43,8 +43,8 @@ proxy:
 
 exec:
   # Run backup on candidate node
-  - cmd: "./scripts/backup-sqlite-to-s3.sh &"
-    if-candidate: true
+  #- cmd: "./scripts/backup-sqlite-to-s3.sh &"
+  #  if-candidate: true
 
   # Only run migrations on candidate nodes.
   - cmd: "npm run migrate"
