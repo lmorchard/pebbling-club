@@ -26,5 +26,6 @@ pc-feed .items > .item > time {
 
 pc-feed .items > .item > time::before {
   content: "\1F4C6";
+  font-size: 0.8em;
   padding-right: 0.25em;
 }
