@@ -18,7 +18,7 @@ export default class SqliteUnfurlRepository
   implements IUnfurlRepository, IKnexRepository, IKnexConnectionOptions
 {
   get migrationsDirectory() {
-    return path.resolve(path.join(__dirname, "migrations"));
+    return this._resolveMigrationsDirectory("unfurl");
   }
 
   knexConnectionOptions(): Knex.Knex.Config["connection"] {
