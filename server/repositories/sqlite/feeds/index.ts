@@ -26,7 +26,7 @@ export default class SqliteFeedsRepository
   implements IFeedsRepository, IKnexRepository, IKnexConnectionOptions
 {
   get migrationsDirectory() {
-    return path.resolve(path.join(__dirname, "migrations"));
+    return this._resolveMigrationsDirectory("feeds");
   }
 
   knexConnectionOptions(): Knex.Knex.Config["connection"] {

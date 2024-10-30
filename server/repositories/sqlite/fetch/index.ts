@@ -7,9 +7,9 @@ import {
   FetchResponse,
   FetchResponseFromCache,
 } from "../../../services/fetch";
-import BodyReadable from "undici/types/readable";
+import BodyReadable from "undici/types/readable.js";
 // @ts-ignore
-import { Readable as BodyReadableImpl } from "undici/lib/api/readable";
+import { Readable as BodyReadableImpl } from "undici/lib/api/readable.js";
 
 export const configSchema = {
   sqliteFetchDatabaseName: {
@@ -25,7 +25,7 @@ export default class SqliteFetchRepository
   implements IFetchRepository, IKnexRepository, IKnexConnectionOptions
 {
   get migrationsDirectory() {
-    return path.resolve(path.join(__dirname, "migrations"));
+    return this._resolveMigrationsDirectory("fetch");
   }
 
   knexConnectionOptions(): Knex.Knex.Config["connection"] {

@@ -51,7 +51,19 @@ export default class BaseSqliteKnexRepository<
   }
 
   get migrationsDirectory() {
-    return path.resolve(path.join(__dirname, "migrations"));
+    return this._resolveMigrationsDirectory("main");
+  }
+
+  _resolveMigrationsDirectory(repositoryPath: string) {
+    return path.resolve(
+      path.join(
+        // TODO: find a replacement for __dirname even when transpiled & bundled
+        process.cwd(),
+        "server/repositories/sqlite",
+        repositoryPath,
+        "migrations"
+      )
+    );
   }
 
   get connection() {

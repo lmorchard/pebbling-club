@@ -8,9 +8,9 @@ import { ImportService } from "../services/imports";
 import { PasswordService, IPasswordsRepository } from "../services/passwords";
 import { ProfileService, IProfilesRepository } from "../services/profiles";
 import { FetchResponseFromCache, FetchService } from "../services/fetch";
-import BodyReadable from "undici/types/readable";
+import BodyReadable from "undici/types/readable.js";
 // @ts-ignore
-import { Readable as BodyReadableImpl } from "undici/lib/api/readable";
+import { Readable as BodyReadableImpl } from "undici/lib/api/readable.js";
 
 export class TestApp extends BaseApp implements IApp {
   repository: IPasswordsRepository & IProfilesRepository & IBookmarksRepository;
