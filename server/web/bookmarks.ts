@@ -77,6 +77,7 @@ export const BookmarksRouter: FastifyPluginAsync<
       };
 
       return reply.renderTemplate(templateBookmarksNew, {
+        minimalLayout: !!request.query.popup,
         csrfToken: reply.generateCsrf(),
         formData,
         unfurlResult,
@@ -329,6 +330,7 @@ export const NewBookmarkQuerystringSchema = {
     tags: { type: "string" },
     next: { type: "string" },
     submit: { type: "string" },
+    popup: { type: "boolean" },
   },
 } as const;
 

@@ -1,11 +1,13 @@
 import { html, TemplateContent, ITemplateProps } from "../utils/html";
 
 export interface PageProps extends ITemplateProps {
+  minimalLayout?: boolean;
   title?: string;
   htmlHead?: TemplateContent;
 }
 
 export default ({
+  minimalLayout = false,
   title,
   htmlHead,
   content,
@@ -25,9 +27,15 @@ export default ({
       </head>
       <body>
         <details-closer>
-          <div class="content-grid-wrapper">
-            <div class="content-grid">${content}</div>
-          </div>
+          ${
+            minimalLayout
+              ? content
+              : html`
+                  <div class="content-grid-wrapper">
+                    <div class="content-grid">${content}</div>
+                  </div>
+              `
+          }
         </details-closer>
       </body>
     </html>
