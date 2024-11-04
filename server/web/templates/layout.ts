@@ -1,15 +1,18 @@
 import _ from "lodash";
 import { Profile } from "../../services/profiles";
-import { html, unescaped, TemplateContent, ITemplateProps } from "../utils/html";
+import { html, TemplateContent, ITemplateProps } from "../utils/html";
+import newBookmarklet from "./partials/newBookmarklet";
 import Page, { PageProps } from "./page";
 
 export interface LayoutProps extends ITemplateProps {
+  minimalLayout?: boolean;
   user?: Profile;
   forceRefresh?: boolean;
   siteUrl?: string;
 }
 
 export const layout = ({
+  minimalLayout = false,
   content,
   user,
   forceRefresh,
@@ -18,9 +21,12 @@ export const layout = ({
   ...pageProps
 }: { content: TemplateContent } & LayoutProps & PageProps) => {
   const newUrl = new URL("/new", siteUrl!).toString();
+  const bookmarkletSrc = newBookmarklet({ newUrl });
+  const bookmarkletPopupSrc = newBookmarklet({ newUrl, popup: true });
 
   return Page({
     ...pageProps,
+    minimalLayout,
     htmlHead: html`
       ${htmlHeadIn}
       ${
@@ -42,60 +48,60 @@ export const layout = ({
       `
       }
     `,
-    content: html`
-      <header class="site">
-        <section class="masthead">
-          <h1>
-            <a href="${user ? `/u/${user.username}` : "/"}"
-              >Pebbling Club 🐧🪨</a
-            >
-          </h1>
-        </section>
-        <nav>
-          <theme-selector title="Enable dark theme">
-            <label>
-              <input type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </theme-selector>
-          ${
-            user
-              ? html`
-                <a class="newBookmark" href="/new">+ New</a>
-                <details class="autoclose">
-                  <summary>
-                    <span>${user.username}</span>
-                  </summary>
-                  <div>
-                    <a href="/new">+ New</a>
-                    <a href="/u/${user.username}">Profile</a>
-                    <a href="/settings">Settings</a>
-                    <a
-                      href="javascript:if(document.getSelection){s=document.getSelection();}else{s='';};document.location='${newUrl}?next=same&href='+encodeURIComponent(location.href)+'&extended='+encodeURIComponent(s)+'&title='+encodeURIComponent(document.title)+'&tags='+encodeURIComponent('')"
-                      >Bookmarklet</a
-                    >
-                    <form action="/logout" method="post">
-                      <button type="submit">Logout</button>
-                    </form>
-                  </div>
-                </details>
-              `
-              : html`
-                <details class="autoclose">
-                  <summary>Welcome!</summary>
-                  <div>
-                    <a href="/signup">Signup</a>
-                    <a href="/login">Login</a>
-                  </div>
-                </details>
-              `
-          }
-        </nav>
-      </header>
+    content: minimalLayout
+      ? content
+      : html`
+        <header class="site">
+          <section class="masthead">
+            <h1>
+              <a href="${user ? `/u/${user.username}` : "/"}"
+                >Pebbling Club 🐧🪨</a
+              >
+            </h1>
+          </section>
+          <nav>
+            <theme-selector title="Enable dark theme">
+              <label>
+                <input type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </theme-selector>
+            ${
+              user
+                ? html`
+                  <a class="newBookmark" href="/new">+ New</a>
+                  <details class="autoclose">
+                    <summary>
+                      <span>${user.username}</span>
+                    </summary>
+                    <div>
+                      <a href="/new">+ New</a>
+                      <a href="/u/${user.username}">Profile</a>
+                      <a href="/settings">Settings</a>
+                      <a href="${bookmarkletSrc}">Bookmarklet</a>
+                      <a href="${bookmarkletPopupSrc}">Bookmarklet (popup)</a>
+                      <form action="/logout" method="post">
+                        <button type="submit">Logout</button>
+                      </form>
+                    </div>
+                  </details>
+                `
+                : html`
+                  <details class="autoclose">
+                    <summary>Welcome!</summary>
+                    <div>
+                      <a href="/signup">Signup</a>
+                      <a href="/login">Login</a>
+                    </div>
+                  </details>
+                `
+            }
+          </nav>
+        </header>
 
-      ${content}
+        ${content}
 
-      <footer></footer>
-    `,
+        <footer></footer>
+      `,
   });
 };
