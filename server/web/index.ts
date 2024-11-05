@@ -18,8 +18,6 @@ import FastifyRequestContextPlugin from "@fastify/request-context";
 
 import AjvErrors from "ajv-errors";
 
-import { IApp, ICliApp } from "../app/types";
-
 import { HomeRouter } from "./home";
 import { ProfilesRouter } from "./profiles";
 import { BookmarksRouter } from "./bookmarks";
@@ -38,10 +36,10 @@ import { Boom } from "@hapi/boom";
 
 import templateError from "./templates/errors/error";
 import templateNotFound from "./templates/errors/notFound";
-import templateForbidden from "./templates/errors/forbidden";
 import { FeedsService } from "../services/feeds";
 import { Command } from "commander";
 import { UnfurlService } from "../services/unfurl";
+import { JobsService } from "../services/jobs";
 
 export const configSchema = {
   host: {
@@ -112,6 +110,7 @@ export type IAppRequirements = {
   profiles: ProfileService;
   bookmarks: BookmarksService;
   unfurl: UnfurlService;
+  jobs?: JobsService;
 };
 
 export default class Server extends CliAppModule<IAppRequirements> {
@@ -123,8 +122,7 @@ export default class Server extends CliAppModule<IAppRequirements> {
   }
 
   async commandServe() {
-    const { log } = this;
-    const { config } = this.app;
+    const { config, jobs } = this.app;
 
     this.setDefaultSiteUrl();
 

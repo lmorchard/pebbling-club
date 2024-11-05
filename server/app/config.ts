@@ -10,9 +10,11 @@ import { configSchema as repositorySqliteConfigSchema } from "../repositories/sq
 import { configSchema as repositorySqliteFeedsConfigSchema } from "../repositories/sqlite/feeds/index";
 import { configSchema as repositorySqliteFetchConfigSchema } from "../repositories/sqlite/fetch/index";
 import { configSchema as repositorySqliteUnfurlConfigSchema } from "../repositories/sqlite/unfurl/index";
+import { configSchema as repositorySqliteJobsConfigSchema } from "../repositories/sqlite/jobs/index";
 import { configSchema as fetchConfigSchema } from "../services/fetch";
 import { configSchema as feedsConfigSchema } from "../services/feeds";
 import { configSchema as unfurlConfigSchema } from "../services/unfurl";
+import { configSchema as jobsConfigSchema } from "../services/jobs";
 
 // HACK: Hardcoded assemblage of all configuration schemas, would be nice
 // if was dynamic at run-time
@@ -23,9 +25,11 @@ export const configSchema = {
   ...repositorySqliteFeedsConfigSchema,
   ...repositorySqliteFetchConfigSchema,
   ...repositorySqliteUnfurlConfigSchema,
+  ...repositorySqliteJobsConfigSchema,
   ...fetchConfigSchema,
   ...feedsConfigSchema,
   ...unfurlConfigSchema,
+  ...jobsConfigSchema,
 } as const;
 
 // Load up the base config from environment and schema

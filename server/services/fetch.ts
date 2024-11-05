@@ -170,9 +170,11 @@ export class FetchService extends AppModule<IAppRequirements> {
         headersTimeout: timeout,
         bodyTimeout: timeout,
         signal: controller.signal,
+        /* TODO: debug why the event thrown by this is uncatchable?
         dispatcher: new Undici.Agent({
           maxResponseSize,
         }),
+        */
       });
       clearTimeout(abortTimeout);
       log.trace({

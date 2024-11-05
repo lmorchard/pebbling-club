@@ -1,13 +1,14 @@
 import { AppModule } from "../../app/modules";
 import { FetchService } from "../fetch";
 import { IFeedsRepository } from "./types";
-
-export * from "./types";
-
 import { autodiscover } from "./autodiscover";
 import { poll } from "./poll";
 import { get } from "./get";
-import { update, updateAll } from "./update";
+import { update, updateAll, updateAllWithJobQueue } from "./update";
+import { initJobs, handleUpdateFeedJob, deferFeedUpdate } from "./jobs";
+import { JobsService } from "../jobs";
+
+export * from "./types";
 
 export const configSchema = {
   feedPollMaxAge: {
@@ -29,12 +30,13 @@ export const configSchema = {
     doc: "Number of concurrent feed updates",
     format: Number,
     default: 32,
-  }
+  },
 };
 
 export type IAppRequirements = {
   feedsRepository: IFeedsRepository;
   fetch: FetchService;
+  jobs?: JobsService;
 };
 
 export class FeedsService extends AppModule<IAppRequirements> {
@@ -43,4 +45,15 @@ export class FeedsService extends AppModule<IAppRequirements> {
   poll: typeof poll = poll.bind(this);
   update: typeof update = update.bind(this);
   updateAll: typeof updateAll = updateAll.bind(this);
+  updateAllWithJobQueue: typeof updateAllWithJobQueue =
+    updateAllWithJobQueue.bind(this);
+  initJobs: typeof initJobs = initJobs.bind(this);
+  handleUpdateFeedJob: typeof handleUpdateFeedJob =
+    handleUpdateFeedJob.bind(this);
+  deferFeedUpdate: typeof deferFeedUpdate = deferFeedUpdate.bind(this);
+
+  async init() {
+    await this.initJobs();
+    return super.init();
+  }
 }

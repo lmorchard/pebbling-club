@@ -47,7 +47,8 @@ export default class CliFeeds extends CliAppModule<IAppRequirements> {
     const { app, log } = this;
     const { feeds } = app;
 
-    await feeds.updateAll({ forceFetch: options.force });
+    //await feeds.updateAll({ forceFetch: options.force });
+    await feeds.updateAllWithJobQueue({ forceFetch: options.force });
   }
 
   async commandGet(url: string, options: { force?: boolean }) {
