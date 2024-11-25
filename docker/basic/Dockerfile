@@ -44,4 +44,4 @@ RUN mkdir -p /var/data
 VOLUME [ "/var/data" ]
 
 EXPOSE ${PORT}
-CMD [ "npm", "run", "prod" ]
+CMD [ "npm", "run", "start" ]
