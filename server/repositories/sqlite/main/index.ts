@@ -541,8 +541,6 @@ export class SqliteRepository
   ) {
     if (!sinceDate) return;
 
-    this.log.info({ msg: "since date", sinceDate });
-
     // TODO: these differences in date format is annoying :(
     // TODO: separate these into distinct parameters
     if (order === "feed") {
