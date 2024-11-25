@@ -41,7 +41,7 @@ export default class BaseSqliteKnexRepository<
       // Failed to access database, assume it doesn't exist
       // TODO: check if it's actually a permission problem
       log.trace({ msg: "sqlite database access failed", err });
-      log.info({
+      log.trace({
         msg: "initializing sqlite database",
         filename: connectionOptions.filename,
       });
@@ -64,6 +64,16 @@ export default class BaseSqliteKnexRepository<
         "migrations"
       )
     );
+  }
+
+  _buildKnexConnectionOptions(databaseNameConfig: string): Knex.Knex.Config["connection"] {
+    const { config } = this.app;
+    return {
+      filename: path.join(
+        config.get("sqliteDatabasePath"),
+        config.get(databaseNameConfig),
+      ),
+    };
   }
 
   get connection() {

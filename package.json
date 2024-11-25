@@ -61,6 +61,7 @@
     "common": "./common",
     "convict": "^6.2.4",
     "cookie-parser": "^1.4.6",
+    "cron-parser": "^4.9.0",
     "csurf": "^1.11.0",
     "csv": "^6.3.10",
     "dotenv": "^16.4.5",

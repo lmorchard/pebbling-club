@@ -23,14 +23,19 @@ import CliFeeds from "./cli/feeds";
 import CliDb from "./cli/db";
 import CliFetch from "./cli/fetch";
 import CliUnfurl from "./services/unfurl/cli";
+import CliJobs from "./services/jobs/cli";
+import SqliteJobsRepository from "./repositories/sqlite/jobs";
+import { JobsService } from "./services/jobs";
 
 export class MainCliApp extends BaseCliApp {
   // TODO: make repository instances switchable via config
   feedsRepository = new SqliteFeedsRepository(this);
   fetchRepository = new SqliteFetchRepository(this);
   unfurlRepository = new SqliteUnfurlRepository(this);
+  jobsRepository = new SqliteJobsRepository(this);
   repository = new SqliteRepository(this);
 
+  jobs = new JobsService(this);
   passwords = new PasswordService(this);
   profiles = new ProfileService(this);
   bookmarks = new BookmarksService(this);
@@ -49,7 +54,10 @@ export class MainCliApp extends BaseCliApp {
       this.feedsRepository,
       this.fetchRepository,
       this.unfurlRepository,
+      this.jobsRepository,
       this.repository,
+
+      this.jobs,
       this.passwords,
       this.profiles,
       this.bookmarks,
@@ -58,13 +66,15 @@ export class MainCliApp extends BaseCliApp {
       this.feeds,
       this.unfurl,
       this.webServer,
+      
       new CliDb(this),
       new CliProfiles(this),
       new CliImport(this),
       new CliBookmarks(this),
       new CliFeeds(this),
       new CliFetch(this),
-      new CliUnfurl(this)
+      new CliUnfurl(this),
+      new CliJobs(this),
     );
   }
 }

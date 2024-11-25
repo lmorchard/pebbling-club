@@ -2,7 +2,6 @@ import PQueue from "p-queue";
 import { FeedsService } from ".";
 import { FeedPollOptions } from "./poll";
 import { Feed, FeedExisting } from "./types";
-import { url } from "inspector";
 
 export async function update(
   this: FeedsService,
@@ -86,4 +85,32 @@ export async function updateAll(
     await updateQueue.onSizeLessThan(concurrency);
   }
   await updateQueue.onIdle();
+}
+
+export async function updateAllWithJobQueue(
+  this: FeedsService,
+  options: FeedPollOptions = {}
+) {
+  const { app, log } = this;
+  const { jobs, config, feedsRepository: repository } = app;
+  const { forceFetch = false, maxage = config.get("feedPollMaxAge") } = options;
+
+  if (!jobs) return;
+
+  await jobs.queue.start();
+
+  const feeds = repository.fetchAllFeeds();
+  for await (const streamItem of feeds) {
+    const feed = streamItem as unknown as Feed;
+    await this.deferFeedUpdate(feed, { forceFetch, maxage });
+  }
+
+  const statusTimer = setInterval(async () => {
+    const count = await jobs.manager.pendingCount();
+    log.debug({ msg: "job status", count });
+  }, 1000);
+
+  await jobs.queue.onIdle();
+
+  clearInterval(statusTimer);
 }
