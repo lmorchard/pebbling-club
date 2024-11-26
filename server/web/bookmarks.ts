@@ -224,7 +224,7 @@ export const BookmarksRouter: FastifyPluginAsync<
       if (!bookmark) throw Boom.notFound(`bookmark ${id} not found`);
       if (!bookmark.canEdit) throw Boom.forbidden(`cannot edit bookmark ${id}`);
 
-      const { href, title, extended, visibility } = request.body;
+      const { href, title, extended, visibility, unfurl } = request.body;
       const tags = bookmarks.formFieldToTags(request.body.tags);
 
       const updateData: BookmarkUpdatable = {
@@ -233,6 +233,9 @@ export const BookmarksRouter: FastifyPluginAsync<
         title,
         extended,
         tags,
+        meta: {
+          unfurl: maybeParseJson(unfurl),
+        },
       };
 
       const result = await bookmarks.update(updateData);
