@@ -4,9 +4,9 @@
   "engines": {
     "node": ">=16.x "
   },
-  "main": "./server/build/index.mjs",
+  "main": "./server/build/bin/manage.mjs",
   "scripts": {
-    "start": "tsx --tsconfig ./server/tsconfig.json ./server/index.ts serve",
+    "start": "tsx --tsconfig ./server/tsconfig.json ./server/bin/manage.ts serve",
     "build": "npm-run-all --parallel build:client:web build:server",
     "build:client:web": "tsx ./client/web/build.ts",
     "build:watch": "npm-run-all --parallel build:watch:client:web",
@@ -18,12 +18,18 @@
     "test": "glob -c \"tsx --tsconfig ./server/tsconfig.json --no-warnings --test\" \"./server/**/*.test.ts\"",
     "test:watch": "glob -c \"tsx --tsconfig ./server/tsconfig.json --no-warnings --watch --test\" \"./server/**/*.test.ts\"",
     "dev": "npm-run-all --parallel test:watch dev:serve build:watch",
-    "dev:serve": "nodemon --watch server --ext 'js,ts' --exec 'tsx  --tsconfig ./server/tsconfig.json -- ./server/index.ts --force-pretty-logs serve'",
-    "manage": "tsx --tsconfig ./server/tsconfig.json ./server/index.ts",
+    "dev:serve": "nodemon --watch server --ext 'js,ts' --exec 'tsx  --tsconfig ./server/tsconfig.json -- ./server/bin/manage.ts --force-pretty-logs serve'",
+    "manage": "tsx --tsconfig ./server/tsconfig.json ./server/bin/manage.ts",
     "migrate": "npm run manage db migrate",
     "prod": "npm-run-all prod:migrate prod:start",
-    "prod:migrate": "node ./server/build/index.mjs db migrate",
-    "prod:start": "node ./server/build/index.mjs serve"
+    "prod:migrate": "node ./server/build/bin/manage.mjs db migrate",
+    "prod:start": "node ./server/build/bin/manage.mjs serve",
+    "prod:exit-on-idle-node": "node ./server/build/bin/exit-on-idle-node.mjs"
+  },
+  "exports": {
+    "./server/bin/single-node.ts": "./server/build/bin/single-node.js",
+    "./server/bin/exit-on-idle-node.ts": "./server/build/bin/exit-on-idle-node.js",
+    "./server/bin/manage.ts": "./server/build/bin/manage.js"
   },
   "author": "",
   "license": "ISC",

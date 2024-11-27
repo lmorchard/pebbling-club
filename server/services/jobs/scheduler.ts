@@ -19,7 +19,10 @@ export class JobsServiceScheduler {
   }
 
   async start() {
-    const { config } = this.parent.app;
+    const { log, app } = this.parent;
+    const { config } = app;
+
+    log.debug({ msg: "starting jobs scheduler" });
 
     if (this.schedulerPollIntervalTimer)
       clearInterval(this.schedulerPollIntervalTimer);
@@ -34,7 +37,7 @@ export class JobsServiceScheduler {
       clearInterval(this.schedulerPollIntervalTimer);
   }
 
-  async setupJobPurge() {
+  async scheduleJobPurge() {
     await this.parent.registerJobHandler(JOB_PURGE_RESOLVED_JOBS, async () => {
       await this.parent.manager.purgeResolvedJobs();
       return { success: true };
@@ -59,6 +62,9 @@ export class JobsServiceScheduler {
         schedule.jobTemplate.payload,
         {
           ...schedule.jobTemplate.options,
+          deduplication: {
+            id: schedule.jobTemplate.options?.deduplication?.id || schedule.key,
+          },
           deferUntil: schedule.nextMillis,
         }
       );

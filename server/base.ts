@@ -1,10 +1,11 @@
 #!/usr/bin/env -S npx tsx
-import { BaseCliApp } from "./app/cli";
+import { BaseApp } from "./app";
 
 import { SqliteRepository } from "./repositories/sqlite/main";
 import SqliteFeedsRepository from "./repositories/sqlite/feeds";
 import SqliteFetchRepository from "./repositories/sqlite/fetch";
 import SqliteUnfurlRepository from "./repositories/sqlite/unfurl";
+import SqliteJobsRepository from "./repositories/sqlite/jobs";
 
 import { PasswordService } from "./services/passwords";
 import { ProfileService } from "./services/profiles";
@@ -13,21 +14,11 @@ import { ImportService } from "./services/imports";
 import { FetchService } from "./services/fetch";
 import { FeedsService } from "./services/feeds";
 import { UnfurlService } from "./services/unfurl";
+import { JobsService } from "./services/jobs";
 
 import WebServer from "./web";
 
-import CliProfiles from "./cli/profiles";
-import CliImport from "./cli/import";
-import CliBookmarks from "./cli/bookmarks";
-import CliFeeds from "./cli/feeds";
-import CliDb from "./cli/db";
-import CliFetch from "./cli/fetch";
-import CliUnfurl from "./services/unfurl/cli";
-import CliJobs from "./services/jobs/cli";
-import SqliteJobsRepository from "./repositories/sqlite/jobs";
-import { JobsService } from "./services/jobs";
-
-export class MainCliApp extends BaseCliApp {
+export class BaseServerApp extends BaseApp {
   // TODO: make repository instances switchable via config
   feedsRepository = new SqliteFeedsRepository(this);
   fetchRepository = new SqliteFetchRepository(this);
@@ -47,9 +38,7 @@ export class MainCliApp extends BaseCliApp {
 
   constructor() {
     super();
-
-    const app = this;
-
+  
     this.modules.push(
       this.feedsRepository,
       this.fetchRepository,
@@ -66,23 +55,6 @@ export class MainCliApp extends BaseCliApp {
       this.feeds,
       this.unfurl,
       this.webServer,
-      
-      new CliDb(this),
-      new CliProfiles(this),
-      new CliImport(this),
-      new CliBookmarks(this),
-      new CliFeeds(this),
-      new CliFetch(this),
-      new CliUnfurl(this),
-      new CliJobs(this),
     );
   }
 }
-
-async function main() {
-  const app = new MainCliApp();
-  await app.init();
-  return app.run();
-}
-
-main().catch(console.error);
