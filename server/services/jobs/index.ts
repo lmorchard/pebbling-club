@@ -63,9 +63,11 @@ export class JobsService extends AppModule<IAppRequirements> {
 
   async start() {
     await this.queue.start();
+    await this.scheduler.start();
   }
 
   async pause() {
+    await this.scheduler.pause();
     await this.queue.pause();
   }
 
@@ -74,6 +76,10 @@ export class JobsService extends AppModule<IAppRequirements> {
   registerJobHandler = this.queue.registerJobHandler.bind(this.queue);
   upsertJobSchedule = this.scheduler.upsertJobSchedule.bind(this.scheduler);
   onIdle = this.queue.onIdle.bind(this.queue);
+
+  async isIdle() {
+    return this.queue.queue.size === 0 && this.queue.queue.pending === 0;
+  }
 }
 
 export interface IJobsRepository {

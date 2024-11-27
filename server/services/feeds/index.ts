@@ -1,12 +1,18 @@
 import { AppModule } from "../../app/modules";
 import { FetchService } from "../fetch";
+import { JobsService } from "../jobs";
 import { IFeedsRepository } from "./types";
 import { autodiscover } from "./autodiscover";
 import { poll } from "./poll";
 import { get } from "./get";
 import { update, updateAll, updateAllWithJobQueue } from "./update";
-import { initJobs, handleUpdateFeedJob, deferFeedUpdate } from "./jobs";
-import { JobsService } from "../jobs";
+import {
+  initJobs,
+  handleUpdateFeedJob,
+  deferFeedUpdate,
+  handleUpdateAllFeedsJob,
+  scheduleAllFeedsUpdate,
+} from "./jobs";
 
 export * from "./types";
 
@@ -50,7 +56,11 @@ export class FeedsService extends AppModule<IAppRequirements> {
   initJobs: typeof initJobs = initJobs.bind(this);
   handleUpdateFeedJob: typeof handleUpdateFeedJob =
     handleUpdateFeedJob.bind(this);
+  handleUpdateAllFeedsJob: typeof handleUpdateAllFeedsJob =
+    handleUpdateAllFeedsJob.bind(this);
   deferFeedUpdate: typeof deferFeedUpdate = deferFeedUpdate.bind(this);
+  scheduleAllFeedsUpdate: typeof scheduleAllFeedsUpdate =
+    scheduleAllFeedsUpdate.bind(this);
 
   async init() {
     await this.initJobs();

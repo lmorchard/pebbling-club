@@ -23,5 +23,13 @@ export default class CliUnfurl extends CliAppModule<IAppRequirements> {
         const jobs = await jobsRepository.listJobs();
         log.info({ msg: "jobs", jobs });
       });
+    
+    jobsProgram
+      .command("purge")
+      .description("purge resolved jobs")
+      .action(async () => {
+        await jobs.manager.purgeResolvedJobs();
+        log.info({ msg: "purge" });
+      });
   }
 }

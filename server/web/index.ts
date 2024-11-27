@@ -97,6 +97,18 @@ export const configSchema = {
     nullable: true,
     default: null,
   },
+  serverIdleTimeout: {
+    doc: "Server idle timeout",
+    env: "SERVER_IDLE_TIMEOUT",
+    format: Number,
+    default: 1000 * 60 * 3,
+  },
+  serverIdleCheckPeriod: {
+    doc: "Server idle check period",
+    env: "SERVER_IDLE_CHECK_PERIOD",
+    format: Number,
+    default: 1000 * 5,
+  },
   ...authConfigSchema,
 } as const;
 
@@ -114,6 +126,8 @@ export type IAppRequirements = {
 };
 
 export default class Server extends CliAppModule<IAppRequirements> {
+  activeRequests: number = 0;
+
   async initCli(program: Command) {
     program
       .command("serve")
@@ -124,7 +138,11 @@ export default class Server extends CliAppModule<IAppRequirements> {
   async commandServe() {
     const { config, jobs } = this.app;
 
-    this.setDefaultSiteUrl();
+    await this.start();
+  }
+
+  async start(host?: string, port?: number) {
+    const { config } = this.app;
 
     const server = await this.buildServer();
 
@@ -138,8 +156,8 @@ export default class Server extends CliAppModule<IAppRequirements> {
     });
 
     await server.listen({
-      host: config.get("host"),
-      port: config.get("port"),
+      host: host || config.get("host"),
+      port: port || config.get("port"),
     });
 
     return closePromise;
@@ -148,11 +166,23 @@ export default class Server extends CliAppModule<IAppRequirements> {
   async buildServer() {
     const { config, profiles, passwords } = this.app;
 
+    this.setDefaultSiteUrl();
+
     const fastify: FastifyInstance = Fastify({
       // HACK: ILogger is not compatible with FastifyBaseLogger, though really it is - fix this
       logger: this.log as FastifyBaseLogger,
       ajv: { customOptions: { allErrors: true }, plugins: [AjvErrors] },
     });
+
+    fastify.addHook(
+      "onRequest",
+      async (request, reply) => this.activeRequests++
+    );
+    fastify.addHook(
+      "onResponse",
+      async (request, reply) => this.activeRequests--
+    );
+    fastify.addHook("onError", async (request, reply) => this.activeRequests--);
 
     fastify.register(FastifyCompress);
     fastify.register(FastifyAccepts);

@@ -10,7 +10,7 @@ export async function update(
 ) {
   const { app } = this;
   const { config, feedsRepository: repository } = app;
-  const log = this.log.child({ url: feedIn.url });
+  const log = this.log.child({ id: feedIn.id, url: feedIn.url });
 
   log.trace({ msg: "updateFeed", feed: feedIn, options });
 

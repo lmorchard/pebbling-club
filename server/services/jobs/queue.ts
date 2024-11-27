@@ -22,7 +22,11 @@ export class JobsServiceQueue {
   }
 
   async start() {
-    const { config } = this.parent.app;
+    const { log, app } = this.parent;
+    const { config } = app;
+
+    log.debug({ msg: "starting jobs queue" });
+
     this.queue.start();
 
     if (this.jobsPollIntervalTimer)
