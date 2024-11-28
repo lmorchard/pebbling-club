@@ -15,7 +15,7 @@ export type IAppRequirements = {
   jobsRepository: SqliteJobsRepository;
 };
 
-export default class CliFeeds extends CliAppModule<IAppRequirements> {
+export default class CliDb extends CliAppModule<IAppRequirements> {
   async initCli(program: Command) {
     const { log, app } = this;
     const {
