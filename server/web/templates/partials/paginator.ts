@@ -9,6 +9,7 @@ export interface Props {
   limit: number;
   offset: number;
   limitChoices?: number[];
+  stickyBottom?: boolean;
 }
 
 function pageParams(props: Props) {
@@ -55,7 +56,7 @@ export default (props: Props) => {
   });
 
   return html`
-    <div class="pagination">
+    <div class="pagination ${props.stickyBottom && "pagination-sticky-bottom"}">
       <div class="directions">
         ${prevUrl && html`<a class="previous" href="${prevUrl}">previous</a>`}
         <span>${offset || "0"} - ${offset + limit} of ${total} items</span>
