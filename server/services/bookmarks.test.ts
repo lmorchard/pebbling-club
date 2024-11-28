@@ -69,6 +69,19 @@ describe("services/bookmarks", () => {
       assert.equal(fetched.extended, bookmarkData.extended);
       assert.equal(fetched.tags?.length, 4);
     });
+
+    it("should gracefully handle a bookmark with duplicated tags", async () => {
+      const bookmark = await app.bookmarks.upsert({
+        ownerId: profileId,
+        ...bookmarkData,
+        tags: ["test", "foo", "foo", "bar", "baz"],
+      });
+      assert.ok(bookmark != null);
+
+      const fetched = await app.bookmarks.get(profileId, bookmark.id);
+      assert.ok(fetched != null);
+      assert.equal(fetched.tags?.length, 4);
+    });
   });
 
   describe("update", () => {

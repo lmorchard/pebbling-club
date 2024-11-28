@@ -19,7 +19,6 @@ import {
 import { IPasswordsRepository } from "../../../services/passwords";
 import FeedsRepository from "../feeds";
 import BaseSqliteKnexRepository from "../base";
-import path from "path";
 
 export const configSchema = {
   sqliteDatabasePath: {
@@ -487,7 +486,8 @@ export class SqliteRepository
   }
 
   serializeTagsColumn(tags: Bookmark["tags"] = []): string {
-    const tagItems: TagItem[] = tags.map((tag) => ({
+    const uniqueTags = Array.from(new Set(tags));
+    const tagItems: TagItem[] = uniqueTags.map((tag) => ({
       name: tag,
     }));
     return JSON.stringify(tagItems);
