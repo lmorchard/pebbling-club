@@ -35,13 +35,6 @@ export default ({
     content: html`
       <section class="profile">
         <section class="bookmarks">
-          ${partialPaginator({
-            total,
-            limit,
-            offset,
-            show,
-            open,
-          })}
           ${partialBookmarkList({
             bookmarks,
             profile,
@@ -54,6 +47,7 @@ export default ({
             offset,
             show,
             open,
+            stickyBottom: true,
           })}
         </section>
         <section class="tagCounts">

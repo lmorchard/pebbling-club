@@ -33,3 +33,9 @@
 
   padding-right: 0.125em;
 }
+
+.pagination-sticky-bottom {
+  position: sticky;
+  bottom: 0;
+  background-color: var(--theme-background-color);
+}
