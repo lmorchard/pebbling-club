@@ -170,13 +170,13 @@ export class FetchService extends AppModule<IAppRequirements> {
         headersTimeout: timeout,
         bodyTimeout: timeout,
         signal: controller.signal,
-        /* TODO: debug why the event thrown by this is uncatchable?
         dispatcher: new Undici.Agent({
           maxResponseSize,
         }),
-        */
       });
+
       clearTimeout(abortTimeout);
+
       log.trace({
         msg: "end fetchResource",
         url,
@@ -184,6 +184,15 @@ export class FetchService extends AppModule<IAppRequirements> {
       });
 
       const { statusCode, headers, body } = responseData;
+
+      body.on('error', (err) => {
+        if ('code' in err && err.code === 'UND_ERR_RES_EXCEEDED_MAX_SIZE') {
+          log.error({ msg: 'Response size exceeded the maximum allowed size', url });
+        } else {
+          log.error({ msg: 'Stream error', err, url });
+        }
+      });
+
       const response = {
         status: statusCode,
         headers,
