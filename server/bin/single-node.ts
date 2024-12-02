@@ -7,11 +7,13 @@ async function main() {
 
   const { jobs, feeds, webServer } = app;
 
+  const closePromise = await webServer.start();
+
   await jobs.start();
   await jobs.scheduler.scheduleJobPurge();
   await feeds.scheduleAllFeedsUpdate();
 
-  return await webServer.start();
+  return closePromise;
 }
 
 main().catch(console.error);

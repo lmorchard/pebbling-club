@@ -14,6 +14,24 @@ async function main() {
 
   const server = await webServer.buildServer();
 
+  const closePromise = new Promise<void>((resolve, reject) => {
+    server.addHook("onClose", (instance, done) => {
+      resolve();
+      done();
+    });
+  });
+
+  await server.listen({
+    host: config.get("host"),
+    port: config.get("port"),
+  });
+
+  await jobs.start();
+
+  await jobs.scheduler.scheduleJobPurge();
+
+  await feeds.scheduleAllFeedsUpdate();
+
   let serverLastIdleTime = Date.now();
 
   server.addHook("onRequest", async (request, reply) => {
@@ -56,24 +74,6 @@ async function main() {
       await server.close();
     }
   }, serverIdleCheckPeriod);
-
-  await jobs.start();
-
-  await jobs.scheduler.scheduleJobPurge();
-
-  await feeds.scheduleAllFeedsUpdate();
-
-  const closePromise = new Promise<void>((resolve, reject) => {
-    server.addHook("onClose", (instance, done) => {
-      resolve();
-      done();
-    });
-  });
-
-  await server.listen({
-    host: config.get("host"),
-    port: config.get("port"),
-  });
 
   await closePromise;
 
