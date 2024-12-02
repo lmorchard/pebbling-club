@@ -37,7 +37,12 @@ async function main() {
     const queueIsIdle = await jobs.isIdle();
     if (!queueIsIdle) {
       serverLastIdleTime = Date.now();
-      log.debug({ mag: "Queue active" });
+      log.debug({
+        msg: "Queue active",
+        total: await jobs.queue.totalCount(),
+        pending: await jobs.queue.pendingCount(),
+        count: await jobs.queue.count(),
+      });
       return;
     }
 

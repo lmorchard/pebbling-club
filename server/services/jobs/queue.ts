@@ -4,7 +4,13 @@ import { JobPayload, JobResult, JobHandler, JobModel } from "./types";
 
 export class JobsServiceQueue {
   parent: JobsService;
-  queue = new PQueue({ concurrency: 1, autoStart: false });
+  queue = new PQueue({
+    concurrency: 1,
+    autoStart: false,
+    throwOnTimeout: true,
+    // TODO: make this configurable - also per job?
+    timeout: 1000 * 60 * 5,
+  });
   handlers = new Map<string, JobHandler>();
   jobsPollIntervalTimer: NodeJS.Timeout | null = null;
 
@@ -29,8 +35,9 @@ export class JobsServiceQueue {
 
     this.queue.start();
 
-    if (this.jobsPollIntervalTimer)
+    if (this.jobsPollIntervalTimer) {
       clearInterval(this.jobsPollIntervalTimer);
+    }
     this.jobsPollIntervalTimer = setInterval(
       () => this.maybeFillQueue(),
       config.get("jobsPollIntervalPeriod")
@@ -41,11 +48,29 @@ export class JobsServiceQueue {
 
   async pause() {
     this.queue.pause();
-    if (this.jobsPollIntervalTimer) clearInterval(this.jobsPollIntervalTimer);
+    if (this.jobsPollIntervalTimer) {
+      clearInterval(this.jobsPollIntervalTimer);
+    }
   }
 
   async onIdle() {
     return this.queue.onIdle();
+  }
+
+  async isIdle() {
+    return await this.totalCount() === 0;
+  }
+
+  async count() {
+    return this.queue.size;
+  }
+
+  async pendingCount() {
+    return this.queue.pending;
+  }
+
+  async totalCount() {
+    return this.queue.size + this.queue.pending;
   }
 
   async maybeFillQueue() {
@@ -55,7 +80,7 @@ export class JobsServiceQueue {
     while (this.queue.size < this.queue.concurrency) {
       const job = await manager.reserveJob();
       if (!job) break;
-      this.queue.add(() => this.runJob(job));
+      await this.runJob(job);
     }
   }
 
@@ -66,24 +91,25 @@ export class JobsServiceQueue {
   async runJob(job: JobModel) {
     const { log, manager } = this.parent;
     const { id, name, payload } = job;
-    log.trace({ msg: "Running job", id, name });
-
-    const handler = this.handlers.get(name);
-    if (!handler) {
-      manager.moveJobToFailed(id, { error: "No handler registered for job" });
-      return;
-    }
 
     try {
-      await manager.moveJobToStarted(id);
-      const result = await handler(payload, (progress, statusMessage) =>
-        manager.updateJobProgress(id, progress, statusMessage)
-      );
-      await manager.moveJobToCompleted(id, result);
+      log.trace({ msg: "Running job", id, name });
+
+      await this.queue.add(async () => {
+        const handler = this.handlers.get(name);
+        if (!handler) {
+          manager.moveJobToFailed(id, { error: "No handler registered for job" });
+          return;
+        }
+        await manager.moveJobToStarted(id);
+        const result = await handler(payload, (progress, statusMessage) =>
+          manager.updateJobProgress(id, progress, statusMessage)
+        );
+        await manager.moveJobToCompleted(id, result);      
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "An error occurred";
-
       if (job.options?.attempts && job.options.attempts > 1) {
         await manager.retryJob(job);
       } else {
