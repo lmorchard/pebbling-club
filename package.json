@@ -24,6 +24,7 @@
     "prod": "npm-run-all prod:migrate prod:start",
     "prod:migrate": "node ./server/build/bin/manage.mjs db migrate",
     "prod:start": "node ./server/build/bin/manage.mjs serve",
+    "prod:single-node": "node ./server/build/bin/single-node.mjs",
     "prod:exit-on-idle-node": "node ./server/build/bin/exit-on-idle-node.mjs"
   },
   "exports": {

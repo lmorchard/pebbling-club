@@ -5,10 +5,11 @@ async function main() {
   const app = new BaseServerApp();
   await app.init();
 
-  const { jobs, webServer } = app;
+  const { jobs, feeds, webServer } = app;
 
   await jobs.start();
   await jobs.scheduler.scheduleJobPurge();
+  await feeds.scheduleAllFeedsUpdate();
 
   return await webServer.start();
 }
