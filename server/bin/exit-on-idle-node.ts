@@ -21,19 +21,6 @@ async function main() {
     });
   });
 
-  await server.listen({
-    host: config.get("host"),
-    port: config.get("port"),
-  });
-
-  await jobs.start();
-
-  await jobs.scheduler.scheduleJobPurge();
-
-  await feeds.scheduleAllFeedsUpdate();
-
-  let serverLastIdleTime = Date.now();
-
   server.addHook("onRequest", async (request, reply) => {
     serverLastIdleTime = Date.now();
     log.debug({
@@ -74,6 +61,19 @@ async function main() {
       await server.close();
     }
   }, serverIdleCheckPeriod);
+
+  await server.listen({
+    host: config.get("host"),
+    port: config.get("port"),
+  });
+
+  await jobs.start();
+
+  await jobs.scheduler.scheduleJobPurge();
+
+  await feeds.scheduleAllFeedsUpdate();
+
+  let serverLastIdleTime = Date.now();
 
   await closePromise;
 
