@@ -47,6 +47,7 @@ header.site > nav > details[open] > summary::after {
 
 header.site > nav > details > div {
   position: absolute;
+  z-index: 10;
   top: 2em;
   right: 0;
   padding: 1em 2em 1em 2em;

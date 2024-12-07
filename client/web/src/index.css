@@ -17,7 +17,8 @@
   --theme-highlighted-bg-color: #dfdfdf;
   --theme-dialog-bg-color: rgba(192, 192, 192, 0.8);
   --theme-text-color: #111;
-  --theme-border-color: #000;
+  --theme-border-color: rgba(0, 0, 0, 1.0);
+  --theme-border-secondary-color: rgba(0, 0, 0, 0.6);
   --theme-shadow-color: rgba(0, 0, 0, 0.5);
   --theme-quote-border-color: #000;
   --theme-link-color: rgba(0, 0, 238, 1);
@@ -33,7 +34,8 @@
     --theme-highlighted-bg-color: #dfdfdf;
     --theme-dialog-bg-color: rgba(192, 192, 192, 0.8);
     --theme-text-color: #111;
-    --theme-border-color: #000;
+    --theme-border-color: rgba(0, 0, 0, 1.0);
+    --theme-border-secondary-color: rgba(0, 0, 0, 0.6);
     --theme-shadow-color: rgba(255, 255, 255, 0.5);
     --theme-quote-border-color: #000;
     --theme-link-color: rgba(0, 0, 238, 1);
@@ -51,6 +53,7 @@
     --theme-dialog-bg-color: rgba(0, 0, 0, 0.8);
     --theme-text-color: #eee;
     --theme-border-color: rgba(255, 255, 255, 0.6);
+    --theme-border-secondary-color: rgba(255, 255, 255, 0.2);
     --theme-quote-border-color: rgba(255, 255, 255, 0.6);
     --theme-link-color: rgb(174, 174, 255);
     --theme-link-visited-color: rgb(195, 190, 199);
