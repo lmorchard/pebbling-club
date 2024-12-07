@@ -21,6 +21,8 @@ async function main() {
     });
   });
 
+  let serverLastIdleTime = Date.now();
+
   server.addHook("onRequest", async (request, reply) => {
     serverLastIdleTime = Date.now();
     log.debug({
@@ -72,8 +74,6 @@ async function main() {
   await jobs.scheduler.scheduleJobPurge();
 
   await feeds.scheduleAllFeedsUpdate();
-
-  let serverLastIdleTime = Date.now();
 
   await closePromise;
 
