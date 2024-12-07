@@ -28,6 +28,12 @@ export const configSchema = {
     format: Boolean,
     default: false,
   },
+  logPrettyFormattimg: {
+    doc: "Enable pretty formatting of logs",
+    env: "LOG_PRETTY",
+    format: Boolean,
+    default: false,
+  },
 } as const;
 
 export class Logging extends CliAppModule {
@@ -92,8 +98,8 @@ export class Logging extends CliAppModule {
   }
 
   buildLogger() {
-    const { usePrettyLogs } = this;
     const { config, events } = this.app;
+    const usePrettyLogs = this.usePrettyLogs || config.get("logPrettyFormattimg");
     const options = {
       level: config.get("logLevel"),
     };

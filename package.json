@@ -18,7 +18,7 @@
     "test": "glob -c \"tsx --tsconfig ./server/tsconfig.json --no-warnings --test\" \"./server/**/*.test.ts\"",
     "test:watch": "glob -c \"tsx --tsconfig ./server/tsconfig.json --no-warnings --watch --test\" \"./server/**/*.test.ts\"",
     "dev": "npm-run-all --parallel test:watch dev:serve build:watch",
-    "dev:serve": "nodemon --watch server --ext 'js,ts' --exec 'tsx  --tsconfig ./server/tsconfig.json -- ./server/bin/single-node.ts --force-pretty-logs'",
+    "dev:serve": "LOG_PRETTY=true nodemon --watch server --ext 'js,ts' --exec 'tsx  --tsconfig ./server/tsconfig.json -- ./server/bin/single-node.ts --force-pretty-logs'",
     "manage": "tsx --tsconfig ./server/tsconfig.json ./server/bin/manage.ts",
     "migrate": "npm run manage db migrate",
     "prod": "npm-run-all prod:migrate prod:start",
