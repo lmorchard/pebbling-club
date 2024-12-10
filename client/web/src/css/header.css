@@ -35,9 +35,15 @@ header.site > nav > details > summary {
 
 header.site > nav > details > summary::after {
   display: inline-block;
+  /*
   width: 1em;
   content: "☰";
-  padding: 0;
+  */
+  width: 1.25em;
+  font-size: 1.125em;
+  content: "\2699\fe0f";
+  padding: 0 0 0 0.5em;
+  text-align: right;
 }
 
 header.site > nav > details[open] > summary::after {

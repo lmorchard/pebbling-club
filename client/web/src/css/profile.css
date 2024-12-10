@@ -40,13 +40,16 @@ nav.secondary details.menu summary::after {
   visibility: visible;
   width: 1.25em;
   font-size: 1.125em;
+  /* content: "☰"; */
   content: "\2699\fe0f";
   padding: 0 0 0 0.5em;
+  text-align: right;
 }
 nav.secondary details[open].menu summary::after {
   font-weight: bold;
   font-size: 1.125em;
-  content: "\2715";
+  /*content: "\2715";*/
+  content: "✕";
 }
 nav.secondary details.menu div {
   position: absolute;
