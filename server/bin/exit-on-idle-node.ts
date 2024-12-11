@@ -60,11 +60,11 @@ async function main() {
     });
     if (serverDuration > serverIdleTimeout) {
       log.debug({ msg: "Server has been idle for too long" });
-      await server.close();
       setTimeout(() => {
         log.error({ msg: "Server failed to close, forcing exit." });
         process.exit(1);
       }, 5000);
+      await server.close();
     }
   }, serverIdleCheckPeriod);
 
