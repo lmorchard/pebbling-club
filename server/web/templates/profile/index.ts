@@ -4,6 +4,8 @@ import { layout, LayoutProps } from "../layout";
 import { BookmarkWithPermissions, TagCount } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
 
+import svgFeed from "@common/svg/feed";
+
 import partialBookmarkList from "../partials/bookmarkList";
 import partialPaginator from "../partials/paginator";
 
@@ -16,6 +18,8 @@ export interface Props extends LayoutProps {
   limit: number;
   offset: number;
   total: number;
+  feedTitle: string;
+  feedUrl: string;
 }
 
 export default ({
@@ -27,11 +31,21 @@ export default ({
   total,
   limit,
   offset,
+  feedUrl,
+  feedTitle,
   ...locals
 }: Props) => {
   return layout({
     ...locals,
     title: profile.username,
+    htmlHead: html`
+      <link rel="alternate" type="application/rss+xml" title="${feedTitle}" href="${feedUrl}" />
+    `,
+    beforeSiteNav: html`
+      <a href="${feedUrl}" class="feed icon" title="${feedTitle}">
+        ${svgFeed}
+      </a>
+    `,
     content: html`
       <section class="profile">
         <section class="bookmarks">

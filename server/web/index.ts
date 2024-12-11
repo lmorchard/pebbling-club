@@ -85,6 +85,12 @@ export const configSchema = {
     nullable: true,
     default: null as null | String,
   },
+  siteName: {
+    doc: "Server site name",
+    env: "SITE_NAME",
+    format: String,
+    default: "Pebbling Club",
+  },
   projectDomain: {
     doc: "Glitch.com project domain",
     env: "PROJECT_DOMAIN",

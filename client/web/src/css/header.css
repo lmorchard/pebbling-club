@@ -26,6 +26,15 @@ header.site > nav {
   gap: var(--column-gap);
 }
 
+header.site > nav a.feed {
+  display: inline-block;
+}
+header.site > nav a.feed svg {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+}
+
 header.site > nav > details > summary {
   position: relative;
   padding: 0;
