@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import templateProfileIndex from "./templates/profile/index";
+import templateProfileFeed, { FeedFormats } from "./templates/profile/feed";
 import { IBaseRouterOptions } from "./types";
 import { FastifyPluginAsync } from "fastify";
 import { Profile } from "../services/profiles";
@@ -9,7 +10,6 @@ import {
   parseBookmarkListOptions,
   parseRefreshHeaders,
 } from "./utils/routes";
-import bookmark from "./templates/partials/bookmark";
 
 declare module "fastify" {
   export interface FastifyRequest {
@@ -44,17 +44,19 @@ export const ProfilesRouter: FastifyPluginAsync<
     Querystring: ListBookmarksQuerystringOptions;
   }>("/:username", async (request, reply) => {
     const { bookmarks } = options.server.app;
-    const { forceRefresh } = parseRefreshHeaders(request);
-    const bookmarkListOptions = parseBookmarkListOptions(request.query);
-    const viewerId = request.user?.id;
-
     const profile = request.profile as Profile;
+    const { forceRefresh } = parseRefreshHeaders(request);
+    const listOptions = parseBookmarkListOptions(request.query);
 
     const { total: bookmarksTotal, items: bookmarksItems } =
-      await bookmarks.listForOwner(viewerId, profile.id, bookmarkListOptions);
+      await bookmarks.listForOwner(
+        request.user?.id,
+        profile.id,
+        listOptions
+      );
 
     return reply.renderTemplate(templateProfileIndex, {
-      ...bookmarkListOptions,
+      ...listOptions,
       profile,
       forceRefresh,
       tagCounts: request.tagCounts!,
@@ -64,32 +66,81 @@ export const ProfilesRouter: FastifyPluginAsync<
   });
 
   fastify.get<{
+    Params: { username: string; format: string };
+    Querystring: ListBookmarksQuerystringOptions;
+  }>("/:username/feed.:format", async (request, reply) => {
+    const { bookmarks } = options.server.app;
+    const { username, format } = request.params;
+    const profile = request.profile as Profile;
+    const listOptions = parseBookmarkListOptions(request.query, {
+      limit: "15",
+    });
+
+    const { items: bookmarksItems } = await bookmarks.listForOwner(
+      request.user?.id,
+      profile.id,
+      listOptions
+    );
+
+    return reply.renderTemplate(templateProfileFeed, {
+      id: `u/${username}`,
+      format: FeedFormats[format as keyof typeof FeedFormats],
+      profile,
+      bookmarks: bookmarksItems,
+    });
+  });
+
+  fastify.get<{
     Params: { username: string; tags: string };
     Querystring: ListBookmarksQuerystringOptions;
   }>("/:username/t/:tags", async (request, reply) => {
     const { bookmarks } = options.server.app;
-    const { forceRefresh } = parseRefreshHeaders(request);
-    const bookmarkListOptions = parseBookmarkListOptions(request.query);
     const { tags } = request.params;
-
-    const viewerId = request.user?.id;
     const profile = request.profile as Profile;
+    const { forceRefresh } = parseRefreshHeaders(request);
+    const listOptions = parseBookmarkListOptions(request.query);
 
     const { total: bookmarksTotal, items: bookmarksItems } =
       await bookmarks.listForOwnerByTags(
-        viewerId,
+        request.user?.id,
         profile.id,
         tags.split(/[\+ ]+/g),
-        bookmarkListOptions
+        listOptions
       );
 
     // TODO: use a different template? allow per-user annotation / description of tag
     return reply.renderTemplate(templateProfileIndex, {
-      ...bookmarkListOptions,
+      ...listOptions,
       profile,
       forceRefresh,
       tagCounts: request.tagCounts!,
       total: bookmarksTotal,
+      bookmarks: bookmarksItems,
+    });
+  });
+
+  fastify.get<{
+    Params: { username: string; tags: string; format: string };
+    Querystring: ListBookmarksQuerystringOptions;
+  }>("/:username/t/:tags/feed.:format", async (request, reply) => {
+    const { bookmarks } = options.server.app;
+    const { username, format, tags } = request.params;
+    const profile = request.profile as Profile;
+    const listOptions = parseBookmarkListOptions(request.query, {
+      limit: "15",
+    });
+
+    const { items: bookmarksItems } = await bookmarks.listForOwnerByTags(
+      request.user?.id,
+      profile.id,
+      tags.split(/[\+ ]+/g),
+      listOptions
+    );
+
+    return reply.renderTemplate(templateProfileFeed, {
+      id: `u/${username}/t/${tags}`,
+      format: FeedFormats[format as keyof typeof FeedFormats],
+      profile,
       bookmarks: bookmarksItems,
     });
   });
