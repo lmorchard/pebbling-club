@@ -7,7 +7,8 @@ declare module "fastify" {
   interface FastifyReply {
     renderTemplate: <P extends ITemplateProps>(
       templateFunction: RenderableTemplate<P>,
-      props?: P
+      props?: P,
+      contentType?: string
     ) => void;
   }
 }
@@ -18,29 +19,32 @@ export interface TemplateRendererOptions {
 
 export const TemplateRenderer = fp(
   async (fastify, { config }: TemplateRendererOptions) => {
-    fastify.decorateReply("renderTemplate", function (template, props) {
-      const reply = this;
-      const request = this.request;
+    fastify.decorateReply(
+      "renderTemplate",
+      function (template, props, contentType = "text/html") {
+        const reply = this;
+        const request = this.request;
 
-      const layoutProps: LayoutProps = {
-        user: request.user,
-        siteUrl: config.get("siteUrl"),
-      };
+        const layoutProps: LayoutProps = {
+          user: request.user,
+          siteUrl: config.get("siteUrl"),
+        };
 
-      return reply
-        .code(200)
-        .headers({
-          "Content-Type": "text/html",
-          "Access-Control-Allow-Origin": "*",
-        })
-        .send(
-          render(
-            template({
-              ...layoutProps,
-              ...props,
-            })
-          )
-        );
-    });
+        return reply
+          .code(200)
+          .headers({
+            "Content-Type": contentType,
+            "Access-Control-Allow-Origin": "*",
+          })
+          .send(
+            render(
+              template({
+                ...layoutProps,
+                ...props,
+              })
+            )
+          );
+      }
+    );
   }
 );

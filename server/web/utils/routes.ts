@@ -9,7 +9,11 @@ export type ListBookmarksQuerystringOptions = {
   since?: string;
 };
 
-export function parseBookmarkListOptions(query: ListBookmarksQuerystringOptions) {
+export function parseBookmarkListOptions(
+  queryIn: ListBookmarksQuerystringOptions,
+  defaults: Partial<ListBookmarksQuerystringOptions> = {}
+) {
+  const query = { ...defaults, ...queryIn };
   const limit = parseInt((query.limit as string) || "50", 10);
   const offset = parseInt((query.offset as string) || "0", 10);
   const show = query.show ? query.show.split(",") : undefined;

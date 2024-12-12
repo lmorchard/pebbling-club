@@ -9,6 +9,7 @@ export interface LayoutProps extends ITemplateProps {
   user?: Profile;
   forceRefresh?: boolean;
   siteUrl?: string;
+  beforeSiteNav?: TemplateContent;
 }
 
 export const layout = ({
@@ -18,6 +19,7 @@ export const layout = ({
   forceRefresh,
   siteUrl,
   htmlHead: htmlHeadIn,
+  beforeSiteNav = "",
   ...pageProps
 }: { content: TemplateContent } & LayoutProps & PageProps) => {
   const newUrl = new URL("/new", siteUrl!).toString();
@@ -60,6 +62,7 @@ export const layout = ({
             </h1>
           </section>
           <nav>
+            ${beforeSiteNav}
             <theme-selector title="Enable dark theme">
               <label>
                 <input type="checkbox" />

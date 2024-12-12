@@ -2,7 +2,7 @@ import classNames from "classnames";
 import { BookmarkWithPermissions } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
 import { html, TemplateContent } from "../../utils/html";
-import linkSvg from "@common/svg/link";
+import svgLink from "@common/svg/link";
 
 export interface Props {
   bookmark: BookmarkWithPermissions;
@@ -34,7 +34,7 @@ export default (props: Props) => {
 
   const thumbnailImage = unfurl?.image
     ? html`<img src="${unfurl.image}" />`
-    : linkSvg;
+    : svgLink;
 
   return html`
     <pc-bookmark bookmark="${bookmarkEncoded}">

@@ -76,6 +76,7 @@
     "fastify": "^4.28.1",
     "fastify-method-override": "^1.5.10",
     "fastify-plugin": "^4.5.1",
+    "feed": "^4.2.2",
     "feedparser": "^2.2.10",
     "html-get": "^2.16.11",
     "htmlparser2": "^9.1.0",
