@@ -156,6 +156,13 @@ export const ProfilesRouter: FastifyPluginAsync<
 
     const title = constructFeedTitle(config.get("siteName"), username, tags);
 
+    const feedUrl = constructFeedUrl(
+      config.get("siteUrl"),
+      username,
+      tags,
+      FeedFormats.rss
+    );
+
     // TODO: need some reverse routing utils to generate these URLs
     const siteUrl = config.get("siteUrl");
     const link = new URL(
@@ -166,7 +173,7 @@ export const ProfilesRouter: FastifyPluginAsync<
     return reply.renderTemplate(
       templateProfileFeed,
       {
-        id: isTagFeed ? `u/${username}/t/${tags}` : `u/${username}`,
+        id: feedUrl,
         format: FeedFormats[format as keyof typeof FeedFormats],
         title,
         bookmarks: bookmarksItems,

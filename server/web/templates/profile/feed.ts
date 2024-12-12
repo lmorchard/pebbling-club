@@ -1,6 +1,6 @@
 import { BookmarkWithPermissions } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
-import { Feed, FeedOptions, Item } from "feed";
+import { Feed, FeedOptions, ItemOptions } from "@gaphub/feed";
 
 export enum FeedFormats {
   rss = "rss",
@@ -20,13 +20,16 @@ export default ({ format, bookmarks, ...feedOptions }: Props) => {
   });
 
   for (const bookmark of bookmarks) {
-    const item: Item = {
+    const item: ItemOptions = {
       title: bookmark.title,
       id: bookmark.href,
       link: bookmark.href,
       date: new Date(bookmark.created!),
-      description: bookmark.extended,
     };
+
+    if (bookmark.extended) {
+      item.description = bookmark.extended;
+    }
 
     const image = bookmark.meta?.unfurl?.image;
     if (image) {
