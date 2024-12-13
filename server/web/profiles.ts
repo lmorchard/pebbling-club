@@ -15,34 +15,11 @@ import {
   parseRefreshHeaders,
 } from "./utils/routes";
 
-declare module "fastify" {
-  export interface FastifyRequest {
-    profile?: Profile;
-    tagCounts?: TagCount[];
-  }
-}
-
 export interface IProfilesRouterOptions extends IBaseRouterOptions {}
 
 export const ProfilesRouter: FastifyPluginAsync<
   IProfilesRouterOptions
 > = async (fastify, options) => {
-  fastify.decorateRequest("profile", null);
-
-  fastify.addHook<{
-    Params: { username: string };
-  }>("preHandler", async (request, reply) => {
-    const { profiles, bookmarks } = options.server.app;
-    const { username } = request.params;
-
-    const profile = await profiles.getByUsername(username);
-    if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
-
-    request.profile = profile;
-    // TODO: limit for tags list?
-    request.tagCounts = await bookmarks.listTagsForOwner(profile.id, 25, 0);
-  });
-
   fastify.get<{
     Params: { username: string };
     Querystring: ListBookmarksQuerystringOptions;
@@ -80,9 +57,12 @@ export const ProfilesRouter: FastifyPluginAsync<
     options: IProfilesRouterOptions,
     isTagRequest: boolean
   ) {
-    const { bookmarks, config } = options.server.app;
+    const { bookmarks, profiles, config } = options.server.app;
     const { username, tags } = request.params;
-    const profile = request.profile as Profile;
+
+    const profile = await profiles.getByUsername(username);
+    if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
+
     const { forceRefresh } = parseRefreshHeaders(request);
     const listOptions = parseBookmarkListOptions(request.query);
 
@@ -94,6 +74,8 @@ export const ProfilesRouter: FastifyPluginAsync<
         listOptions,
         tags
       );
+
+    const tagCounts = await bookmarks.listTagsForOwner(profile.id, 25, 0);
 
     const feedTitle = constructFeedTitle(
       config.get("siteName"),
@@ -112,7 +94,7 @@ export const ProfilesRouter: FastifyPluginAsync<
       ...listOptions,
       profile,
       forceRefresh,
-      tagCounts: request.tagCounts!,
+      tagCounts,
       total: bookmarksTotal,
       bookmarks: bookmarksItems,
       feedTitle,
@@ -135,9 +117,12 @@ export const ProfilesRouter: FastifyPluginAsync<
     options: IProfilesRouterOptions,
     isTagFeed: boolean
   ) {
-    const { bookmarks, config } = options.server.app;
+    const { bookmarks, profiles, config } = options.server.app;
     const { username, format, tags } = request.params;
-    const profile = request.profile as Profile;
+
+    const profile = await profiles.getByUsername(username);
+    if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
+
     const listOptions = parseBookmarkListOptions(request.query, {
       limit: "15",
     });
