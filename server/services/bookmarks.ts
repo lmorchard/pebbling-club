@@ -70,6 +70,7 @@ export class BookmarksService extends BaseService<IAppRequirements> {
     );
   }
 
+  // TODO: merge listForOwner and listForOwnerByTags into a single method?
   async listForOwner(
     viewerId: string | undefined,
     ownerId: string,
@@ -97,6 +98,28 @@ export class BookmarksService extends BaseService<IAppRequirements> {
         tags,
         this._convertBookmarksListOptions(options)
       );
+    return {
+      total,
+      items: await this.annotateBookmarksWithPermissions(viewerId, items),
+    };
+  }
+
+  async searchForOwner(
+    viewerId: string | undefined,
+    ownerId: string,
+    query: string,
+    tags: string[],
+    options: BookmarksListOptions
+  ) {
+    // TODO: support a search query syntax on specific fields, etc. parse
+    // that down to a data structure for the repository to translate into
+    // specific DB query logic
+    const { total, items } = await this.app.repository.searchBookmarksForOwner(
+      ownerId,
+      query,
+      tags,
+      this._convertBookmarksListOptions(options)
+    );
     return {
       total,
       items: await this.annotateBookmarksWithPermissions(viewerId, items),
@@ -271,6 +294,12 @@ export interface IBookmarksRepository {
   ): Promise<{ total: number; items: Bookmark[] }>;
   listBookmarksForOwnerByTags(
     ownerId: string,
+    tags: string[],
+    options: BookmarksRepositoryListOptions
+  ): Promise<{ total: number; items: Bookmark[] }>;
+  searchBookmarksForOwner(
+    ownerId: string,
+    query: string,
     tags: string[],
     options: BookmarksRepositoryListOptions
   ): Promise<{ total: number; items: Bookmark[] }>;

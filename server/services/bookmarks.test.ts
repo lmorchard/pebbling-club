@@ -50,6 +50,13 @@ describe("services/bookmarks", () => {
     tags: ["test", "foo", "bar", "baz"],
   };
 
+  const bookmarksData = Array.from({ length: 10 }).map((_, idx) => ({
+    ...bookmarkData,
+    href: `http://example.com/${idx}`,
+    title: `Example ${idx}`,
+    tags: ["test", "foo", "bar", `tag${idx}`],
+  }));
+
   describe("upsert", () => {
     it("should create a new bookmark", async () => {
       const bookmark = await app.bookmarks.upsert({
@@ -105,6 +112,25 @@ describe("services/bookmarks", () => {
       assert.equal(fetched.title, "Updated");
       assert.equal(fetched.extended, bookmarkData.extended);
       assert.equal(fetched.tags?.length, bookmarkData.tags.length);
+    });
+  });
+
+  describe("searchBookmarksForOwner", () => {
+    it("should search bookmarks by owner", async () => {
+      await Promise.all(
+        bookmarksData.map((bookmark) =>
+          app.bookmarks.upsert({ ownerId: profileId, ...bookmark })
+        )
+      );
+      const { items: bookmarks } = await app.bookmarks.searchForOwner(
+        profileId,
+        profileId,
+        "Example 5",
+        [],
+        { limit: 10, offset: 0},
+      );
+      assert.equal(bookmarks.length, 1);
+      assert.equal(bookmarks[0].title, "Example 5");
     });
   });
 });

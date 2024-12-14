@@ -1,25 +1,19 @@
-import { isNullOrUndefined } from "util";
 import { html } from "../../utils/html";
+import {
+  BookmarksListRouteOptions,
+  serializeBookmarkListOptions,
+} from "../../utils/routes";
 
-export interface Props {
+export type Props = BookmarksListRouteOptions & {
   baseUrl?: string;
-  show?: string[];
-  open?: string;
   total: number;
-  limit: number;
-  offset: number;
   limitChoices?: number[];
   stickyBottom?: boolean;
-}
+};
 
 function pageParams(props: Props) {
-  const { limit, offset, show: showAttachments, open: openAttachment } = props;
-  const params = new URLSearchParams({
-    limit: limit.toString(),
-    offset: offset.toString(),
-  });
-  if (showAttachments) params.append("show", showAttachments.join(","));
-  if (openAttachment) params.append("open", openAttachment);
+  const { baseUrl, total, limitChoices, stickyBottom, ...options } = props;
+  const params = new URLSearchParams(serializeBookmarkListOptions(options));
   return params.toString();
 }
 

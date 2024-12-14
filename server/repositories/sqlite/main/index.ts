@@ -454,6 +454,27 @@ export class SqliteRepository
     });
   }
 
+  async searchBookmarksForOwner(
+    ownerId: string,
+    searchQuery: string,
+    tags: string[],
+    options: BookmarksRepositoryListOptions
+  ): Promise<{ total: number; items: Bookmark[] }> {
+    return this._listBookmarks(options, async (query) => {
+      query.where({ ownerId });
+      if (tags.length) {
+        this._constrainBookmarksQueryByTag(query, tags);
+      }
+      query.andWhere((query) => {
+        query.whereRaw(`title like ?`, [`%${searchQuery}%`]);
+        query.orWhereRaw(`extended like ?`, [`%${searchQuery}%`]);
+        query.orWhereRaw(`tags like ?`, [`%${searchQuery}%`]);
+        query.orWhereRaw(`meta like ?`, [`%${searchQuery}%`]);
+        query.orWhereRaw(`href like ?`, [`%${searchQuery}%`]);
+      });
+    });
+  }
+
   async listBookmarksByTags(
     tags: string[],
     options: BookmarksRepositoryListOptions
