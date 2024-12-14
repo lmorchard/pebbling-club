@@ -1,18 +1,18 @@
 import Boom from "@hapi/boom";
 import templateProfileIndex from "./templates/profile/index";
 import templateProfileFeed, {
-  FeedFormats,
   constructFeedTitle,
   constructFeedUrl,
 } from "./templates/profile/feed";
-import { IBaseRouterOptions } from "./types";
+import { FeedFormats, IBaseRouterOptions } from "./types";
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
-import { Profile } from "../services/profiles";
-import { TagCount } from "../services/bookmarks";
+import { BookmarksService } from "../services/bookmarks";
 import {
-  ListBookmarksQuerystringOptions,
+  BookmarksListRouteQuerystringOptions,
   parseBookmarkListOptions,
+  BookmarksListRouteOptions,
   parseRefreshHeaders,
+  feedContentTypes,
 } from "./utils/routes";
 
 export interface IProfilesRouterOptions extends IBaseRouterOptions {}
@@ -22,28 +22,28 @@ export const ProfilesRouter: FastifyPluginAsync<
 > = async (fastify, options) => {
   fastify.get<{
     Params: { username: string };
-    Querystring: ListBookmarksQuerystringOptions;
+    Querystring: BookmarksListRouteQuerystringOptions;
   }>("/:username", async (request, reply) => {
     return handleProfileRequest(request, reply, options, false);
   });
 
   fastify.get<{
     Params: { username: string; format: string };
-    Querystring: ListBookmarksQuerystringOptions;
+    Querystring: BookmarksListRouteQuerystringOptions;
   }>("/:username/feed.:format", async (request, reply) => {
     return handleProfileFeedRequest(request, reply, options, false);
   });
 
   fastify.get<{
     Params: { username: string; tags: string };
-    Querystring: ListBookmarksQuerystringOptions;
+    Querystring: BookmarksListRouteQuerystringOptions;
   }>("/:username/t/:tags", async (request, reply) => {
     return handleProfileRequest(request, reply, options, true);
   });
 
   fastify.get<{
     Params: { username: string; tags: string; format: string };
-    Querystring: ListBookmarksQuerystringOptions;
+    Querystring: BookmarksListRouteQuerystringOptions;
   }>("/:username/t/:tags/feed.:format", async (request, reply) => {
     return handleProfileFeedRequest(request, reply, options, true);
   });
@@ -51,7 +51,7 @@ export const ProfilesRouter: FastifyPluginAsync<
   async function handleProfileRequest(
     request: FastifyRequest<{
       Params: { username: string; tags?: string };
-      Querystring: ListBookmarksQuerystringOptions;
+      Querystring: BookmarksListRouteQuerystringOptions;
     }>,
     reply: FastifyReply,
     options: IProfilesRouterOptions,
@@ -102,16 +102,10 @@ export const ProfilesRouter: FastifyPluginAsync<
     });
   }
 
-  const feedContentTypes: Record<FeedFormats, string> = {
-    [FeedFormats.rss]: "application/rss+xml",
-    [FeedFormats.atom]: "application/atom+xml",
-    [FeedFormats.json]: "application/json",
-  };
-
   async function handleProfileFeedRequest(
     request: FastifyRequest<{
       Params: { username: string; format?: string; tags?: string };
-      Querystring: ListBookmarksQuerystringOptions;
+      Querystring: BookmarksListRouteQuerystringOptions;
     }>,
     reply: FastifyReply,
     options: IProfilesRouterOptions,
@@ -123,9 +117,7 @@ export const ProfilesRouter: FastifyPluginAsync<
     const profile = await profiles.getByUsername(username);
     if (!profile?.id) throw Boom.notFound(`profile ${username} not found`);
 
-    const listOptions = parseBookmarkListOptions(request.query, {
-      limit: "15",
-    });
+    const listOptions = parseBookmarkListOptions(request.query);
 
     const { items: bookmarksItems } = await fetchBookmarks(
       bookmarks,
@@ -171,21 +163,26 @@ export const ProfilesRouter: FastifyPluginAsync<
   }
 
   async function fetchBookmarks(
-    bookmarksService: any,
+    bookmarks: BookmarksService,
     userId: string | undefined,
     profileId: string,
-    listOptions: any,
-    tags?: string
+    listOptions: BookmarksListRouteOptions,
+    tagsIn?: string
   ) {
-    if (tags) {
-      return bookmarksService.listForOwnerByTags(
+    const tags = tagsIn && tagsIn.split(/[\+ ]+/g);
+    const { q } = listOptions;
+    if (q) {
+      return bookmarks.searchForOwner(
         userId,
         profileId,
-        tags.split(/[\+ ]+/g),
+        q,
+        tags || [],
         listOptions
       );
+    } else if (tags) {
+      return bookmarks.listForOwnerByTags(userId, profileId, tags, listOptions);
     } else {
-      return bookmarksService.listForOwner(userId, profileId, listOptions);
+      return bookmarks.listForOwner(userId, profileId, listOptions);
     }
   }
 };

@@ -1,12 +1,7 @@
+import { FeedFormats } from "../../types";
 import { BookmarkWithPermissions } from "../../../services/bookmarks";
 import { Profile } from "../../../services/profiles";
 import { Feed, FeedOptions, ItemOptions } from "@gaphub/feed";
-
-export enum FeedFormats {
-  rss = "rss",
-  atom = "atom",
-  json = "json",
-}
 
 export interface Props extends FeedOptions {
   format: FeedFormats;

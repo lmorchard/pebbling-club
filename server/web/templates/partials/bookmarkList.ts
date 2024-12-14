@@ -12,10 +12,10 @@ export interface Props {
 }
 
 export default ({
+  hideAuthor = true,
   bookmarks,
   profile,
-  hideAuthor = true,
-  show = ["notes", "feed", "embed", "unfurl"],
+  show,
   open,
 }: Props) => html`
   <pc-bookmark-list>
@@ -24,9 +24,9 @@ export default ({
         (bookmark) =>
           html`<li>
             ${partialBookmark({
+              hideAuthor,
               bookmark,
               profile,
-              hideAuthor,
               show,
               open,
             })}

@@ -1,4 +1,4 @@
-import { html } from "../../utils/html";
+import { html, TemplateContent } from "../../utils/html";
 import { layout, LayoutProps } from "../layout";
 
 import { BookmarkWithPermissions, TagCount } from "../../../services/bookmarks";
@@ -8,9 +8,15 @@ import svgFeed from "@common/svg/feed";
 
 import partialBookmarkList from "../partials/bookmarkList";
 import partialPaginator from "../partials/paginator";
+import {
+  BookmarksListRouteOptions,
+  defaultBookmarksListRouteOptions,
+} from "../../utils/routes";
+import { stripDefaults } from "@/utils/defaults";
 
 export interface Props extends LayoutProps {
   profile: Profile;
+  q?: string;
   show?: string[];
   open?: string;
   bookmarks: BookmarkWithPermissions[];
@@ -25,7 +31,8 @@ export interface Props extends LayoutProps {
 export default ({
   profile,
   bookmarks,
-  show = ["notes", "embed", "feed"],
+  q,
+  show,
   open,
   tagCounts,
   total,
@@ -42,6 +49,8 @@ export default ({
       <link rel="alternate" type="application/rss+xml" title="${feedTitle}" href="${feedUrl}" />
     `,
     beforeSiteNav: html`
+      ${bookmarkListSearchForm({ q, open, show })}
+
       <a href="${feedUrl}" class="feed icon" title="${feedTitle}">
         ${svgFeed}
       </a>
@@ -61,6 +70,7 @@ export default ({
             offset,
             show,
             open,
+            q,
             stickyBottom: true,
           })}
         </section>
@@ -77,3 +87,32 @@ export default ({
     `,
   });
 };
+
+type BookmarkListSearchFormProps = Pick<
+  BookmarksListRouteOptions,
+  "open" | "show" | "q"
+>;
+
+function bookmarkListSearchForm(
+  props: BookmarkListSearchFormProps
+): TemplateContent {
+  const { open, show, q } = stripDefaults(
+    props,
+    defaultBookmarksListRouteOptions
+  );
+  return html`
+    <div class="search">
+      <form method="get" action="">
+      ${open && html`<input type="hidden" name="open" value="${open}" />`}
+      ${
+        show &&
+        show.length > 0 &&
+        html`<input type="hidden" name="show" value="${show.join(",")}" />`
+      }
+        <input name="q" type="search" placeholder="Search" value="${
+          q ? q : ""
+        }" />
+      </form>
+    </div>
+  `;
+}
