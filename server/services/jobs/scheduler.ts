@@ -24,6 +24,11 @@ export class JobsServiceScheduler {
 
     log.debug({ msg: "starting jobs scheduler" });
 
+    await this.parent.registerJobHandler(JOB_PURGE_RESOLVED_JOBS, async () => {
+      await this.parent.manager.purgeResolvedJobs();
+      return { success: true };
+    });
+
     if (this.schedulerPollIntervalTimer)
       clearInterval(this.schedulerPollIntervalTimer);
     this.schedulerPollIntervalTimer = setInterval(
@@ -38,10 +43,8 @@ export class JobsServiceScheduler {
   }
 
   async scheduleJobPurge() {
-    await this.parent.registerJobHandler(JOB_PURGE_RESOLVED_JOBS, async () => {
-      await this.parent.manager.purgeResolvedJobs();
-      return { success: true };
-    });
+    const { log } = this.parent;
+    log.debug({ msg: "scheduling job purge" });
     await this.upsertJobSchedule(
       `schedule-periodic-${JOB_PURGE_RESOLVED_JOBS}`,
       { every: this.parent.app.config.get("jobPurgeInterval") },

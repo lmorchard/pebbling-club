@@ -32,7 +32,7 @@ export const configSchema = {
     doc: "Interval in milliseconds to purge resolved jobs",
     env: "JOBS_PURGE_INTERVAL",
     format: Number,
-    default: 1000 * 60 * 60 * 24,
+    default: 1000 * 60 * 1,
   },
 };
 

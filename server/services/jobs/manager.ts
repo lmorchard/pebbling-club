@@ -99,6 +99,8 @@ export class JobsServiceManager {
   }
 
   async purgeResolvedJobs() {
+    const { log } = this.parent;
+    log.info({ msg: "purging resolved jobs" });
     await this.parent.app.jobsRepository.purgeResolvedJobs();
   }
 }
