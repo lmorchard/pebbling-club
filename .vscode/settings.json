@@ -1,0 +1,7 @@
+{
+    "editor.tabSize": 4, // Set tab size
+    "editor.insertSpaces": true, // Use spaces instead of tabs
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter" // Optional: Enforce formatting
+    }
+}
