@@ -2,7 +2,7 @@ project_dir=djangotutorial
 
 main: venv/bin/activate
 
-runserver: main
+runserver: venv/bin/activate
 	cd $(project_dir) && \
 	python manage.py runserver
 
@@ -22,6 +22,7 @@ upgrade: requirements.txt
 
 venv/bin/activate: requirements.txt
 	test -d venv || python -m venv venv
+	touch venv/bin/activate && \
 	source venv/bin/activate && \
 	python -m pip install --upgrade pip && \
 	pip install -r requirements.txt
