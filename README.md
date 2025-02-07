@@ -5,6 +5,12 @@
 Trying to jot down notes of needful things before productivity occurs.
 Some of this will end up unnecessary after initial commit.
 
+I'm trying to bundle common tasks up into a Makefile
+```bash
+make # install dependencies
+make runserver # run development server
+```
+
 ```bash
 # create virtual environment (if not already created)
 python -m venv venv
@@ -23,3 +29,8 @@ When installing packages:
 ```bash
 pip freeze > requirements.txt
 ```
+
+## TODO
+
+- [ ] get code linting and formatting working
+- [ ] get some kind of type system working?
