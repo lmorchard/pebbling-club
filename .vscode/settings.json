@@ -2,8 +2,11 @@
     "editor.tabSize": 4, // Set tab size
     "editor.insertSpaces": true, // Use spaces instead of tabs
     "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter" // Optional: Enforce formatting
+        "editor.defaultFormatter": "ms-python.black-formatter"
     },
+    "[django-html]": {
+        "editor.defaultFormatter": "batisteo.vscode-django"
+    },    
     "makefile.configureOnOpen": false,
     "editor.formatOnSave": true    
 }
