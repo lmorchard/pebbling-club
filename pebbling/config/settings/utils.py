@@ -1,6 +1,7 @@
 from pathlib import Path
 import environ
 
+
 def read_env_files(env_filenames):
     dot_env_dir = Path(__file__).resolve().parent.parent.parent.parent
 

@@ -12,6 +12,11 @@ shell:
 	cd $(project_dir) && \
 	python manage.py shell
 
+test: venv/bin/activate
+	. venv/bin/activate && \
+	cd $(project_dir) && \
+	python manage.py test
+
 format:
 	python -m black .
 
