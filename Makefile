@@ -12,6 +12,9 @@ shell:
 	cd $(project_dir) && \
 	python manage.py shell
 
+format:
+	python -m black .
+	
 migrate:
 	. venv/bin/activate && \
 	cd $(project_dir) && \
