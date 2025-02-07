@@ -5,7 +5,7 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "[django-html]": {
-        "editor.defaultFormatter": "batisteo.vscode-django"
+        "editor.defaultFormatter": "junstyle.vscode-django-support"
     },    
     "makefile.configureOnOpen": false,
     "editor.formatOnSave": true    

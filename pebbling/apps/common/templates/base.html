@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            {% block title %}My Django App{% endblock %}
+        </title>
+        <style></style>
+    </head>
+    <body>
+        <ul class="navbar-nav ms-auto">
+            {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'profile' %}">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                </li>
+            {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'login' %}">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'register' %}">Register</a>
+                </li>
+            {% endif %}
+        </ul>
+        <!-- Main Content -->
+        <div class="container mt-4">
+            {% block content %}{% endblock %}
+        </div>
+        <!-- Footer -->
+        <footer class="text-center mt-5 py-3 bg-light">
+            <p>&copy; 2025 My Django App</p>
+        </footer>
+    </body>
+</html>

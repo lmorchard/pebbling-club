@@ -18,7 +18,8 @@ test: venv/bin/activate
 	python manage.py test
 
 format:
-	python -m black .
+	python -m black . \
+    && djlint pebbling --reformat
 
 migrate:
 	. venv/bin/activate && \
