@@ -1,8 +1,8 @@
-project_dir=djangotutorial
+project_dir=pebbling
 
 main: venv/bin/activate
 
-runserver: venv/bin/activate
+dev: venv/bin/activate
 	. venv/bin/activate && \
 	cd $(project_dir) && \
 	python manage.py runserver
@@ -14,7 +14,7 @@ shell:
 
 format:
 	python -m black .
-	
+
 migrate:
 	. venv/bin/activate && \
 	cd $(project_dir) && \
