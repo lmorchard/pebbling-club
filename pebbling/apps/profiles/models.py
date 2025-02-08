@@ -1,8 +1,9 @@
 from django.db import models
 from django.conf import settings
+from apps.common.models import TimestampedModel
 
 
-class Profile(models.Model):
+class Profile(TimestampedModel):
     """Profile model with additional user details."""
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
