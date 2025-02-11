@@ -9,3 +9,5 @@ def read_env_files(env_filenames):
         env_file = dot_env_dir / env_filename
         if env_file.exists():
             environ.Env.read_env(dot_env_dir / env_file)
+
+    return environ.Env()

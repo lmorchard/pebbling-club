@@ -2,10 +2,10 @@ project_dir=pebbling
 
 main: venv/bin/activate
 
-dev: venv/bin/activate
-	. venv/bin/activate && \
-	cd $(project_dir) && \
-	python manage.py runserver
+runserver: venv/bin/activate
+	. venv/bin/activate \
+	&& cd $(project_dir) \
+	&& python manage.py runserver
 
 shell:
 	. venv/bin/activate && \

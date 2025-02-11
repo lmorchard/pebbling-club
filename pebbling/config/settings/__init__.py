@@ -1,11 +1,13 @@
-import os
 from django.core.exceptions import ImproperlyConfigured
+from .utils import read_env_files
 
-env = os.getenv("DJANGO_ENV", "dev")  # Default to dev if not set
-if env not in ["dev", "prod"]:
-    raise ImproperlyConfigured(f"Invalid DJANGO_ENV: {env}")
+env = read_env_files([".env"])
 
-if env == "dev":
+django_env = env("DJANGO_ENV", default="prod")
+if django_env not in ["dev", "prod"]:
+    raise ImproperlyConfigured(f"Invalid DJANGO_ENV: {django_env}")
+print(django_env)
+if django_env == "dev":
     from .dev import *
 else:
     from .prod import *

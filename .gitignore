@@ -1,5 +1,7 @@
-.env.*
 .env
+.env.dev
+.env.prod
+.env.local
 venv/
 tmp/
 *.pyc
