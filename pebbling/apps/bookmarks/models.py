@@ -1,3 +1,4 @@
+import hashlib
 from django.db import models
 from django.contrib.auth import get_user_model
 from apps.common.models import TimestampedModel
@@ -41,3 +42,14 @@ class Bookmark(TimestampedModel):
 
     def __str__(self):
         return self.title
+
+    def generate_unique_hash(self):
+        """Generate a SHA-1 hash based on the URL."""
+        return hashlib.sha1(self.url.encode("utf-8")).hexdigest()
+
+    def save(self, *args, **kwargs):
+        """Set unique_hash before saving if not already set."""
+
+        self.unique_hash = self.generate_unique_hash()
+
+        super().save(*args, **kwargs)  # Call the default save method

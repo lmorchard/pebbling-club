@@ -11,5 +11,6 @@
       <li>No tags found.</li>
     {% endfor %}
   </ul>
+  {% include 'bookmarks/_pagination.html' %}
   <a href="{% url 'bookmarks:list' %}" class="btn btn-secondary">Back to Bookmarks</a>
 {% endblock %}

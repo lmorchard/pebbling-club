@@ -12,6 +12,7 @@ class BookmarkListView(ListView):
     model = Bookmark
     template_name = "bookmarks/bookmark_list.html"
     context_object_name = "bookmarks"
+    paginate_by = 10
 
     def get_queryset(self):
         return Bookmark.objects.filter(owner=self.request.user).order_by("-created_at")
@@ -71,6 +72,7 @@ class TagListView(ListView):
     model = Tag
     template_name = "bookmarks/tag_list.html"
     context_object_name = "tags"
+    paginate_by = 10
 
     def get_queryset(self):
         """Return tags only for the logged-in user."""
@@ -82,6 +84,7 @@ class TagDetailView(ListView):
     model = Bookmark
     template_name = "bookmarks/tag_detail.html"
     context_object_name = "bookmarks"
+    paginate_by = 10
 
     def get_queryset(self):
         """Return all bookmarks linked to a specific tag."""
