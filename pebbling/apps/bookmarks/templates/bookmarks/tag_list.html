@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Your Tags</h2>
+  <ul>
+    {% for tag in tags %}
+      <li>
+        <a href="{% url 'bookmarks:tag_detail' tag.name %}">{{ tag.name }}</a>
+      </li>
+    {% empty %}
+      <li>No tags found.</li>
+    {% endfor %}
+  </ul>
+  <a href="{% url 'bookmarks:list' %}" class="btn btn-secondary">Back to Bookmarks</a>
+{% endblock %}
