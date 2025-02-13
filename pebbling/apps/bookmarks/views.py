@@ -21,9 +21,48 @@ class BookmarkListView(ListView):
 # Create View: Add a new bookmark
 class BookmarkCreateView(CreateView):
     model = Bookmark
-    form_class = BookmarkForm
     template_name = "bookmarks/bookmark_form.html"
+    form_class = BookmarkForm
     success_url = reverse_lazy("bookmarks:list")
+
+    def get_initial(self):
+        """Pre-populate form with query parameters or existing bookmark data."""
+        initial = super().get_initial()
+        
+        # Get URL from query parameters
+        url = self.request.GET.get('url', '')
+        if url:
+            # Check for existing bookmark with this URL
+            self.existing_bookmark = Bookmark.objects.filter(
+                owner=self.request.user,
+                unique_hash=Bookmark.objects.generate_unique_hash_for_url(url)
+            ).first()
+            
+            if self.existing_bookmark:
+                # Use existing bookmark data
+                initial.update({
+                    'url': self.existing_bookmark.url,
+                    'title': self.existing_bookmark.title,
+                    'description': self.existing_bookmark.description,
+                    'tags': ' '.join(tag.name for tag in self.existing_bookmark.tags.all()),
+                })
+                return initial
+        
+        # If no existing bookmark found, use query parameters
+        initial.update({
+            'url': url,
+            'title': self.request.GET.get('title', ''),
+            'description': self.request.GET.get('description', ''),
+            'tags': self.request.GET.get('tags', ''),
+        })
+        return initial
+
+    def get_context_data(self, **kwargs):
+        """Add existing bookmark info to context if found."""
+        context = super().get_context_data(**kwargs)
+        if hasattr(self, 'existing_bookmark'):
+            context['existing_bookmark'] = self.existing_bookmark
+        return context
 
     def get_form_kwargs(self):
         """Pass the current user to the form."""
@@ -32,7 +71,7 @@ class BookmarkCreateView(CreateView):
         return kwargs
 
     def form_valid(self, form):
-        form.instance.owner = self.request.user  # Ensure the owner is set
+        form.instance.owner = self.request.user
         return super().form_valid(form)
 
 

@@ -24,7 +24,25 @@ class Tag(TimestampedModel):
 
 
 class BookmarkManager(models.Manager):
-    pass
+    def generate_unique_hash_for_url(self, url):
+        """Generate a unique hash for a given URL."""
+        return hashlib.sha1(url.encode("utf-8")).hexdigest()
+
+    def update_or_create(self, defaults=None, **kwargs):
+        """Override update_or_create to handle URL-based lookups."""
+        defaults = defaults or {}
+        
+        if 'url' in kwargs:
+            # Generate hash from URL and move URL to defaults
+            url = kwargs.pop('url')
+            kwargs['unique_hash'] = self.generate_unique_hash_for_url(url)
+            defaults['url'] = url
+        
+        # Handle meta merge specially
+        if 'meta' in defaults and defaults['meta']:
+            defaults['meta'] = models.F('meta').copy() | defaults['meta']
+        
+        return super().update_or_create(defaults=defaults, **kwargs)
 
 
 class Bookmark(TimestampedModel):
@@ -34,22 +52,23 @@ class Bookmark(TimestampedModel):
 
     url = models.URLField()
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    unique_hash = models.CharField(max_length=255, unique=True)
+    unique_hash = models.CharField(max_length=255)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     tags = models.ManyToManyField("bookmarks.Tag", related_name="bookmarks", blank=True)
     meta = models.JSONField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ['owner', 'unique_hash']
 
     def __str__(self):
         return self.title
 
     def generate_unique_hash(self):
         """Generate a SHA-1 hash based on the URL."""
-        return hashlib.sha1(self.url.encode("utf-8")).hexdigest()
+        return self.__class__.objects.generate_unique_hash_for_url(self.url)
 
     def save(self, *args, **kwargs):
-        """Set unique_hash before saving if not already set."""
-
+        """Standard save with unique_hash generation."""
         self.unique_hash = self.generate_unique_hash()
-
-        super().save(*args, **kwargs)  # Call the default save method
+        return super().save(*args, **kwargs)

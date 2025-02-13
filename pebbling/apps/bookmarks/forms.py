@@ -33,18 +33,37 @@ class BookmarkForm(forms.ModelForm):
         for name in tag_names:
             tag, created = Tag.objects.get_or_create(name=name.strip(), owner=self.user)
             tags.append(tag)
-        return tags  # Return a list of Tag objects, which Django will handle for M2M fields
+        return tags
+
+    def save_m2m(self):
+        """Save tags relationship."""
+        if hasattr(self, '_tags'):
+            self.instance.tags.set(self._tags)
 
     def save(self, commit=True):
-        """Save the bookmark and associate tags."""
-        instance = super().save(commit=False)
+        """Save the form and handle the owner field."""
+        if not self.user:
+            raise ValueError("User must be set before saving")
 
-        if not instance.owner:
-            instance.owner = self.user  # Ensure owner is set
+        # Get the cleaned data
+        data = self.cleaned_data.copy()
+        tags = data.pop('tags')
 
         if commit:
-            instance.save()
-            self.save_m2m()
+            # Use update_or_create
+            instance, created = Bookmark.objects.update_or_create(
+                url=data['url'],
+                owner=self.user,
+                defaults=data
+            )
+            self.instance = instance
+            # Set the tags
+            instance.tags.set(tags)
+        else:
+            # Just create an unsaved instance
+            instance = Bookmark(owner=self.user, **data)
+            self.instance = instance
+            # Store tags for later
+            self._tags = tags
 
-        instance.tags.set(self.cleaned_data["tags"])  # Assign tags to bookmark
         return instance
