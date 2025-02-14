@@ -2,6 +2,11 @@ project_dir=pebbling
 
 .PHONY: serve
 
+dev: venv/bin/activate
+	. venv/bin/activate \
+	&& cd $(project_dir) \
+    && honcho start -f Procfile-dev
+
 serve: venv/bin/activate
 	. venv/bin/activate \
 	&& cd $(project_dir) \

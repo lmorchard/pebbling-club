@@ -1,0 +1,2 @@
+web: python manage.py runserver 0.0.0.0:8000
+worker: watchmedo auto-restart --directory=apps --directory=core --pattern="*.py" --recursive -- celery -A core worker --pool=solo --loglevel=info
