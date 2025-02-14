@@ -111,8 +111,10 @@ CACHES = {
 }
 
 # Celery settings
-CELERY_BEAT_SCHEDULE_FILENAME = str(BASE_DIR / '..' / 'data' / 'celerybeat-schedule')
-CELERY_BROKER_URL = "sqla+sqlite:///../data/celery.sqlite3"  # Use separate SQLite DB for Celery
+CELERY_BEAT_SCHEDULE_FILENAME = str(BASE_DIR / ".." / "data" / "celerybeat-schedule")
+CELERY_BROKER_URL = (
+    "sqla+sqlite:///../data/celery.sqlite3"  # Use separate SQLite DB for Celery
+)
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
