@@ -5,7 +5,7 @@ project_dir=pebbling
 dev: venv/bin/activate
 	. venv/bin/activate \
 	&& cd $(project_dir) \
-    && honcho start -f Procfile-dev
+	&& honcho start -f Procfile-dev
 
 serve: venv/bin/activate
 	. venv/bin/activate \
@@ -34,8 +34,9 @@ format:
 migrate:
 	. venv/bin/activate \
 	&& cd $(project_dir) \
-    && python manage.py migrate django_celery_results  --database=celery_db \
-    && python manage.py migrate django_celery_beat --database=celery_db \
+	&& python manage.py migrate django_celery_results  --database=celery_db \
+	&& python manage.py migrate django_celery_beat --database=celery_db \
+	&& python manage.py createcachetable --database=cache_db \
 	&& python manage.py migrate
 
 freeze:

@@ -75,8 +75,32 @@ DATABASES = {
             "timeout": 30,
         },
     },
+    "cache_db": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "cache.sqlite3",
+        "OPTIONS": {
+            "timeout": 30,
+        },
+    }
 }
 
+DATABASE_ROUTERS = ['core.routers.CacheRouter']
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_table',
+        'OPTIONS': {
+            'DATABASE': 'cache_db',
+        }
+    }
+}
+
+# Celery settings
+CELERY_BROKER_URL = "sqla+sqlite:///celery.sqlite3"  # Use separate SQLite DB for Celery
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -124,9 +148,3 @@ AUTH_USER_MODEL = "users.CustomUser"
 LOGIN_REDIRECT_URL = "profile"
 
 LOGOUT_REDIRECT_URL = "login"
-
-# Celery settings
-CELERY_BROKER_URL = "sqla+sqlite:///celery.sqlite3"  # Use separate SQLite DB for Celery
-CELERY_RESULT_BACKEND = "django-db"
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
