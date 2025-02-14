@@ -21,10 +21,10 @@ INSTALLED_APPS = [
     "django_celery_results",  # Stores Celery task results in DB
     "django_celery_beat",  # Enables periodic tasks
     "pebbling",
-    "apps.home",
-    "apps.users",
-    "apps.profiles",
-    "apps.bookmarks",
+    "pebbling_apps.home",
+    "pebbling_apps.users",
+    "pebbling_apps.profiles",
+    "pebbling_apps.bookmarks",
 ]
 
 MIDDLEWARE = [
