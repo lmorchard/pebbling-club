@@ -34,10 +34,10 @@ format: venv/bin/activate
 
 migrate: venv/bin/activate
 	. venv/bin/activate \
+	&& mkdir -p data \
 	&& cd $(project_dir) \
-	&& python manage.py migrate django_celery_results  --database=celery_db \
-	&& python manage.py migrate django_celery_beat --database=celery_db \
-	&& python manage.py createcachetable --database=cache_db \
+	&& python manage.py createcachetable --database cache_db \
+	&& python manage.py migrate --database=celery_db \
 	&& python manage.py migrate
 
 freeze:

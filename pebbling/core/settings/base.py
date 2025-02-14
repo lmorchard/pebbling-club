@@ -60,31 +60,45 @@ WSGI_APPLICATION = "core.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+_shared_sqlite_options = {
+    "transaction_mode": "IMMEDIATE",
+    "timeout": 5,  # seconds
+    "init_command": """
+        PRAGMA journal_mode=WAL;
+        PRAGMA synchronous=NORMAL;
+        PRAGMA mmap_size=134217728;
+        PRAGMA journal_size_limit=27103364;
+        PRAGMA cache_size=2000;
+    """,
+}
+
+DATABASES_BASE_DIR = BASE_DIR / ".." / "data"
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",  # Main DB
+        "NAME": DATABASES_BASE_DIR / "main.sqlite3",
         "OPTIONS": {
-            "timeout": 30,
+            **_shared_sqlite_options,
         },
     },
     "celery_db": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "celery.sqlite3",  # Separate DB for Celery
+        "NAME": DATABASES_BASE_DIR / "celery.sqlite3",
         "OPTIONS": {
-            "timeout": 30,
+            **_shared_sqlite_options,
         },
     },
     "cache_db": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "cache.sqlite3",
+        "NAME": DATABASES_BASE_DIR / "cache.sqlite3",
         "OPTIONS": {
-            "timeout": 30,
+            **_shared_sqlite_options,
         },
     },
 }
 
-DATABASE_ROUTERS = ["core.routers.CacheRouter"]
+DATABASE_ROUTERS = ["core.routers.CacheRouter", "core.routers.CeleryRouter"]
 
 CACHES = {
     "default": {
@@ -97,7 +111,8 @@ CACHES = {
 }
 
 # Celery settings
-CELERY_BROKER_URL = "sqla+sqlite:///celery.sqlite3"  # Use separate SQLite DB for Celery
+CELERY_BEAT_SCHEDULE_FILENAME = str(BASE_DIR / '..' / 'data' / 'celerybeat-schedule')
+CELERY_BROKER_URL = "sqla+sqlite:///../data/celery.sqlite3"  # Use separate SQLite DB for Celery
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
