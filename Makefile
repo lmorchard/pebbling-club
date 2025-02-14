@@ -7,6 +7,11 @@ serve: venv/bin/activate
 	&& cd $(project_dir) \
 	&& python manage.py runserver
 
+worker: venv/bin/activate
+	. venv/bin/activate \
+	&& cd $(project_dir) \
+	&& celery -A core worker --loglevel=info
+
 shell:
 	. venv/bin/activate \
 	&& cd $(project_dir) \

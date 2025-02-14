@@ -1,7 +1,7 @@
 import hashlib
 from django.db import models
 from django.contrib.auth import get_user_model
-from apps.common.models import TimestampedModel
+from core.models import TimestampedModel
 
 
 class TagManager(models.Manager):
@@ -31,17 +31,17 @@ class BookmarkManager(models.Manager):
     def update_or_create(self, defaults=None, **kwargs):
         """Override update_or_create to handle URL-based lookups."""
         defaults = defaults or {}
-        
-        if 'url' in kwargs:
+
+        if "url" in kwargs:
             # Generate hash from URL and move URL to defaults
-            url = kwargs.pop('url')
-            kwargs['unique_hash'] = self.generate_unique_hash_for_url(url)
-            defaults['url'] = url
-        
+            url = kwargs.pop("url")
+            kwargs["unique_hash"] = self.generate_unique_hash_for_url(url)
+            defaults["url"] = url
+
         # Handle meta merge specially
-        if 'meta' in defaults and defaults['meta']:
-            defaults['meta'] = models.F('meta').copy() | defaults['meta']
-        
+        if "meta" in defaults and defaults["meta"]:
+            defaults["meta"] = models.F("meta").copy() | defaults["meta"]
+
         return super().update_or_create(defaults=defaults, **kwargs)
 
 
@@ -59,7 +59,7 @@ class Bookmark(TimestampedModel):
     meta = models.JSONField(blank=True, null=True)
 
     class Meta:
-        unique_together = ['owner', 'unique_hash']
+        unique_together = ["owner", "unique_hash"]
 
     def __str__(self):
         return self.title

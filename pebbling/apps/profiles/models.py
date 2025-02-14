@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from apps.common.models import TimestampedModel
+from core.models import TimestampedModel
 
 
 class Profile(TimestampedModel):
