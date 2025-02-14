@@ -20,7 +20,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_celery_results",  # Stores Celery task results in DB
     "django_celery_beat",  # Enables periodic tasks
-    "core",
+    "pebbling",
     "apps.home",
     "apps.users",
     "apps.profiles",
@@ -37,7 +37,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "core.urls"
+ROOT_URLCONF = "pebbling.urls"
 
 TEMPLATES = [
     {
@@ -55,7 +55,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "core.wsgi.application"
+WSGI_APPLICATION = "pebbling.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -72,7 +72,7 @@ _shared_sqlite_options = {
     """,
 }
 
-DATABASES_BASE_DIR = BASE_DIR / ".." / "data"
+DATABASES_BASE_DIR = BASE_DIR / "data"
 
 DATABASES = {
     "default": {
@@ -98,7 +98,7 @@ DATABASES = {
     },
 }
 
-DATABASE_ROUTERS = ["core.routers.CacheRouter", "core.routers.CeleryRouter"]
+DATABASE_ROUTERS = ["pebbling.routers.CacheRouter", "pebbling.routers.CeleryRouter"]
 
 CACHES = {
     "default": {
@@ -111,9 +111,9 @@ CACHES = {
 }
 
 # Celery settings
-CELERY_BEAT_SCHEDULE_FILENAME = str(BASE_DIR / ".." / "data" / "celerybeat-schedule")
+CELERY_BEAT_SCHEDULE_FILENAME = str(BASE_DIR / "data" / "celerybeat-schedule")
 CELERY_BROKER_URL = (
-    "sqla+sqlite:///../data/celery.sqlite3"  # Use separate SQLite DB for Celery
+    "sqla+sqlite:///data/celery.sqlite3"  # Use separate SQLite DB for Celery
 )
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["json"]

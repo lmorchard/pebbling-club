@@ -1,7 +1,7 @@
 import hashlib
 from django.db import models
 from django.contrib.auth import get_user_model
-from core.models import TimestampedModel
+from pebbling.models import TimestampedModel
 
 
 class TagManager(models.Manager):

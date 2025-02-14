@@ -1,30 +1,23 @@
-project_dir=pebbling
-
 .PHONY: serve
 
 dev: venv/bin/activate
 	. venv/bin/activate \
-	&& cd $(project_dir) \
 	&& honcho start -f Procfile-dev
 
 serve: venv/bin/activate
 	. venv/bin/activate \
-	&& cd $(project_dir) \
 	&& python manage.py runserver
 
 worker: venv/bin/activate
 	. venv/bin/activate \
-	&& cd $(project_dir) \
-	&& celery -A core worker --loglevel=info
+	&& celery -A pebbling worker --loglevel=info
 
 shell:
 	. venv/bin/activate \
-	&& cd $(project_dir) \
 	&& python manage.py shell
 
 test: venv/bin/activate
 	. venv/bin/activate \
-	&& cd $(project_dir) \
 	&& python manage.py test
 
 format: venv/bin/activate
@@ -35,7 +28,6 @@ format: venv/bin/activate
 migrate: venv/bin/activate
 	. venv/bin/activate \
 	&& mkdir -p data \
-	&& cd $(project_dir) \
 	&& python manage.py createcachetable --database cache_db \
 	&& python manage.py migrate --database=celery_db \
 	&& python manage.py migrate
