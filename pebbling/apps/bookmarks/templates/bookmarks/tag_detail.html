@@ -1,10 +1,7 @@
 {% extends 'base.html' %}
-
 {% block content %}
-  <h2>Bookmarks Tagged: "{{ tag.name }}"</h2>
-
-  {% include 'bookmarks/_bookmark_list.html' %}
-  {% include 'bookmarks/_pagination.html' %}
-
-  <a href="{% url 'bookmarks:tag_list' %}" class="btn btn-secondary">Back to Tags</a>
+    <h2>Bookmarks Tagged: "{{ tag.name }}"</h2>
+    {% include 'bookmarks/_bookmark_list.html' %}
+    {% include 'bookmarks/_pagination.html' %}
+    <a href="{% url 'bookmarks:tag_list' %}" class="btn btn-secondary">Back to Tags</a>
 {% endblock %}

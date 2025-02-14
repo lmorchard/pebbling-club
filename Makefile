@@ -27,11 +27,12 @@ test: venv/bin/activate
 	&& cd $(project_dir) \
 	&& python manage.py test
 
-format:
-	python -m black . \
+format: venv/bin/activate
+	. venv/bin/activate \
+	&&python -m black . \
 	&& djlint pebbling --reformat
 
-migrate:
+migrate: venv/bin/activate
 	. venv/bin/activate \
 	&& cd $(project_dir) \
 	&& python manage.py migrate django_celery_results  --database=celery_db \

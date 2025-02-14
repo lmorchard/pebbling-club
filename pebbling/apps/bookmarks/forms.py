@@ -37,7 +37,7 @@ class BookmarkForm(forms.ModelForm):
 
     def save_m2m(self):
         """Save tags relationship."""
-        if hasattr(self, '_tags'):
+        if hasattr(self, "_tags"):
             self.instance.tags.set(self._tags)
 
     def save(self, commit=True):
@@ -47,14 +47,12 @@ class BookmarkForm(forms.ModelForm):
 
         # Get the cleaned data
         data = self.cleaned_data.copy()
-        tags = data.pop('tags')
+        tags = data.pop("tags")
 
         if commit:
             # Use update_or_create
             instance, created = Bookmark.objects.update_or_create(
-                url=data['url'],
-                owner=self.user,
-                defaults=data
+                url=data["url"], owner=self.user, defaults=data
             )
             self.instance = instance
             # Set the tags

@@ -81,18 +81,18 @@ DATABASES = {
         "OPTIONS": {
             "timeout": 30,
         },
-    }
+    },
 }
 
-DATABASE_ROUTERS = ['core.routers.CacheRouter']
+DATABASE_ROUTERS = ["core.routers.CacheRouter"]
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'django_cache_table',
-        'OPTIONS': {
-            'DATABASE': 'cache_db',
-        }
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_cache_table",
+        "OPTIONS": {
+            "DATABASE": "cache_db",
+        },
     }
 }
 
