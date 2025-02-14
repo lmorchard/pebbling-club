@@ -18,6 +18,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_celery_results",  # Stores Celery task results in DB
+    "django_celery_beat",  # Enables periodic tasks
     "apps.common",
     "apps.home",
     "apps.users",
@@ -55,15 +57,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+        "NAME": BASE_DIR / "db.sqlite3",  # Main DB
+        "OPTIONS": {
+            "timeout": 30,
+        },
+    },
+    "celery_db": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "celery.sqlite3",  # Separate DB for Celery
+        "OPTIONS": {
+            "timeout": 30,
+        },
+    },
 }
 
 
@@ -113,3 +124,9 @@ AUTH_USER_MODEL = "users.CustomUser"
 LOGIN_REDIRECT_URL = "profile"
 
 LOGOUT_REDIRECT_URL = "login"
+
+# Celery settings
+CELERY_BROKER_URL = "sqla+sqlite:///celery.sqlite3"  # Use separate SQLite DB for Celery
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"

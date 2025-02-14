@@ -24,6 +24,8 @@ format:
 migrate:
 	. venv/bin/activate \
 	&& cd $(project_dir) \
+    && python manage.py migrate django_celery_results  --database=celery_db \
+    && python manage.py migrate django_celery_beat --database=celery_db \
 	&& python manage.py migrate
 
 freeze:
