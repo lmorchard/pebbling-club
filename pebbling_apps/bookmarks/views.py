@@ -5,6 +5,7 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.core.exceptions import PermissionDenied
 from .models import Bookmark, Tag
 from .forms import BookmarkForm
+from urllib.parse import quote, unquote
 
 
 # List View: Show all bookmarks for the logged-in user
@@ -13,6 +14,11 @@ class BookmarkListView(ListView):
     template_name = "bookmarks/bookmark_list.html"
     context_object_name = "bookmarks"
     paginate_by = 10
+
+    def get_paginate_by(self, queryset):
+        """Allow pagination limit to be set via query parameter."""
+        limit = self.request.GET.get("limit", self.paginate_by)
+        return int(limit) if str(limit).isdigit() else self.paginate_by
 
     def get_queryset(self):
         return Bookmark.objects.filter(owner=self.request.user).order_by("-created_at")
@@ -119,6 +125,11 @@ class TagListView(ListView):
     context_object_name = "tags"
     paginate_by = 10
 
+    def get_paginate_by(self, queryset):
+        """Allow pagination limit to be set via query parameter."""
+        limit = self.request.GET.get("limit", self.paginate_by)
+        return int(limit) if str(limit).isdigit() else self.paginate_by
+
     def get_queryset(self):
         """Return tags only for the logged-in user."""
         return Tag.objects.filter(owner=self.request.user).order_by("name")
@@ -131,15 +142,19 @@ class TagDetailView(ListView):
     context_object_name = "bookmarks"
     paginate_by = 10
 
+    def get_paginate_by(self, queryset):
+        """Allow pagination limit to be set via query parameter."""
+        limit = self.request.GET.get("limit", self.paginate_by)
+        return int(limit) if str(limit).isdigit() else self.paginate_by
+
     def get_queryset(self):
         """Return all bookmarks linked to a specific tag."""
-        self.tag = get_object_or_404(
-            Tag, name=self.kwargs["tag_name"], owner=self.request.user
-        )
+        # Double-decode to restore the original tag name
+        tag_name = unquote(unquote(self.kwargs["tag_name"]))
+        self.tag = get_object_or_404(Tag, name=tag_name, owner=self.request.user)
         return self.tag.bookmarks.all().order_by("-created_at")
 
     def get_context_data(self, **kwargs):
-        """Pass the tag object to the template for display."""
         context = super().get_context_data(**kwargs)
         context["tag"] = self.tag
         return context

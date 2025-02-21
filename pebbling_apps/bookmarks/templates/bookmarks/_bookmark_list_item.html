@@ -1,0 +1,17 @@
+{% load bookmark_tags %}
+
+<li>
+  <a href="{{ bookmark.url }}" target="_blank">{{ bookmark.title }}</a>
+  <p>{{ bookmark.description }}</p>
+  <!-- Display Tags as Links -->
+  <p>
+    <strong>Tags:</strong>
+    {% for tag in bookmark.tags.all %}
+      <a href="{% url 'bookmarks:tag_detail' tag.name|urlencode_bookmark_tag %}">{{ tag.name }}</a>
+    {% empty %}
+      No tags
+    {% endfor %}
+  </p>
+  <a href="{% url 'bookmarks:edit' bookmark.pk %}">Edit</a> |
+  <a href="{% url 'bookmarks:delete' bookmark.pk %}">Delete</a>
+</li>

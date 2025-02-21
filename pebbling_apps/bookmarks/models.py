@@ -40,7 +40,12 @@ class BookmarkManager(models.Manager):
 
         # Handle meta merge specially
         if "meta" in defaults and defaults["meta"]:
-            defaults["meta"] = models.F("meta").copy() | defaults["meta"]
+            instance = self.filter(**kwargs).first()
+            if instance and instance.meta:
+                # Merge the existing meta with new meta
+                merged_meta = instance.meta.copy()
+                merged_meta.update(defaults["meta"])
+                defaults["meta"] = merged_meta
 
         return super().update_or_create(defaults=defaults, **kwargs)
 
