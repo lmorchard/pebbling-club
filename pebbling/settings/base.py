@@ -21,10 +21,11 @@ INSTALLED_APPS = [
     "django_celery_results",  # Stores Celery task results in DB
     "django_celery_beat",  # Enables periodic tasks
     "pebbling",
-    "pebbling_apps.home",
     "pebbling_apps.users",
     "pebbling_apps.profiles",
     "pebbling_apps.bookmarks",
+    "pebbling_apps.feeds",
+    "pebbling_apps.home",
 ]
 
 MIDDLEWARE = [
@@ -82,6 +83,13 @@ DATABASES = {
             **_shared_sqlite_options,
         },
     },
+    "feeds_db": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": DATABASES_BASE_DIR / "feeds.sqlite3",
+        "OPTIONS": {
+            **_shared_sqlite_options,
+        },
+    },
     "celery_db": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": DATABASES_BASE_DIR / "celery.sqlite3",
@@ -98,7 +106,11 @@ DATABASES = {
     },
 }
 
-DATABASE_ROUTERS = ["pebbling.routers.CacheRouter", "pebbling.routers.CeleryRouter"]
+DATABASE_ROUTERS = [
+    "pebbling.routers.CacheRouter",
+    "pebbling.routers.CeleryRouter",
+    "pebbling.routers.FeedsRouter",
+]
 
 CACHES = {
     "default": {

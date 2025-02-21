@@ -6,5 +6,7 @@ venv/
 tmp/
 *.pyc
 __pycache__/
+data/
 *.sqlite3*
 *.db
+.aider*

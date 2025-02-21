@@ -30,6 +30,7 @@ migrate: venv/bin/activate
 	&& mkdir -p data \
 	&& python manage.py createcachetable --database cache_db \
 	&& python manage.py migrate --database=celery_db \
+	&& python manage.py migrate --database=feeds_db \
 	&& python manage.py migrate
 
 freeze:

@@ -72,3 +72,42 @@ class CeleryRouter:
 
         # For all other databases, let other routers decide
         return None
+
+
+class FeedsRouter:
+    """
+    Router to handle Feeds database operations
+    """
+
+    # TODO: can this specified as pebbling_apps.feeds? seems like no
+    feeds_app = "feeds"
+
+    def db_for_read(self, model, **hints):
+        if model._meta.app_label == self.feeds_app:
+            return "feeds_db"
+        return None
+
+    def db_for_write(self, model, **hints):
+        if model._meta.app_label == self.feeds_app:
+            return "feeds_db"
+        return None
+
+    def allow_relation(self, obj1, obj2, **hints):
+        if (
+            obj1._meta.app_label == self.feeds_app
+            or obj2._meta.app_label == self.feeds_app
+        ):
+            return True
+        return None
+
+    def allow_migrate(self, db, app_label, model_name=None, **hints):
+        """
+        Make sure the Feeds tables only appear in the feeds_db database.
+        """
+        if app_label == self.feeds_app:
+            return db == "feeds_db"
+        if db == "feeds_db":
+            return app_label == self.feeds_app
+        if db == "default":
+            return app_label != self.feeds_app
+        return None
