@@ -8,6 +8,12 @@ from .forms import BookmarkForm
 from urllib.parse import quote, unquote
 
 
+def get_paginate_limit(request, default_limit):
+    """Utility function to get pagination limit from query parameters."""
+    limit = request.GET.get("limit", default_limit)
+    return int(limit) if str(limit).isdigit() else default_limit
+
+
 # List View: Show all bookmarks for the logged-in user
 class BookmarkListView(ListView):
     model = Bookmark
@@ -16,9 +22,7 @@ class BookmarkListView(ListView):
     paginate_by = 10
 
     def get_paginate_by(self, queryset):
-        """Allow pagination limit to be set via query parameter."""
-        limit = self.request.GET.get("limit", self.paginate_by)
-        return int(limit) if str(limit).isdigit() else self.paginate_by
+        return get_paginate_limit(self.request, self.paginate_by)
 
     def get_queryset(self):
         return Bookmark.objects.filter(owner=self.request.user).order_by("-created_at")
@@ -34,18 +38,15 @@ class BookmarkCreateView(CreateView):
     def get_initial(self):
         """Pre-populate form with query parameters or existing bookmark data."""
         initial = super().get_initial()
-
-        # Get URL from query parameters
         url = self.request.GET.get("url", "")
+
         if url:
-            # Check for existing bookmark with this URL
             self.existing_bookmark = Bookmark.objects.filter(
                 owner=self.request.user,
                 unique_hash=Bookmark.objects.generate_unique_hash_for_url(url),
             ).first()
 
             if self.existing_bookmark:
-                # Use existing bookmark data
                 initial.update(
                     {
                         "url": self.existing_bookmark.url,
@@ -58,7 +59,7 @@ class BookmarkCreateView(CreateView):
                 )
                 return initial
 
-        # If no existing bookmark found, use query parameters
+        # Use query parameters if no existing bookmark found
         initial.update(
             {
                 "url": url,
@@ -126,9 +127,7 @@ class TagListView(ListView):
     paginate_by = 10
 
     def get_paginate_by(self, queryset):
-        """Allow pagination limit to be set via query parameter."""
-        limit = self.request.GET.get("limit", self.paginate_by)
-        return int(limit) if str(limit).isdigit() else self.paginate_by
+        return get_paginate_limit(self.request, self.paginate_by)
 
     def get_queryset(self):
         """Return tags only for the logged-in user."""
@@ -143,9 +142,7 @@ class TagDetailView(ListView):
     paginate_by = 10
 
     def get_paginate_by(self, queryset):
-        """Allow pagination limit to be set via query parameter."""
-        limit = self.request.GET.get("limit", self.paginate_by)
-        return int(limit) if str(limit).isdigit() else self.paginate_by
+        return get_paginate_limit(self.request, self.paginate_by)
 
     def get_queryset(self):
         """Return all bookmarks linked to a specific tag."""
