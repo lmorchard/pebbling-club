@@ -3,13 +3,13 @@ from django.core.management.base import BaseCommand, CommandError
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from pebbling_apps.feeds.models import Feed
-from pebbling_apps.feeds.services import FeedService
+from pebbling_apps.feeds.tasks import poll_feed  # Import the task
 
 logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "Fetch items from an RSS feed"
+    help = "Poll an RSS feed and schedule the fetch_feed task"
 
     def add_arguments(self, parser):
         parser.add_argument("url", type=str, help="The URL of the RSS feed")
@@ -35,15 +35,9 @@ class Command(BaseCommand):
                 feed = Feed.objects.create(url=url)
                 logger.info(f"Created new feed: {feed}")
 
-            # Fetch feed content
-            service = FeedService()
-            if service.fetch_feed(feed):
-                message = f"Successfully fetched feed: {feed}"
-                logger.info(message)
-            else:
-                message = f"Failed to fetch feed: {feed}"
-                logger.error(message)
-                raise CommandError(message)
+            # Schedule the fetch_feed task
+            poll_feed.delay(feed.id)  # Schedule the task
+            logger.info(f"Scheduled fetch_feed task for feed: {feed}")
 
         except Exception as e:
             logger.error(f"Error processing feed: {str(e)}")

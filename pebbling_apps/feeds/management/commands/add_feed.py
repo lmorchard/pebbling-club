@@ -42,7 +42,6 @@ class Command(BaseCommand):
             action = "created" if created else "updated"
             message = f"Successfully {action} feed: {feed}"
             logger.info(message)
-            self.stdout.write(self.style.SUCCESS(message))
 
         except Exception as e:
             logger.error(f"Failed to save feed: {str(e)}")
