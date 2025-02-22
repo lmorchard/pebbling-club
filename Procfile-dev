@@ -1,3 +1,4 @@
 web: python manage.py runserver 0.0.0.0:8000
 worker: watchmedo auto-restart --directory=pebbling_apps --directory=pebbling --pattern="*.py" --recursive -- celery -A pebbling worker --pool=solo --loglevel=info
 beat: celery -A pebbling beat --loglevel=info
+frontend: cd frontend && npm run build:watch

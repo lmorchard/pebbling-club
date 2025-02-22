@@ -6,7 +6,7 @@
   },
   "scripts": {
     "build": "tsx ./build.ts",
-    "build:watch": "onchange -v -p 100 -i 'src/**/*' -- npm run build:client:web",
+    "build:watch": "onchange -v -p 100 -i 'src/**/*' -- npm run build",
     "lint": "tsc --project ./tsconfig.json --noEmit"
   },
   "author": "",
