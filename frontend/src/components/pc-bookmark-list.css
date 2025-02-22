@@ -1,0 +1,8 @@
+.bookmarks.h-feed {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  row-gap: 2.5em;
+  margin: 0;
+  padding: 1em 0;
+}

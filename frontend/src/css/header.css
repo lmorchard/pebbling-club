@@ -1,0 +1,88 @@
+header.site {
+  grid-column: wide;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0 1em 0;
+  margin: 0 0 1em 0;
+  border-bottom: 1px solid var(--theme-border-color);
+  position: relative;
+}
+
+header.site > section.masthead > h1 {
+  margin: 0;
+  padding: 0;  
+}
+
+header.site > section.masthead > h1 a {
+  text-decoration: none;
+  color: var(--theme-text-color);
+}
+
+header.site > nav {
+  display: flex;
+  flex-direction: row;
+  gap: var(--column-gap);
+}
+
+header.site > nav a.feed {
+  display: inline-block;
+}
+header.site > nav a.feed svg {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+}
+
+header.site > nav > details > summary {
+  position: relative;
+  padding: 0;
+  list-style: none;
+  cursor: pointer;
+}
+
+header.site > nav > details > summary::after {
+  display: inline-block;
+  width: 1em;
+  content: "☰";
+  padding: 0;
+}
+
+header.site > nav > details[open] > summary::after {
+  font-weight: bold;
+  content: "✕";
+}
+
+header.site > nav > details > div {
+  position: absolute;
+  top: 2em;
+  right: 0;
+  padding: 1em 2em 1em 2em;
+  display: flex;
+  gap: 0.5em;
+  flex-direction: column;
+  align-items: flex-end;
+  background: var(--theme-background-color-transparent);
+  border: 1px solid var(--theme-border-color);
+}
+
+header.site > nav > details > div a {
+  text-decoration: none;
+  color: var(--theme-link-color);
+}
+
+header.site > nav > details > div form {
+  margin: 0;
+  padding: 0;
+}
+
+header.site > nav > details > div button {
+  border: none;
+  background: none;
+  margin: 0;
+  padding: 0;
+  font-size: 1em;
+  cursor: pointer;
+  color: var(--theme-link-color);
+}

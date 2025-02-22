@@ -1,0 +1,41 @@
+.pagination {
+  display: flex;
+  flex-direction: row;
+  column-gap: 2em;
+  padding: 1em 0;
+}
+
+.pagination .directions {
+  display: flex;
+  flex-direction: row;
+  column-gap: 1em;  
+}
+
+.pagination .directions a.previous::before {
+  content: "\2190";
+  padding-right: 0.25em;
+}
+
+.pagination .directions a.next::after {
+  content: "\2192";
+  padding-left: 0.25em;
+}
+
+.pagination .limitChoices {
+  display: flex;
+  flex-direction: row;
+  column-gap: 0.75em;
+}
+
+.pagination .limitChoices a:before  {
+  content: "\1F5CA";
+  content: "\1F4D1";
+
+  padding-right: 0.125em;
+}
+
+.pagination-sticky-bottom {
+  position: sticky;
+  bottom: 0;
+  background-color: var(--theme-background-color-transparent);
+}

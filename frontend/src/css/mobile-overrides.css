@@ -1,0 +1,40 @@
+@media (max-width: 640px) {
+  :root {
+    --bookmark-thumbnail-size: 48px;
+  }
+  header.site > nav theme-selector {
+    display: none;
+  }
+  header.site > nav .newBookmark {
+    display: none;
+  }
+  .pagination {
+    justify-content: center;
+  }
+  .pagination .limitChoices {
+    display: none;
+  }
+  .bookmarks.h-feed {
+    row-gap: 2.5em;
+  }
+  .bookmark.h-entry {
+    display: grid;
+    column-gap: var(--column-gap * 0.75);
+    row-gap: calc(var(--column-gap) * 0.5);    
+  }  
+  .bookmark.h-entry .meta {
+    column-gap: var(--column-gap * 0.75);
+    row-gap: calc(var(--column-gap) * 0.5);    
+  }
+  .bookmark.h-entry > * {
+    grid-column: full;    
+  }
+  .bookmark.h-entry .bookmark-thumbnail {
+    width: var(--bookmark-thumbnail-size);
+    grid-column: full;
+  }
+  .bookmark.h-entry .p-summary {
+    margin: 0;
+    padding: 0.25em 0 0.25em 1em;
+  }
+}

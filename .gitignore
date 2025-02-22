@@ -4,8 +4,11 @@
 .env.local
 venv/
 tmp/
+static/
 *.pyc
 __pycache__/
+node_modules/
+frontend/build/
 data/
 *.sqlite3*
 *.db

@@ -1,0 +1,198 @@
+:root {
+  --thumbnail-size: 84px;
+}
+
+.bookmark.h-entry {
+  display: grid;
+  column-gap: var(--column-gap);
+  row-gap: calc(var(--column-gap) * 0.75);
+  grid-template-columns:
+    [full-start thumbnail-start] var(--thumbnail-size)
+    [thumbnail-end main-start main-1] auto
+    [main-2] auto
+    [main-3] auto
+    [main-4] auto
+    [main-end full-end]
+}
+
+.bookmark.h-entry > * {
+  grid-column: main;
+}
+
+.bookmark.h-entry > .meta {
+  grid-column: main;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  column-gap: var(--column-gap);
+  row-gap: calc(var(--column-gap) * 0.75);
+}
+
+.bookmark.h-entry .thumbnail {
+  grid-column: thumbnail;
+  grid-row: 1 / 3;
+
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: var(--thumbnail-size);
+  height: var(--thumbnail-size);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--theme-text-color);
+  background-color: rgb(128, 128, 128, 0.1);
+  border: solid 1px rgb(128, 128, 128, 0.3);
+}
+
+.bookmark.h-entry .thumbnail img, .bookmark.h-entry .thumbnail svg {
+  width: 100%;
+  object-fit: contain;
+}
+
+.bookmark.h-entry .p-name {
+  grid-column: main;
+  font-size: 1.2em;
+}
+
+.bookmark.h-entry .href::before {
+  content: "\1F310";
+  padding-right: 0.25em;
+}
+
+.bookmark.h-entry .href {
+  font-size: 0.9em;
+  opacity: 0.75;
+  display: block;
+  max-width: 20em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
+.bookmark.h-entry > .meta > time {
+  font-size: 0.9em;
+  opacity: 0.75;
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
+.bookmark.h-entry > .meta > time::before {
+  content: "\1F4C6";
+  padding-right: 0.25em;
+}
+
+.bookmark.h-entry .p-author {
+  font-size: 0.9em;
+  opacity: 0.75;
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
+.bookmark.h-entry .p-author::before {
+  content: "\1F464";
+  padding-right: 0.25em;
+}
+
+.bookmark.h-entry .tags {
+  font-size: 0.9em;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 1.5em;
+  row-gap: 0.5em;
+  margin-left: 10px;
+
+  flex-basis: 100%;
+}
+
+.bookmark.h-entry .p-category::before {
+  content: "\1F3F7";
+  padding-right: 0.25em;
+}
+
+.bookmark.h-entry .p-category {
+  white-space: nowrap;
+}
+
+:root {
+  --tag-size: 11px;
+}
+
+.bookmark.h-entry .p-category {
+  position: relative;
+  background-color: var(--theme-highlighted-bg-color);
+  padding: 4px 1em 4px calc(1em - var(--tag-size) / 2);
+  border-radius: 0px;
+  display: inline-block;
+}
+
+.bookmark.h-entry .p-category::before {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  top: 50%;
+  left: calc(0px - var(--tag-size));
+  border-right: var(--tag-size) solid var(--theme-highlighted-bg-color);
+  border-top: var(--tag-size) solid transparent;
+  border-bottom: var(--tag-size) solid transparent;
+  transform: translateY(-50%);
+}
+
+.bookmark.h-entry .p-summary {
+  line-height: 1.5em;
+}
+
+.bookmark.h-entry .actions {
+  grid-column: thumbnail;
+  grid-row: 1 / 3;
+  display: none;
+
+  flex-direction: column;
+  row-gap: 0.5em;
+  padding: 0.5em;
+  background: var(--theme-background-color-transparent);
+}
+
+.bookmark.h-entry .thumbnail:hover {
+  border: 1px solid red;
+}
+
+.bookmark.h-entry .thumbnail:hover ~ .actions {
+  display: flex;
+}
+
+.bookmark.h-entry .actions:hover {
+  display: flex;
+}
+
+.bookmark.h-entry .actions a {
+  border: 1px solid var(--theme-shadow-color);
+  border-radius: 4px;
+  font-size: 0.9em;
+  text-decoration: none;
+  text-align: center;
+  padding: 0.125em 0.25em;
+  background: var(--theme-highlighted-bg-color);
+  opacity: 0.8;
+  box-shadow: 1px 1px 2px 0px var(--theme-shadow-color);
+}
+
+.bookmark.h-entry .actions a:hover {
+  opacity: 1;
+}
+
+pc-bookmark-attachment section iframe {
+  display: block;
+  border: none;
+  padding: none;
+  margin: none;
+  width: 100%;
+  /* TODO: rig up something to auto-adjust iframe height */
+  height: 300px;
+}

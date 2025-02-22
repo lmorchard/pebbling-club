@@ -1,0 +1,82 @@
+@import url("./css/content-grid.css");
+@import url("./css/utilities.css");
+@import url("./css/forms.css");
+@import url("./css/pagination.css");
+@import url("./css/header.css");
+@import url("./css/profile.css");
+
+:root {
+  --column-gap: 1.25em;
+  --row-gap: 1.25em;
+
+  --theme-font-family: sans-serif;
+  --theme-font-size: 14px;
+
+  --theme-background-color: rgba(238, 238, 238, 1);
+  --theme-background-color-transparent: rgba(238, 238, 238, 0.8);
+  --theme-highlighted-bg-color: #dfdfdf;
+  --theme-dialog-bg-color: rgba(192, 192, 192, 0.8);
+  --theme-text-color: #111;
+  --theme-border-color: #000;
+  --theme-shadow-color: rgba(0, 0, 0, 0.5);
+  --theme-quote-border-color: #000;
+  --theme-link-color: rgba(0, 0, 238, 1);
+  --theme-link-visited-color: rgba(85, 26, 139, 1);
+  --theme-link-active-color: rgba(255, 0, 0, 1);
+  --theme-link-visited-active-color: rgba(255, 0, 0, 1);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --theme-background-color: rgba(238, 238, 238, 1);
+    --theme-background-color-transparent: rgba(238, 238, 238, 0.8);
+    --theme-highlighted-bg-color: #dfdfdf;
+    --theme-dialog-bg-color: rgba(192, 192, 192, 0.8);
+    --theme-text-color: #111;
+    --theme-border-color: #000;
+    --theme-shadow-color: rgba(255, 255, 255, 0.5);
+    --theme-quote-border-color: #000;
+    --theme-link-color: rgba(0, 0, 238, 1);
+    --theme-link-visited-color: rgba(85, 26, 139, 1);
+    --theme-link-active-color: rgba(255, 0, 0, 1);
+    --theme-link-visited-active-color: rgba(255, 0, 0, 1);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --theme-background-color: rgba(24, 24, 24, 1);
+    --theme-background-color-transparent: rgba(24, 24, 24, 0.8);
+    --theme-highlighted-bg-color: #332f33;
+    --theme-dialog-bg-color: rgba(0, 0, 0, 0.8);
+    --theme-text-color: #eee;
+    --theme-border-color: rgba(255, 255, 255, 0.6);
+    --theme-quote-border-color: rgba(255, 255, 255, 0.6);
+    --theme-link-color: rgb(174, 174, 255);
+    --theme-link-visited-color: rgb(195, 190, 199);
+    --theme-link-active-color: rgb(248, 199, 199);
+    --theme-link-visited-active-color: rgb(248, 199, 199);
+  }
+}
+
+body {
+  background-color: var(--theme-background-color);
+  color: var(--theme-text-color);
+  font-size: var(--theme-font-size);
+  font-family: var(--theme-font-family);
+  margin: 2em;
+  padding: 0;
+}
+
+a:link { color: var(--theme-link-color); }
+a:visited { color: var(--theme-link-visited-color); }
+a:link:active { color: var(--theme-link-active-color); }
+a:visited:active { color: var(--theme-link-visited-active-color); }
+
+section.home {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
