@@ -5,7 +5,7 @@ import logging
 import time
 from feedparser import FeedParserDict
 
-from pebbling.models import TimestampedModel
+from pebbling_apps.common.models import TimestampedModel
 
 logger = logging.getLogger(__name__)
 

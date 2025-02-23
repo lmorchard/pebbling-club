@@ -20,8 +20,8 @@ from django.urls import include, path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("profiles/", include("pebbling_apps.profiles.urls")),
-    path("users/", include("pebbling_apps.users.urls")),
-    path("bookmarks/", include("pebbling_apps.bookmarks.urls")),
+    path("auth/", include("pebbling_apps.users.urls")),
+    path("u/", include("pebbling_apps.profiles.urls")),
+    path("", include("pebbling_apps.bookmarks.urls")),
     path("", include("pebbling_apps.home.urls")),
 ]

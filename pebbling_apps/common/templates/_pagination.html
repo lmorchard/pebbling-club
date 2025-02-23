@@ -1,0 +1,24 @@
+{% if is_paginated %}
+    <div class="pagination pagination-sticky-bottom">
+        <div class="directions">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; First</a>
+                <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+            <span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                <a href="?page={{ paginator.num_pages }}">Last &raquo;</a>
+            {% endif %}
+        </div>
+        {% comment %}
+    <div class="limitChoices">
+      ${limitChoicesUrls.map(
+        ({ choice, url }) => html`
+        <a href="${url}">${choice}</a>
+      `
+      )}
+    </div>
+        {% endcomment %}
+    </div>
+{% endif %}

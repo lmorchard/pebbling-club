@@ -37,9 +37,9 @@
                             <section class="masthead">
                                 <h1>
                                     {% if user.is_authenticated %}
-                                        <a href="{{ user.username }}">Pebbling Club 🐧🪨</a>
+                                        <a href="{% url 'profiles:view' user.username %}">Pebbling Club 🐧🪨</a>
                                     {% else %}
-                                        <a href="/">Pebbling Club 🐧🪨</a>
+                                        <a href="{% url 'home:index' %}">Pebbling Club 🐧🪨</a>
                                     {% endif %}
                                 </h1>
                             </section>
@@ -59,8 +59,8 @@
                                         </summary>
                                         <div>
                                             <a href="{% url 'bookmarks:add' %}">+ New</a>
-                                            <a href="/u/${user.username}">Profile</a>
-                                            <a href="/settings">Settings</a>
+                                            <a href="{% url "profiles:view" user.username %}">Profile</a>
+                                            <a href="{% url "profiles:edit" user.username %}">Settings</a>
                                             <a href="${bookmarkletSrc}">Bookmarklet</a>
                                             <a href="${bookmarkletPopupSrc}">Bookmarklet (popup)</a>
                                             <form action="{% url 'users:logout' %}" method="post">

@@ -24,7 +24,7 @@ class BookmarkListView(ListView):
         return get_paginate_limit(self.request)
 
     def get_queryset(self):
-        return Bookmark.objects.filter(owner=self.request.user).order_by("-created_at")
+        return Bookmark.objects.order_by("-created_at")
 
 
 # Create View: Add a new bookmark
@@ -129,7 +129,7 @@ class TagListView(ListView):
 
     def get_queryset(self):
         """Return tags only for the logged-in user."""
-        return Tag.objects.filter(owner=self.request.user).order_by("name")
+        return Tag.objects.order_by("name")
 
 
 # View to show all bookmarks associated with a specific tag
@@ -142,13 +142,16 @@ class TagDetailView(ListView):
         return get_paginate_limit(self.request)
 
     def get_queryset(self):
-        """Return all bookmarks linked to a specific tag."""
-        # Double-decode to restore the original tag name
-        tag_name = unquote(unquote(self.kwargs["tag_name"]))
-        self.tag = get_object_or_404(Tag, name=tag_name, owner=self.request.user)
-        return self.tag.bookmarks.all().order_by("-created_at")
+        """Return all bookmarks linked to a specific tag, regardless of owner."""
+        self.tag_name = unquote(
+            unquote(self.kwargs["tag_name"])
+        )  # Get the single tag name
+        tags = Tag.objects.filter(name=self.tag_name)  # Get the tag matching the name
+        return (
+            Bookmark.objects.filter(tags__in=tags).distinct().order_by("-created_at")
+        )  # Get bookmarks for that tag
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["tag"] = self.tag
+        context["tag_name"] = self.tag_name
         return context

@@ -1,8 +1,15 @@
 {% extends 'base.html' %}
 {% block title %}Home - My Django App{% endblock %}
 {% block content %}
-    <div class="text-center">
-        <h1>Welcome to My Django App!</h1>
-        <p>This is a simple home page.</p>
-    </div>
+    <section class="home">
+        <nav>
+            <a href="{% url 'users:login' %}">Login</a>
+        </nav>
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="100%"
+             height="100%"
+             viewBox="0 0 30 20">
+            <text class="tagline" lengthAdjust="spacing" fill="currentColor" x="0" y="15" textLength="30">🐧🪨</text>
+        </svg>
+    </section>
 {% endblock %}

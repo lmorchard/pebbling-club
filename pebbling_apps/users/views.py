@@ -14,7 +14,9 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)  # Auto-login after registration
-            return redirect("dashboard")  # Redirect to a dashboard or home page
+            return redirect(
+                "profiles:view", user.username
+            )  # Redirect to a dashboard or home page
     else:
         form = CustomUserCreationForm()
     return render(request, "users/register.html", {"form": form})
@@ -22,4 +24,4 @@ def register(request):
 
 def logout_view(request):
     logout(request)
-    return redirect("login")  # Redirect to login after logging out
+    return redirect("users:login")  # Redirect to login after logging out

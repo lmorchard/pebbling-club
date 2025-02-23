@@ -14,7 +14,8 @@
                 <a href="{{ bookmark.url }}">${host}</a>
             </div>
             {% if not hide_author %}
-                <a class="p-author" href="{% url 'profiles:profile' %}">{{ bookmark.owner.username }}</a>
+                <a class="p-author"
+                   href="{% url 'profiles:view' bookmark.owner.username %}">{{ bookmark.owner.username }}</a>
             {% endif %}
             {% with created=bookmark.created_at|date:'c' %}
                 <time class="dt-published" title="{{ created }}" datetime="{{ created }}">
@@ -26,11 +27,11 @@
                     {% for tag in bookmark.tags.all %}
                         {% if tag.name %}
                             {% comment %}
-              const tagUrl = profile
-              ? `/u/${profile.username}/t/${tag}`
-              : `/t/${tag}`;
+                              const tagUrl = profile
+                              ? `/u/${profile.username}/t/${tag}`
+                              : `/t/${tag}`;
                             {% endcomment %}
-                            <a href="{% url 'bookmarks:tag_detail' tag.name|urlencode_bookmark_tag %}"
+                            <a href="{% url 'profiles:tag' bookmark.owner.username tag.name|urlencode_bookmark_tag %}"
                                rel="category tag"
                                class="p-category">{{ tag.name }}</a>
                         {% endif %}

@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "django_celery_results",  # Stores Celery task results in DB
     "django_celery_beat",  # Enables periodic tasks
     "pebbling",
+    "pebbling_apps.common",
     "pebbling_apps.users",
     "pebbling_apps.profiles",
     "pebbling_apps.bookmarks",
@@ -184,6 +185,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.CustomUser"
 
-LOGIN_REDIRECT_URL = "profile"
+LOGIN_REDIRECT_URL = "profiles:index"
 
-LOGOUT_REDIRECT_URL = "login"
+LOGOUT_REDIRECT_URL = "users:login"

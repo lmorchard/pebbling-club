@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from pebbling.models import TimestampedModel
+from pebbling_apps.common.models import TimestampedModel
 
 
 class Profile(TimestampedModel):

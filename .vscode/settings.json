@@ -8,5 +8,5 @@
         "editor.defaultFormatter": "monosans.djlint"
     },
     "makefile.configureOnOpen": false,
-    "editor.formatOnSave": false
+    "editor.formatOnSave": true
 }

@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% load bookmark_tags %}
 {% block content %}
-    <h2>Your Tags</h2>
     <ul>
         {% for tag in tags %}
             <li>
@@ -11,6 +10,5 @@
             <li>No tags found.</li>
         {% endfor %}
     </ul>
-    {% include 'bookmarks/_pagination.html' %}
-    <a href="{% url 'bookmarks:list' %}" class="btn btn-secondary">Back to Bookmarks</a>
+    {% include '_pagination.html' %}
 {% endblock %}
