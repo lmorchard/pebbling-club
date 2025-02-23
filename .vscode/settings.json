@@ -5,8 +5,8 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "[django-html]": {
-        "editor.defaultFormatter": "junstyle.vscode-django-support"
-    },    
+        "editor.defaultFormatter": "monosans.djlint"
+    },
     "makefile.configureOnOpen": false,
-    "editor.formatOnSave": true    
+    "editor.formatOnSave": false
 }

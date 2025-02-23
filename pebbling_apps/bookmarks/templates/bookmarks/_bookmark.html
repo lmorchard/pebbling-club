@@ -1,20 +1,54 @@
 {% load bookmark_tags %}
-{% load tz %}
-<a href="{{ bookmark.url }}" target="_blank">{{ bookmark.title }}</a>
-<p>{{ bookmark.description }}</p>
-<p>
-  <small>{% timezone user_timezone %}{{ bookmark.created_at|date:'c' }}{% endtimezone %}</small>
-</p>
-<!-- Display Tags as Links -->
-<p>
-  <strong>Tags:</strong>
-  {% for tag in bookmark.tags.all %}
-    {% if tag.name %}
-      <a href="{% url 'bookmarks:tag_detail' tag.name|urlencode_bookmark_tag %}">{{ tag.name }}</a>
-    {% endif %}
-  {% empty %}
-    No tags
-  {% endfor %}
-</p>
-<a href="{% url 'bookmarks:edit' bookmark.pk %}">Edit</a> |
-<a href="{% url 'bookmarks:delete' bookmark.pk %}">Delete</a>
+<pc-bookmark bookmark="${bookmarkEncoded}">
+    <section class="bookmark h-entry">
+        <a class="thumbnail" href="{{ bookmark.url }}">${thumbnailImage}</a>
+        <div class="actions">
+            {% if not read_only and can_edit %}
+                <a href="{% url 'bookmarks:edit' bookmark.pk %}">Edit</a>
+                <a href="{% url 'bookmarks:delete' bookmark.pk %}">Delete</a>
+            {% endif %}
+        </div>
+        <a class="p-name u-url" href="{{ bookmark.url }}">{{ bookmark.title }}</a>
+        <div class="meta">
+            <div class="href">
+                <a href="{{ bookmark.url }}">${host}</a>
+            </div>
+            {% if not hide_author %}
+                <a class="p-author" href="{% url 'profiles:profile' %}">{{ bookmark.owner.username }}</a>
+            {% endif %}
+            {% with created=bookmark.created_at|date:'c' %}
+                <time class="dt-published" title="{{ created }}" datetime="{{ created }}">
+                    <a href="{% url 'bookmarks:edit' bookmark.pk %}">{{ created }}</a>
+                </time>
+            {% endwith %}
+            {% if bookmark.tags %}
+                <div class="tags">
+                    {% for tag in bookmark.tags.all %}
+                        {% if tag.name %}
+                            {% comment %}
+              const tagUrl = profile
+              ? `/u/${profile.username}/t/${tag}`
+              : `/t/${tag}`;
+                            {% endcomment %}
+                            <a href="{% url 'bookmarks:tag_detail' tag.name|urlencode_bookmark_tag %}"
+                               rel="category tag"
+                               class="p-category">{{ tag.name }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <pc-bookmark-attachment-set class="vertical">
+            <pc-bookmark-attachment name="notes">
+                <details open>
+                    <summary>Notes</summary>
+                    <section>
+                        <section class="p-summary">
+                            {{ bookmark.description }}
+                        </section>
+                    </section>
+                </details>
+            </pc-bookmark-attachment>
+        </pc-bookmark-attachment-set>
+    </section>
+</pc-bookmark>

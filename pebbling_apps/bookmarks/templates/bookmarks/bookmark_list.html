@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
 {% block content %}
-    <h2>Your Bookmarks</h2>
-    <a href="{% url 'bookmarks:add' %}" class="btn btn-primary">Add New Bookmark</a>
     {% include 'bookmarks/_bookmark_list.html' %}
     {% include 'bookmarks/_pagination.html' %}
 {% endblock %}

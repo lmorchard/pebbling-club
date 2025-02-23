@@ -5,9 +5,9 @@
     "node": ">=22.x "
   },
   "scripts": {
-    "build": "tsx ./build.ts",
-    "build:watch": "onchange -v -p 100 -i 'src/**/*' -- npm run build",
-    "lint": "tsc --project ./tsconfig.json --noEmit"
+    "build": "cd frontend && tsx ./build.ts",
+    "build:watch": "onchange -v -p 100 -i 'frontend/src/**/*' -- npm run build",
+    "lint": "cd frontend && tsc --project ./tsconfig.json --noEmit"
   },
   "author": "",
   "license": "ISC",

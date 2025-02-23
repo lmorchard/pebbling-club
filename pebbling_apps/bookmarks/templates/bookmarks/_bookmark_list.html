@@ -1,9 +1,9 @@
-<ul>
-  {% for bookmark in bookmarks %}
-    <li>
-      {% include 'bookmarks/_bookmark.html' with bookmark=bookmark %}
-    </li>
-  {% empty %}
-    <li>No bookmarks found.</li>
-  {% endfor %}
-</ul>
+<pc-bookmark-list>
+    <ul class="bookmarks h-feed">
+        {% for bookmark in bookmarks %}
+            <li>{% include 'bookmarks/_bookmark.html' with bookmark=bookmark %}</li>
+        {% empty %}
+            <li>No bookmarks found.</li>
+        {% endfor %}
+    </ul>
+</pc-bookmark-list>

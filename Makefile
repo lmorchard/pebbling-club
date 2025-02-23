@@ -23,7 +23,7 @@ test: venv/bin/activate
 format: venv/bin/activate
 	. venv/bin/activate \
 	&& python -m black . \
-	&& djlint pebbling --reformat
+	&& djlint pebbling pebbling_apps --reformat
 
 migrate: venv/bin/activate
 	. venv/bin/activate \

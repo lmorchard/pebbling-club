@@ -1,0 +1,2 @@
+ignore = "H023,H030,H031"
+custom_html = '\w+-\w+-\w+-\w+,\w+-\w+-\w+,\w+-\w+'

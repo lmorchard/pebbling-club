@@ -8,7 +8,7 @@ from .forms import BookmarkForm
 from urllib.parse import quote, unquote
 
 
-def get_paginate_limit(request, default_limit):
+def get_paginate_limit(request, default_limit=100):
     """Utility function to get pagination limit from query parameters."""
     limit = request.GET.get("limit", default_limit)
     return int(limit) if str(limit).isdigit() else default_limit
@@ -19,10 +19,9 @@ class BookmarkListView(ListView):
     model = Bookmark
     template_name = "bookmarks/bookmark_list.html"
     context_object_name = "bookmarks"
-    paginate_by = 10
 
     def get_paginate_by(self, queryset):
-        return get_paginate_limit(self.request, self.paginate_by)
+        return get_paginate_limit(self.request)
 
     def get_queryset(self):
         return Bookmark.objects.filter(owner=self.request.user).order_by("-created_at")
@@ -124,10 +123,9 @@ class TagListView(ListView):
     model = Tag
     template_name = "bookmarks/tag_list.html"
     context_object_name = "tags"
-    paginate_by = 10
 
     def get_paginate_by(self, queryset):
-        return get_paginate_limit(self.request, self.paginate_by)
+        return get_paginate_limit(self.request)
 
     def get_queryset(self):
         """Return tags only for the logged-in user."""
@@ -139,10 +137,9 @@ class TagDetailView(ListView):
     model = Bookmark
     template_name = "bookmarks/tag_detail.html"
     context_object_name = "bookmarks"
-    paginate_by = 10
 
     def get_paginate_by(self, queryset):
-        return get_paginate_limit(self.request, self.paginate_by)
+        return get_paginate_limit(self.request)
 
     def get_queryset(self):
         """Return all bookmarks linked to a specific tag."""
