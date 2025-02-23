@@ -52,7 +52,7 @@
                                     </label>
                                 </theme-selector>
                                 {% if user.is_authenticated %}
-                                    <a class="newBookmark" href="/new">+ New</a>
+                                    <a class="newBookmark" href="{% url 'bookmarks:add' %}">+ New</a>
                                     <details class="autoclose">
                                         <summary>
                                             <span>{{ user.username }}</span>
