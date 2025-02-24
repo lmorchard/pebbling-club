@@ -91,56 +91,63 @@ class UnfurlMetadata:
         try:
             # Check if the metadata type exists
             if metadata_type in self.metadata:
-                # Handle OpenGraph
                 if metadata_type == "opengraph":
-                    return next(
-                        value
-                        for key, value in self.metadata[metadata_type][0]["properties"]
-                        if key == metadata_key
-                    )
-                # Handle Dublin Core
+                    return self._extract_opengraph(metadata_key)
                 elif metadata_type == "dublincore":
-                    return next(
-                        element["content"]
-                        for element in self.metadata[metadata_type][0].get(
-                            "elements", []
-                        )
-                        if element.get("URI") == metadata_key
-                    )
-                # Handle JSON-LD
+                    return self._extract_dublincore(metadata_key)
                 elif metadata_type == "json-ld":
-                    value = self.metadata[metadata_type][0].get(metadata_key)
-                    if metadata_key == "author":
-                        return value.get("name")
-                    return value
-                # Handle RDFa
+                    return self._extract_json_ld(metadata_key)
                 elif metadata_type == "rdfa":
-                    return next(
-                        element["@value"]
-                        for element in self.metadata[metadata_type][0].get(
-                            metadata_key, []
-                        )
-                    )
-                # Handle Microdata
+                    return self._extract_rdfa(metadata_key)
                 elif metadata_type == "microdata":
-                    for item in self.metadata[metadata_type]:
-                        if "properties" in item:
-                            properties = item["properties"]
-                            if metadata_key in properties:
-                                # If the key is a list, return the first non-empty value
-                                if isinstance(properties[metadata_key], list):
-                                    return next(
-                                        (
-                                            value
-                                            for value in properties[metadata_key]
-                                            if value
-                                        ),
-                                        None,
-                                    )
-                                return properties[metadata_key]
+                    return self._extract_microdata(metadata_key)
             return None
-        except (KeyError, IndexError, StopIteration):
+        except (KeyError, IndexError, AttributeError, StopIteration):
             return None
+
+    def _extract_opengraph(self, metadata_key):
+        """Extract OpenGraph metadata."""
+        return next(
+            value
+            for key, value in self.metadata["opengraph"][0]["properties"]
+            if key == metadata_key
+        )
+
+    def _extract_dublincore(self, metadata_key):
+        """Extract Dublin Core metadata."""
+        return next(
+            element["content"]
+            for element in self.metadata["dublincore"][0].get("elements", [])
+            if element.get("URI") == metadata_key
+        )
+
+    def _extract_json_ld(self, metadata_key):
+        """Extract JSON-LD metadata."""
+        value = self.metadata["json-ld"][0].get(metadata_key)
+        if metadata_key == "author":
+            return value.get("name")
+        return value
+
+    def _extract_rdfa(self, metadata_key):
+        """Extract RDFa metadata."""
+        return next(
+            element["@value"]
+            for element in self.metadata["rdfa"][0].get(metadata_key, [])
+        )
+
+    def _extract_microdata(self, metadata_key):
+        """Extract Microdata metadata."""
+        for item in self.metadata["microdata"]:
+            if "properties" in item:
+                properties = item["properties"]
+                if metadata_key in properties:
+                    # If the key is a list, return the first non-empty value
+                    if isinstance(properties[metadata_key], list):
+                        return next(
+                            (value for value in properties[metadata_key] if value),
+                            None,
+                        )
+                    return properties[metadata_key]
 
     # https://alexmiller.phd/posts/python-3-feedfinder-rss-detection-from-url/
     def _findfeed(self, parsed_url):

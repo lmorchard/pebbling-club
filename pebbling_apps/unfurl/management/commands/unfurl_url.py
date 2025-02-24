@@ -32,7 +32,7 @@ class Command(BaseCommand):
         print(unfurl_metadata.image)
         # print(unfurl_metadata.metadata)
 
-        pp.pprint(unfurl_metadata.metadata)
+        # pp.pprint(unfurl_metadata.metadata)
 
         # out = {"feeds": unfurl_metadata.feeds, "metadata": unfurl_metadata.metadata}
 
