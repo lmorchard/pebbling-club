@@ -78,6 +78,10 @@ class UnfurlMetadata:
             ]
         )
 
+    @property
+    def categories(self):
+        return self._extract_metadata("microdata", "category")
+
     def _extract_first_metadata(self, metadata_pairs):
         """Utility method to extract the first available metadata."""
         for metadata_type, metadata_key in metadata_pairs:

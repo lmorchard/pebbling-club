@@ -30,6 +30,7 @@ class Command(BaseCommand):
         print(unfurl_metadata.author)
         print(unfurl_metadata.description)
         print(unfurl_metadata.image)
+        print(unfurl_metadata.categories)
         # print(unfurl_metadata.metadata)
 
         # pp.pprint(unfurl_metadata.metadata)
