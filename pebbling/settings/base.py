@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "pebbling_apps.bookmarks",
     "pebbling_apps.feeds",
     "pebbling_apps.home",
+    "pebbling_apps.unfurl",
 ]
 
 MIDDLEWARE = [
