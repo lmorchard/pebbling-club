@@ -1,4 +1,4 @@
-.PHONY: serve
+.PHONY: dev
 
 dev: venv/bin/activate
 	. venv/bin/activate \
@@ -37,13 +37,15 @@ freeze:
 	. venv/bin/activate \
 	&& python -m pip freeze > requirements.txt
 
-upgrade: requirements.txt
-	. venv/bin/activate \
-	&& python -m pip install -r requirements.txt
-
-venv/bin/activate: requirements.txt
+venv/bin/activate: requirements.txt npm-install
 	test -d venv || python -m venv venv
 	touch venv/bin/activate \
 	&& . venv/bin/activate \
 	&& python -m pip install --upgrade pip \
 	&& pip install -r requirements.txt
+
+npm-install: package.json node_modules/.keep
+	cd frontend && npm install
+
+node_modules/.keep:
+	mkdir -p node_modules && touch node_modules/.keep

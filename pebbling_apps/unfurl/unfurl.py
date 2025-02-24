@@ -14,15 +14,24 @@ class UnfurlMetadata:
     feeds: list[str] = field(default_factory=list)
     html: str = ""
 
-    def unfurl(self):
+    def fetch(self):
+        """Fetch the HTML content of the URL."""
         url_validator = URLValidator()
         url_validator(self.url)
 
         self.html = requests.get(self.url).text
+
+    def parse(self):
+        """Parse the fetched HTML to extract feeds and metadata."""
         parsed_url = urllib.parse.urlparse(self.url)
 
         self.feeds = self._findfeed(parsed_url)
         self.metadata = extruct.extract(self.html, base_url=self.url)
+
+    def unfurl(self):
+        """Fetch and parse the URL."""
+        self.fetch()
+        self.parse()
 
     @property
     def feed(self):

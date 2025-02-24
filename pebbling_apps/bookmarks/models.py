@@ -1,7 +1,9 @@
 import hashlib
+from django.conf import settings
 from django.db import models
 from django.contrib.auth import get_user_model
 from pebbling_apps.common.models import TimestampedModel
+from pebbling_apps.unfurl.models import UnfurlMetadataField
 
 
 class TagManager(models.Manager):
@@ -53,6 +55,8 @@ class BookmarkManager(models.Manager):
 class Bookmark(TimestampedModel):
     """Bookmark model with url and title."""
 
+    omit_html = getattr(settings, "OMIT_HTML_FROM_UNFURL_METADATA", True)
+
     objects = BookmarkManager()
 
     url = models.URLField()
@@ -62,6 +66,8 @@ class Bookmark(TimestampedModel):
     description = models.TextField(blank=True, null=True)
     tags = models.ManyToManyField("bookmarks.Tag", related_name="bookmarks", blank=True)
     meta = models.JSONField(blank=True, null=True)
+
+    unfurl_metadata = UnfurlMetadataField(blank=True, null=True, omit_html=omit_html)
 
     class Meta:
         unique_together = ["owner", "unique_hash"]
