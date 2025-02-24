@@ -10,9 +10,9 @@ from dataclasses import dataclass, field
 @dataclass
 class UnfurlMetadata:
     url: str
-    html: str = ""
-    feeds: list[str] = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
+    feeds: list[str] = field(default_factory=list)
+    html: str = ""
 
     def unfurl(self):
         url_validator = URLValidator()
@@ -21,11 +21,129 @@ class UnfurlMetadata:
         self.html = requests.get(self.url).text
         parsed_url = urllib.parse.urlparse(self.url)
 
-        self.feeds = self.findfeed(parsed_url)
+        self.feeds = self._findfeed(parsed_url)
         self.metadata = extruct.extract(self.html, base_url=self.url)
 
+    @property
+    def feed(self):
+        if len(self.feeds) > 0:
+            return self.feeds[0]
+        return None
+
+    @property
+    def title(self):
+        return self._extract_first_metadata(
+            [
+                ("opengraph", "og:title"),
+                ("dublincore", "http://purl.org/dc/elements/1.1/title"),
+                ("rdfa", "http://ogp.me/ns#title"),
+                ("json-ld", "headline"),
+                ("microdata", "name"),
+            ]
+        )
+
+    @property
+    def description(self):
+        return self._extract_first_metadata(
+            [
+                ("opengraph", "og:description"),
+                ("dublincore", "http://purl.org/dc/elements/1.1/description"),
+                ("rdfa", "http://ogp.me/ns#description"),
+                ("json-ld", "description"),
+                ("microdata", "description"),
+            ]
+        )
+
+    @property
+    def image(self):
+        return self._extract_first_metadata(
+            [
+                ("opengraph", "og:image"),
+                ("dublincore", "http://purl.org/dc/elements/1.1/image"),
+                ("rdfa", "http://ogp.me/ns#image"),
+                ("json-ld", "image"),
+                ("microdata", "image"),
+            ]
+        )
+
+    @property
+    def author(self):
+        return self._extract_first_metadata(
+            [
+                ("json-ld", "author"),
+                ("opengraph", "og:author"),
+                ("dublincore", "http://purl.org/dc/elements/1.1/creator"),
+                ("rdfa", "http://ogp.me/ns#author"),
+                ("microdata", "author"),
+            ]
+        )
+
+    def _extract_first_metadata(self, metadata_pairs):
+        """Utility method to extract the first available metadata."""
+        for metadata_type, metadata_key in metadata_pairs:
+            value = self._extract_metadata(metadata_type, metadata_key)
+            if value:
+                return value
+        return None
+
+    def _extract_metadata(self, metadata_type, metadata_key):
+        """Utility method to extract metadata based on type and key."""
+        try:
+            # Check if the metadata type exists
+            if metadata_type in self.metadata:
+                # Handle OpenGraph
+                if metadata_type == "opengraph":
+                    return next(
+                        value
+                        for key, value in self.metadata[metadata_type][0]["properties"]
+                        if key == metadata_key
+                    )
+                # Handle Dublin Core
+                elif metadata_type == "dublincore":
+                    return next(
+                        element["content"]
+                        for element in self.metadata[metadata_type][0].get(
+                            "elements", []
+                        )
+                        if element.get("URI") == metadata_key
+                    )
+                # Handle JSON-LD
+                elif metadata_type == "json-ld":
+                    value = self.metadata[metadata_type][0].get(metadata_key)
+                    if metadata_key == "author":
+                        return value.get("name")
+                    return value
+                # Handle RDFa
+                elif metadata_type == "rdfa":
+                    return next(
+                        element["@value"]
+                        for element in self.metadata[metadata_type][0].get(
+                            metadata_key, []
+                        )
+                    )
+                # Handle Microdata
+                elif metadata_type == "microdata":
+                    for item in self.metadata[metadata_type]:
+                        if "properties" in item:
+                            properties = item["properties"]
+                            if metadata_key in properties:
+                                # If the key is a list, return the first non-empty value
+                                if isinstance(properties[metadata_key], list):
+                                    return next(
+                                        (
+                                            value
+                                            for value in properties[metadata_key]
+                                            if value
+                                        ),
+                                        None,
+                                    )
+                                return properties[metadata_key]
+            return None
+        except (KeyError, IndexError, StopIteration):
+            return None
+
     # https://alexmiller.phd/posts/python-3-feedfinder-rss-detection-from-url/
-    def findfeed(self, parsed_url):
+    def _findfeed(self, parsed_url):
         result = []
         possible_feeds = []
         html = bs4(self.html, features="lxml")
@@ -51,132 +169,3 @@ class UnfurlMetadata:
                 if url not in result:
                     result.append(url)
         return result
-
-    @property
-    def feed(self):
-        if len(self.feeds) > 0:
-            return self.feeds[0]
-        return None
-
-    @property
-    def title(self):
-        return (
-            self._title_from_opengraph()
-            or self._title_from_dublincore()
-            or self._title_from_rdfa()
-        )
-
-    def _title_from_opengraph(self):
-        try:
-            return next(
-                value
-                for key, value in self.metadata["opengraph"][0]["properties"]
-                if key == "og:title"
-            )
-        except (KeyError, IndexError, StopIteration):
-            return None
-
-    def _title_from_dublincore(self):
-        try:
-            return next(
-                element["content"]
-                for element in self.metadata.get("dublincore", [{}])[0].get(
-                    "elements", []
-                )
-                if element.get("URI") == "http://purl.org/dc/elements/1.1/title"
-            )
-        except (KeyError, IndexError, StopIteration):
-            return None
-
-    def _title_from_rdfa(self):
-        try:
-            return next(
-                element["@value"]
-                for element in self.metadata.get("rdfa", [{}])[0].get(
-                    "http://ogp.me/ns#title", []
-                )
-            )
-        except (KeyError, IndexError, StopIteration):
-            return None
-
-    @property
-    def description(self):
-        return (
-            self._description_from_opengraph()
-            or self._description_from_dublincore()
-            or self._description_from_rdfa()
-        )
-
-    def _description_from_dublincore(self):
-        try:
-            return next(
-                element["content"]
-                for element in self.metadata.get("dublincore", [{}])[0].get(
-                    "elements", []
-                )
-                if element.get("URI") == "http://purl.org/dc/elements/1.1/description"
-            )
-        except (KeyError, IndexError, StopIteration):
-            return None
-
-    def _description_from_rdfa(self):
-        try:
-            return next(
-                element["@value"]
-                for element in self.metadata.get("rdfa", [{}])[0].get(
-                    "http://ogp.me/ns#description", []
-                )
-            )
-        except (KeyError, IndexError, StopIteration):
-            return None
-
-    def _description_from_opengraph(self):
-        try:
-            return next(
-                value
-                for key, value in self.metadata["opengraph"][0]["properties"]
-                if key == "og:description"
-            )
-        except (KeyError, IndexError, StopIteration):
-            return None
-
-    @property
-    def image(self):
-        return (
-            self._image_from_opengraph()
-            or self._image_from_dublincore()
-            or self._image_from_rdfa()
-        )
-
-    def _image_from_opengraph(self):
-        try:
-            return next(
-                value
-                for key, value in self.metadata["opengraph"][0]["properties"]
-                if key == "og:image"
-            )
-        except (KeyError, IndexError, StopIteration):
-            return None
-
-    def _image_from_dublincore(self):
-        try:
-            return next(
-                element["content"]
-                for element in self.metadata.get("dublincore", [{}])[0].get(
-                    "elements", []
-                )
-                if element.get("URI") == "http://purl.org/dc/elements/1.1/image"
-            )
-        except (KeyError, IndexError, StopIteration):
-            return None
-
-    def _image_from_rdfa(self):
-        try:
-            return next(
-                element["@value"]
-                for element in self.metadata.get("rdfa", [{}])[0].get(
-                    "http://ogp.me/ns#image", []
-                )
-            )
-        except (KeyError, IndexError, StopIteration):
-            return None

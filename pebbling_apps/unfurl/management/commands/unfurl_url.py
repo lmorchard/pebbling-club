@@ -27,6 +27,7 @@ class Command(BaseCommand):
         pp = pprint.PrettyPrinter(indent=2)
 
         print(unfurl_metadata.title)
+        print(unfurl_metadata.author)
         print(unfurl_metadata.description)
         print(unfurl_metadata.image)
         # print(unfurl_metadata.metadata)
