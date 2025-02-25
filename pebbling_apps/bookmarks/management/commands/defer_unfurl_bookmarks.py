@@ -25,7 +25,7 @@ class Command(BaseCommand):
             logger.error(f"User '{username}' does not exist.")  # Use logger for error
             return
 
-        bookmarks = Bookmark.objects.filter(owner=user)
+        bookmarks = Bookmark.objects.filter(owner=user).order_by("-created_at")
 
         if not bookmarks.exists():
             logger.warning(
