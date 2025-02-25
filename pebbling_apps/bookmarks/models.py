@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from pebbling_apps.common.models import TimestampedModel
 from pebbling_apps.unfurl.models import UnfurlMetadataField
+from urllib.parse import urlparse
 
 
 class TagManager(models.Manager):
@@ -83,3 +84,8 @@ class Bookmark(TimestampedModel):
         """Standard save with unique_hash generation."""
         self.unique_hash = self.generate_unique_hash()
         return super().save(*args, **kwargs)
+
+    @property
+    def host_name(self):
+        """Extracts the host name from the bookmark URL."""
+        return urlparse(self.url).hostname

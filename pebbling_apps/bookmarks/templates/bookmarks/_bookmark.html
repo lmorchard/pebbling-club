@@ -1,9 +1,9 @@
 {% load bookmark_tags %}
 <pc-bookmark bookmark="${bookmarkEncoded}">
     <section class="bookmark h-entry">
-        <a class="thumbnail" href="{{ bookmark.url }}">${thumbnailImage}</a>
+        <a class="thumbnail" href="{{ bookmark.url }}"><img src="{{ bookmark.unfurl_metadata.image }}" /></a>
         <div class="actions">
-            {% if not read_only and can_edit %}
+            {% if True or not read_only and can_edit %}
                 <a href="{% url 'bookmarks:edit' bookmark.pk %}">Edit</a>
                 <a href="{% url 'bookmarks:delete' bookmark.pk %}">Delete</a>
             {% endif %}
@@ -11,7 +11,7 @@
         <a class="p-name u-url" href="{{ bookmark.url }}">{{ bookmark.title }}</a>
         <div class="meta">
             <div class="href">
-                <a href="{{ bookmark.url }}">${host}</a>
+                <a href="{{ bookmark.url }}">{{ bookmark.host_name }}</a>
             </div>
             {% if not hide_author %}
                 <a class="p-author"

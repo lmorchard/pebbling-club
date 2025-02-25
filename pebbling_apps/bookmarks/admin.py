@@ -16,7 +16,7 @@ class BookmarkAdmin(admin.ModelAdmin):
     list_filter = ("owner", "tags")
     search_fields = ("title", "url", "description")
     filter_horizontal = ("tags",)
-    readonly_fields = ("unique_hash",)
+    readonly_fields = ("unique_hash", "unfurl_metadata")
     fieldsets = (
         (None, {"fields": ("url", "title", "description", "owner")}),
         (
@@ -28,7 +28,7 @@ class BookmarkAdmin(admin.ModelAdmin):
         (
             "Metadata",
             {
-                "fields": ("meta", "unique_hash"),
+                "fields": ("meta", "unique_hash", "unfurl_metadata"),
                 "classes": ("collapse",),
             },
         ),
