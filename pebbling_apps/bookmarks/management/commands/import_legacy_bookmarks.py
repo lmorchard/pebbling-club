@@ -93,7 +93,6 @@ class Command(BaseCommand):
                 defaults={
                     "title": data["title"] or "",
                     "description": data["extended"] or "",
-                    "meta": data["meta"] or {},
                     "created_at": created_date,
                     "updated_at": modified_date,
                 },

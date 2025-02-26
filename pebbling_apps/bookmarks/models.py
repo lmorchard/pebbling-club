@@ -41,15 +41,6 @@ class BookmarkManager(models.Manager):
             kwargs["unique_hash"] = self.generate_unique_hash_for_url(url)
             defaults["url"] = url
 
-        # Handle meta merge specially
-        if "meta" in defaults and defaults["meta"]:
-            instance = self.filter(**kwargs).first()
-            if instance and instance.meta:
-                # Merge the existing meta with new meta
-                merged_meta = instance.meta.copy()
-                merged_meta.update(defaults["meta"])
-                defaults["meta"] = merged_meta
-
         return super().update_or_create(defaults=defaults, **kwargs)
 
 
@@ -66,7 +57,6 @@ class Bookmark(TimestampedModel):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     tags = models.ManyToManyField("bookmarks.Tag", related_name="bookmarks", blank=True)
-    meta = models.JSONField(blank=True, null=True)
 
     unfurl_metadata = UnfurlMetadataField(blank=True, null=True, omit_html=omit_html)
 

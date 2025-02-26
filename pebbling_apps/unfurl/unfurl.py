@@ -189,3 +189,11 @@ class UnfurlMetadata:
                 if url not in result:
                     result.append(url)
         return result
+
+    def __str__(self):
+        title = self.title or "No Title"
+        description = self.description or "No Description"
+        return f"UnfurlMetadata(title={title}, description={description})"
+
+    def __repr__(self):
+        return self.__str__()

@@ -18,18 +18,25 @@ class BookmarkAdmin(admin.ModelAdmin):
     autocomplete_fields = ("tags",)
     readonly_fields = ("unique_hash", "unfurl_metadata")
     fieldsets = (
-        (None, {"fields": ("url", "title", "description", "owner")}),
         (
-            "Tags",
+            None,
             {
-                "fields": ("tags",),
+                "fields": (
+                    "owner",
+                    "url",
+                    "title",
+                    "description",
+                    "tags",
+                )
             },
         ),
         (
             "Metadata",
             {
-                "fields": ("meta", "unique_hash", "unfurl_metadata"),
-                "classes": ("collapse",),
+                "fields": (
+                    "unique_hash",
+                    "unfurl_metadata",
+                ),
             },
         ),
     )
