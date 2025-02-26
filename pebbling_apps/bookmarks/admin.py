@@ -13,9 +13,9 @@ class TagAdmin(admin.ModelAdmin):
 @admin.register(Bookmark)
 class BookmarkAdmin(admin.ModelAdmin):
     list_display = ("title", "url", "owner", "created_at")
-    list_filter = ("owner", "tags")
+    list_filter = ("owner",)
     search_fields = ("title", "url", "description")
-    filter_horizontal = ("tags",)
+    autocomplete_fields = ("tags",)
     readonly_fields = ("unique_hash", "unfurl_metadata")
     fieldsets = (
         (None, {"fields": ("url", "title", "description", "owner")}),
