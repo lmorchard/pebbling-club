@@ -71,12 +71,26 @@ class ProfileTagDetailView(ListView):
         """Return all bookmarks linked to a specific tag."""
         username = self.kwargs.get("username")  # Get the username from the URL
         user = get_object_or_404(CustomUser, username=username)  # Look up the user
-        # Double-decode to restore the original tag name
-        self.tag_name = unquote(unquote(self.kwargs["tag_name"]))
+        self.tag_name = unquote(
+            unquote(self.kwargs["tag_name"])
+        )  # Double-decode to restore the original tag name
         self.tag = get_object_or_404(Tag, name=self.tag_name, owner=user)
-        return self.tag.bookmarks.all().order_by("-created_at")
+
+        queryset = self.tag.bookmarks.all().order_by("-created_at")
+
+        # Filter bookmarks based on the search query
+        query = self.request.GET.get("q")
+        if query:
+            queryset = filter_bookmarks(
+                queryset, query
+            )  # Use the utility function to filter bookmarks
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["tag_name"] = self.tag_name
+        context["search_query"] = self.request.GET.get(
+            "q", ""
+        )  # Pass the search query to the context
         return context
