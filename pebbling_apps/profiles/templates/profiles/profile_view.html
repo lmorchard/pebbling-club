@@ -1,4 +1,9 @@
 {% extends 'base.html' %}
+{% block before_site_nav %}
+    <form method="get" action="" class="search-form">
+        <input type="text" name="q" placeholder="Search bookmarks..." aria-label="Search bookmarks" value="{{ request.GET.q|default:'' }}">
+    </form>
+{% endblock %}
 {% block content %}
     {% include 'bookmarks/_bookmark_list.html' %}
     {% include '_pagination.html' %}

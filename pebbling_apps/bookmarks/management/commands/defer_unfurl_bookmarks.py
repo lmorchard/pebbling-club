@@ -12,9 +12,16 @@ class Command(BaseCommand):
         parser.add_argument(
             "username", type=str, help="Username of the user whose bookmarks to unfurl"
         )
+        parser.add_argument(
+            "--limit",
+            type=int,
+            default=None,
+            help="Limit the number of bookmarks to unfurl",
+        )  # Added limit argument
 
     def handle(self, *args, **options):
         username = options["username"]
+        limit = options.get("limit")  # Get the limit from options
         User = get_user_model()
 
         logger = logging.getLogger(__name__)  # Set up a logger
@@ -26,6 +33,9 @@ class Command(BaseCommand):
             return
 
         bookmarks = Bookmark.objects.filter(owner=user).order_by("-created_at")
+
+        if limit is not None:
+            bookmarks = bookmarks[:limit]  # Apply limit in the database query
 
         if not bookmarks.exists():
             logger.warning(

@@ -6,6 +6,9 @@ from django.core.exceptions import PermissionDenied
 from .models import Bookmark, Tag
 from .forms import BookmarkForm
 from urllib.parse import quote, unquote
+from django.db import models
+from django.db.models import Q
+from pebbling_apps.common.utils import filter_bookmarks
 
 
 def get_paginate_limit(request, default_limit=100):
@@ -24,7 +27,10 @@ class BookmarkListView(ListView):
         return get_paginate_limit(self.request)
 
     def get_queryset(self):
-        return Bookmark.objects.order_by("-created_at")
+        queryset = Bookmark.objects.order_by("-created_at")
+        query = self.request.GET.get("q")
+        queryset = filter_bookmarks(queryset, query)  # Use the utility function
+        return queryset
 
 
 # Create View: Add a new bookmark

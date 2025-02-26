@@ -7,10 +7,12 @@ from django.core.exceptions import PermissionDenied
 from pebbling_apps.bookmarks.models import Bookmark, Tag
 from pebbling_apps.bookmarks.forms import BookmarkForm
 from urllib.parse import quote, unquote
+from django.db.models import Q
 
 from pebbling_apps.bookmarks.models import Bookmark
 from .forms import ProfileUpdateForm
 from pebbling_apps.users.models import CustomUser
+from pebbling_apps.common.utils import filter_bookmarks
 
 
 @login_required
@@ -48,11 +50,13 @@ class ProfileBookmarkListView(ListView):
         return get_paginate_limit(self.request)
 
     def get_queryset(self):
-        username = self.kwargs.get("username")  # Get the username from the URL
-        user = get_object_or_404(CustomUser, username=username)  # Look up the user
-        return Bookmark.objects.filter(owner=user).order_by(
-            "-created_at"
-        )  # Filter bookmarks by user
+        username = self.kwargs.get("username")
+        user = get_object_or_404(CustomUser, username=username)
+        queryset = Bookmark.objects.filter(owner=user).order_by("-created_at")
+
+        query = self.request.GET.get("q")
+        queryset = filter_bookmarks(queryset, query)  # Use the utility function
+        return queryset
 
 
 class ProfileTagDetailView(ListView):
