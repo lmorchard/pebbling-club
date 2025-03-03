@@ -16,7 +16,7 @@ shell:
 	. venv/bin/activate \
 	&& python manage.py shell
 
-test: venv/bin/activate
+test:
 	. venv/bin/activate \
 	&& python manage.py test
 

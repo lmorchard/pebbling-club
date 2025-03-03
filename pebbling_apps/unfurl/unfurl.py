@@ -168,7 +168,7 @@ class UnfurlMetadata:
         possible_feeds = []
         html = bs4(self.html, features="lxml")
         feed_urls = html.findAll("link", rel="alternate")
-        if len(feed_urls) > 1:
+        if len(feed_urls) > 0:
             for f in feed_urls:
                 t = f.get("type", None)
                 if t:
