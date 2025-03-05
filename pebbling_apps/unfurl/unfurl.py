@@ -5,6 +5,7 @@ import requests
 import extruct
 from django.core.validators import URLValidator
 from dataclasses import dataclass, field
+import json
 
 
 @dataclass
@@ -13,6 +14,31 @@ class UnfurlMetadata:
     metadata: dict = field(default_factory=dict)
     feeds: list[str] = field(default_factory=list)
     html: str = ""
+
+    @classmethod
+    def from_json(cls, json_str: str, omit_html: bool = False) -> "UnfurlMetadata":
+        """Create an UnfurlMetadata instance from a JSON string."""
+        if not json_str:
+            return None
+
+        data = json.loads(json_str)
+        return cls(
+            url=data["url"],
+            metadata=data.get("metadata", {}),
+            feeds=data.get("feeds", []),
+            html=data.get("html", "") if not omit_html else "",
+        )
+
+    def to_json(self, omit_html: bool = False) -> str:
+        """Convert the UnfurlMetadata instance to a JSON string."""
+        data = {
+            "url": self.url,
+            "metadata": self.metadata,
+            "feeds": self.feeds,
+        }
+        if not omit_html:
+            data["html"] = self.html
+        return json.dumps(data)
 
     def unfurl(self):
         """Fetch and parse the URL."""

@@ -16,27 +16,14 @@ class UnfurlMetadataField(models.Field):
         if value is None:
             return None  # Handle None gracefully
         if isinstance(value, UnfurlMetadata):
-            data = {
-                "url": value.url,
-                "metadata": value.metadata,
-                "feeds": value.feeds,
-            }
-            if not self.omit_html:
-                data["html"] = value.html
-            return json.dumps(data)
+            return value.to_json(omit_html=self.omit_html)
         return value  # Return the value as is if it's not an UnfurlMetadata instance
 
     def from_db_value(self, value, expression, connection):
         """Convert the JSON string back to an UnfurlMetadata instance."""
         if value is None or value == "":  # Handle None or empty string gracefully
             return None
-        data = json.loads(value)
-        return UnfurlMetadata(
-            url=data["url"],
-            metadata=data.get("metadata", {}),
-            feeds=data.get("feeds", []),
-            html=data.get("html", ""),
-        )
+        return UnfurlMetadata.from_json(value, omit_html=self.omit_html)
 
     def to_python(self, value):
         """Convert the value from the database to an UnfurlMetadata instance."""
@@ -44,13 +31,7 @@ class UnfurlMetadataField(models.Field):
             return None
         if isinstance(value, UnfurlMetadata):
             return value
-        data = json.loads(value)
-        return UnfurlMetadata(
-            url=data["url"],
-            metadata=data.get("metadata", {}),
-            feeds=data.get("feeds", []),
-            html=data.get("html", ""),
-        )
+        return UnfurlMetadata.from_json(value, omit_html=self.omit_html)
 
     def db_type(self, connection):
         """Specify the database column type for this field."""

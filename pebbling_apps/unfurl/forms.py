@@ -19,28 +19,16 @@ class UnfurlMetadataFormField(forms.CharField):
         """Convert UnfurlMetadata instance to JSON string for form display"""
         if not value:
             return ""
-        data = {
-            "url": value.url,
-            "metadata": value.metadata,
-            "feeds": value.feeds,
-        }
-        if not self.omit_html:
-            data["html"] = value.html
-        return json.dumps(data, indent=2)
+        if isinstance(value, str):
+            return value
+        return value.to_json(omit_html=self.omit_html)
 
     def clean(self, value):
         """Convert JSON string back to UnfurlMetadata instance"""
         value = super().clean(value)
         if not value:
             return None
-
         try:
-            data = json.loads(value)
-            return UnfurlMetadata(
-                url=data.get("url", ""),
-                metadata=data.get("metadata", {}),
-                feeds=data.get("feeds", []),
-                html=data.get("html", ""),
-            )
+            return UnfurlMetadata.from_json(value, omit_html=self.omit_html)
         except json.JSONDecodeError:
             raise forms.ValidationError("Invalid JSON format for unfurl metadata")
