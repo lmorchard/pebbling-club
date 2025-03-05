@@ -9,6 +9,7 @@ from urllib.parse import quote, unquote
 from django.db import models
 from django.db.models import Q
 from pebbling_apps.common.utils import filter_bookmarks
+from pebbling_apps.unfurl.unfurl import UnfurlMetadata
 
 
 def get_paginate_limit(request, default_limit=100):
@@ -60,19 +61,39 @@ class BookmarkCreateView(CreateView):
                         "tags": " ".join(
                             tag.name for tag in self.existing_bookmark.tags.all()
                         ),
+                        "unfurl_metadata": self.existing_bookmark.unfurl_metadata,
                     }
                 )
                 return initial
 
-        # Use query parameters if no existing bookmark found
-        initial.update(
-            {
-                "url": url,
-                "title": self.request.GET.get("title", ""),
-                "description": self.request.GET.get("description", ""),
-                "tags": self.request.GET.get("tags", ""),
-            }
-        )
+            # No existing bookmark - try to fetch metadata
+            try:
+                unfurl_metadata = UnfurlMetadata(url=url)
+                unfurl_metadata.unfurl()  # Fetch and parse metadata
+
+                initial.update(
+                    {
+                        "url": url,
+                        "title": self.request.GET.get("title", unfurl_metadata.title),
+                        "description": self.request.GET.get(
+                            "description",
+                            unfurl_metadata.description,
+                        ),
+                        "tags": self.request.GET.get("tags", ""),
+                        "unfurl_metadata": unfurl_metadata,
+                    }
+                )
+            except Exception as e:
+                # If metadata fetch fails, just use query parameters
+                initial.update(
+                    {
+                        "url": url,
+                        "title": self.request.GET.get("title", ""),
+                        "description": self.request.GET.get("description", ""),
+                        "tags": self.request.GET.get("tags", ""),
+                    }
+                )
+
         return initial
 
     def get_context_data(self, **kwargs):

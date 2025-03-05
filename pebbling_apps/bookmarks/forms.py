@@ -10,7 +10,7 @@ class BookmarkForm(forms.ModelForm):
 
     class Meta:
         model = Bookmark
-        fields = ["url", "title", "description", "tags"]
+        fields = ["url", "title", "description", "tags", "unfurl_metadata"]
 
     def __init__(self, *args, **kwargs):
         """Set the initial value for the tags field as a space-separated string."""

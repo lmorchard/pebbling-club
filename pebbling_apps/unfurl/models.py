@@ -1,6 +1,7 @@
 from django.db import models
 import json
 from .unfurl import UnfurlMetadata
+from .forms import UnfurlMetadataFormField
 
 
 class UnfurlMetadataField(models.Field):
@@ -54,3 +55,8 @@ class UnfurlMetadataField(models.Field):
     def db_type(self, connection):
         """Specify the database column type for this field."""
         return "text"  # Use 'text' to store JSON strings
+
+    def formfield(self, **kwargs):
+        defaults = {"form_class": UnfurlMetadataFormField, "omit_html": self.omit_html}
+        defaults.update(kwargs)
+        return super().formfield(**defaults)
