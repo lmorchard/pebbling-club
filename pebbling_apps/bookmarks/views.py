@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.core.exceptions import PermissionDenied
 from .models import Bookmark, Tag
@@ -114,7 +114,23 @@ class BookmarkCreateView(CreateView):
         return kwargs
 
     def form_valid(self, form):
+        """Handle successful form submission with custom redirect logic."""
         form.instance.owner = self.request.user
+        self.object = form.save()
+
+        # Check for next parameter
+        next_param = self.request.GET.get("next")
+        if next_param == "close":
+            return render(
+                self.request,
+                "bookmarks/bookmark_create_close.html",
+                {"bookmark": self.object},
+            )
+        elif next_param == "profile":
+            return redirect("profiles:view", username=self.request.user.username)
+        elif next_param == "same":
+            return redirect(self.object.url)
+
         return super().form_valid(form)
 
 
