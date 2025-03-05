@@ -97,10 +97,12 @@ class BookmarkCreateView(CreateView):
         return initial
 
     def get_context_data(self, **kwargs):
-        """Add existing bookmark info to context if found."""
+        """Add existing bookmark info and layout mode to context."""
         context = super().get_context_data(**kwargs)
         if hasattr(self, "existing_bookmark"):
             context["existing_bookmark"] = self.existing_bookmark
+        # Add minimal_layout flag if popup parameter is present
+        context["minimal_layout"] = "popup" in self.request.GET
         return context
 
     def get_form_kwargs(self):

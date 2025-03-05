@@ -1,12 +1,14 @@
 {% extends 'base.html' %}
 {% block content %}
-    <h2>
-        {% if object %}
-            Edit Bookmark
-        {% else %}
-            Add Bookmark
-        {% endif %}
-    </h2>
+    {% if not minimal_layout %}
+        <h2>
+            {% if object %}
+                Edit Bookmark
+            {% else %}
+                Add Bookmark
+            {% endif %}
+        </h2>
+    {% endif %}
     {% if existing_bookmark %}
         <p class="text-muted">
             This URL was previously bookmarked. Last updated: {{ existing_bookmark.updated_at|date:"F j, Y" }}
