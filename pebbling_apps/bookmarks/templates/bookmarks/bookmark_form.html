@@ -14,10 +14,19 @@
             This URL was previously bookmarked. Last updated: {{ existing_bookmark.updated_at|date:"F j, Y" }}
         </p>
     {% endif %}
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-success">Save</button>
-        <a href="{% url 'bookmarks:list' %}" class="btn btn-secondary">Cancel</a>
-    </form>
+    <pc-bookmark-form>
+        <form method="post">
+            {% csrf_token %}
+            {{ form }}
+            <section class="actions">
+                <button type="submit" class="btn btn-success">
+                    {% if object %}
+                        Save bookmark
+                    {% else %}
+                        Add new bookmark
+                    {% endif %}
+                </button>
+            </section>
+        </form>
+    </pc-bookmark-form>
 {% endblock %}

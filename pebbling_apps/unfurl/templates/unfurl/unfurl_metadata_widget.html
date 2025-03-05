@@ -1,0 +1,8 @@
+<details>
+    <summary>{{ widget.label }}</summary>
+    <textarea name="{{ widget.name }}"
+              {% if widget.attrs %}{% for key, value in widget.attrs.items %}{% if key != "label" %}{{ key }}="{{ value }}"{% endif %}
+              {% endfor %}
+              {% endif %}>{{ widget.value }}</textarea>
+    {% if widget.help_text %}<p class="help">{{ widget.help_text }}</p>{% endif %}
+</details>

@@ -4,30 +4,47 @@ form {
   row-gap: calc(var(--row-gap) / 2);
 }
 
-form label {
+form > div {
   display: flex;
   flex-direction: column;
   row-gap: 0.25em;
 }
 
 @media (min-width: 1024px) {
-  form > label {
+  form > div {
     display: grid;
     column-gap: var(--column-gap);
     grid-template-columns:
       [label] 1fr
       [field] 11fr;
+    grid-template-rows: auto auto;
+    grid-auto-flow: dense;
   }
-  form > label span.label {
+  form > div label {
     grid-column: label;
   }
-  form > label input, form label textarea {
+  form > div input, form > div textarea {
     grid-column: field;
+    grid-row: 1;
   }
 }
 
-form > label span.error {
-  color: red;
+form > div .helptext {
+    grid-column: field;
+    font-size: 0.8em;
+    color: var(--theme-text-muted-color);
+}
+
+form > div ul.errorlist {
+  grid-column: field;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+form > div ul.errorlist li {
+  color: var(--theme-error-message-color);
+  font-size: 0.8em;
 }
 
 form > section {

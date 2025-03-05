@@ -4,13 +4,29 @@ import json
 from .unfurl import UnfurlMetadata
 
 
-class UnfurlMetadataFormField(forms.CharField):
-    widget = forms.Textarea
-    default_attrs = {"rows": 10}
+class UnfurlMetadataWidget(forms.Textarea):
+    template_name = "unfurl/unfurl_metadata_widget.html"
 
+    def __init__(self, attrs=None):
+        default_attrs = {"rows": 10}
+        if attrs:
+            default_attrs.update(attrs)
+        super().__init__(default_attrs)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["widget"]["label"] = self.attrs.get("label", "Unfurl Metadata")
+        return context
+
+
+class UnfurlMetadataFormField(forms.CharField):
     def __init__(self, *args, omit_html=False, **kwargs):
         self.omit_html = omit_html
-        kwargs.setdefault("widget", self.widget(attrs=self.default_attrs))
+        widget_attrs = {
+            "label": kwargs.pop("label", "Unfurl Metadata"),
+            "rows": 10,
+        }
+        kwargs["widget"] = UnfurlMetadataWidget(attrs=widget_attrs)
         kwargs.setdefault("required", False)
         kwargs.setdefault("help_text", "JSON representation of URL metadata")
         super().__init__(*args, **kwargs)

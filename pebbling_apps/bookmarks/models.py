@@ -51,7 +51,7 @@ class Bookmark(TimestampedModel):
 
     objects = BookmarkManager()
 
-    url = models.URLField()
+    url = models.URLField(verbose_name="URL")
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     unique_hash = models.CharField(max_length=255)
     title = models.CharField(max_length=255)

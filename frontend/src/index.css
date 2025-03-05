@@ -24,6 +24,8 @@
   --theme-link-visited-color: rgba(85, 26, 139, 1);
   --theme-link-active-color: rgba(255, 0, 0, 1);
   --theme-link-visited-active-color: rgba(255, 0, 0, 1);
+  --theme-error-message-color: #f00;
+  --theme-text-muted-color: #666;
 }
 
 @media (prefers-color-scheme: light) {
