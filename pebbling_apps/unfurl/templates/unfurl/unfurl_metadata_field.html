@@ -1,9 +1,5 @@
-<details class="unfurl-field-wrapper {% if field.errors %}error{% endif %}">
-    {% if field.label %}
-        <summary>
-            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        </summary>
-    {% endif %}
+<details class="unfurl-data {% if field.errors %}error{% endif %}">
+    {% if field.label %}<summary>{{ field.label }}:</summary>{% endif %}
     {{ field }}
     {% if field.help_text %}<div class="help-text">{{ field.help_text }}</div>{% endif %}
     {% if field.errors %}
