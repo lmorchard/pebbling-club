@@ -47,6 +47,7 @@ class BookmarkForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["tags"].user = self.user
         self.fields["tags"].widget.attrs["autofocus"] = True
+        self.fields["description"].widget.attrs["rows"] = 5
 
     def save(self, commit=True):
         """Save the form and handle the owner field."""

@@ -2,10 +2,12 @@ from django import forms
 from django.conf import settings
 import json
 from .unfurl import UnfurlMetadata
+from django.forms.boundfield import BoundField
+from django.template.loader import get_template
 
 
 class UnfurlMetadataWidget(forms.Textarea):
-    template_name = "unfurl/unfurl_metadata_widget.html"
+    # template_name = "unfurl/unfurl_metadata_widget.html"
 
     def __init__(self, attrs=None):
         default_attrs = {"rows": 10}
@@ -13,13 +15,26 @@ class UnfurlMetadataWidget(forms.Textarea):
             default_attrs.update(attrs)
         super().__init__(default_attrs)
 
-    def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-        context["widget"]["label"] = self.attrs.get("label", "Unfurl Metadata")
-        return context
+
+class UnfurlMetadataBoundField(BoundField):
+    template_name = "unfurl/unfurl_metadata_field.html"
+
+    def __init__(self, form, field, name):
+        super().__init__(form, field, name)
+
+    def render(self):
+        template = get_template(self.template_name)
+        return template.render(
+            {
+                "field": self,
+                "form": self.form,
+                "name": self.name,
+            }
+        )
 
 
 class UnfurlMetadataFormField(forms.CharField):
+
     def __init__(self, *args, omit_html=False, **kwargs):
         self.omit_html = omit_html
         widget_attrs = {
@@ -30,6 +45,9 @@ class UnfurlMetadataFormField(forms.CharField):
         kwargs.setdefault("required", False)
         kwargs.setdefault("help_text", "JSON representation of URL metadata")
         super().__init__(*args, **kwargs)
+
+    def get_bound_field(self, form, field_name):
+        return UnfurlMetadataBoundField(form, self, field_name)
 
     def prepare_value(self, value):
         """Convert UnfurlMetadata instance to JSON string for form display"""
