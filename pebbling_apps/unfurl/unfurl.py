@@ -29,8 +29,8 @@ class UnfurlMetadata:
             html=data.get("html", "") if not omit_html else "",
         )
 
-    def to_json(self, omit_html: bool = False) -> str:
-        """Convert the UnfurlMetadata instance to a JSON string."""
+    def to_dict(self, omit_html: bool = False) -> dict:
+        """Convert the UnfurlMetadata instance to a dictionary."""
         data = {
             "url": self.url,
             "metadata": self.metadata,
@@ -38,7 +38,11 @@ class UnfurlMetadata:
         }
         if not omit_html:
             data["html"] = self.html
-        return json.dumps(data)
+        return data
+
+    def to_json(self, omit_html: bool = False) -> str:
+        """Convert the UnfurlMetadata instance to a JSON string."""
+        return json.dumps(self.to_dict(omit_html=omit_html))
 
     def unfurl(self):
         """Fetch and parse the URL."""

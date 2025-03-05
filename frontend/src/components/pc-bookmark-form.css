@@ -7,9 +7,8 @@ pc-bookmark-form .unfurl-data summary {
   margin-bottom: 0.5em;
 }
 
-pc-bookmark-form .unfurl-data summary button.refresh {
-  font-size: 0.8em;
-  margin-left: 0.5em;
+pc-bookmark-form .unfurl-data .refresh {
+  grid-column: field;
 }
 
 pc-bookmark-form .unfurl-data textarea {
