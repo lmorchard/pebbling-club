@@ -82,6 +82,23 @@ class Feed(TimestampedModel):
         self.title = parsed_feed.get("title", "")
         self.save()
 
+    def to_dict(self) -> dict:
+        """Convert Feed instance to a dictionary for JSON serialization."""
+        return {
+            "id": self.id,
+            "url": self.url,
+            "title": self.title,
+            "newest_item_date": (
+                self.newest_item_date.isoformat() if self.newest_item_date else None
+            ),
+            "disabled": self.disabled,
+            "etag": self.etag,
+            "modified": self.modified,
+            "json": self.json,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }
+
     class Meta:
         ordering = ["-newest_item_date"]
         indexes = [
@@ -106,6 +123,24 @@ class FeedItem(TimestampedModel):
 
     def __str__(self) -> str:
         return self.title
+
+    def to_dict(self) -> dict:
+        """Convert FeedItem instance to a dictionary for JSON serialization."""
+        return {
+            "id": self.id,
+            "feed_id": self.feed_id,
+            "guid": self.guid,
+            "date": self.date.isoformat() if self.date else None,
+            "link": self.link,
+            "title": self.title,
+            "summary": self.summary,
+            "description": self.description,
+            "last_seen_at": self.last_seen_at.isoformat(),
+            "first_seen_at": self.first_seen_at.isoformat(),
+            "json": self.json,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }
 
     class Meta:
         ordering = ["-date"]

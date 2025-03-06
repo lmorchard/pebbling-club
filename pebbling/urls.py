@@ -22,6 +22,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("auth/", include("pebbling_apps.users.urls")),
     path("u/", include("pebbling_apps.profiles.urls")),
+    path("feeds/", include("pebbling_apps.feeds.urls")),
     path("", include("pebbling_apps.bookmarks.urls")),
     path("", include("pebbling_apps.home.urls")),
 ]

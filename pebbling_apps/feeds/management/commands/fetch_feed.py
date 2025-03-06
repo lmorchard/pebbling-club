@@ -16,27 +16,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         url = options["url"]
-        create = options.get("create", False)
-
-        # Validate URL format
-        url_validator = URLValidator()
         try:
-            url_validator(url)
-        except ValidationError:
-            logger.error(f"Invalid URL format: {url}")
-            raise CommandError(f"Invalid URL format: {url}")
-
-        # Get or create feed
-        try:
-            try:
-                feed = Feed.objects.get(url=url)
-                logger.info(f"Found feed: {feed}")
-            except Feed.DoesNotExist:
-                feed = Feed.objects.create(url=url)
-                logger.info(f"Created new feed: {feed}")
-
-            # Fetch feed content
             service = FeedService()
+            feed, created = service.get_or_create_feed(url)
+
             if service.fetch_feed(feed):
                 message = f"Successfully fetched feed: {feed}"
                 logger.info(message)

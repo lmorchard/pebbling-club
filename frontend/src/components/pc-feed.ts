@@ -72,7 +72,7 @@ export default class PCFeedElement extends LitElement {
       return html`${JSON.stringify(this.error)}`;
     }
 
-    const items = this.feed?.items?.items;
+    const items = this.feed?.items;
     if (!items?.length) {
       return html`(no items)`;
     }
@@ -92,7 +92,9 @@ export default class PCFeedElement extends LitElement {
         ${sortedItems.slice(0, 100).map(
           (item: any) => html`
             <li class="item">
-              <time dt="${item.date.toISOString()}">${item.date.toLocaleString()}</time>
+              <time dt="${item.date.toISOString()}"
+                >${item.date.toLocaleString()}</time
+              >
               <a target="_blank" href="${item.link}">
                 ${item.title || "(untitled)"}
               </a>
@@ -170,16 +172,13 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
     }
 
     const results = await response.json();
-    for (const result of results) {
-      for (const { element, url } of batch) {
-        if (url === result.url) {
-          element.isLoading = false;
-          if (result.success) {
-            element.feed = result.fetched;
-          } else {
-            element.error = result.err;
-          }
-        }
+    for (const { element, url } of batch) {
+      const result = results[url];
+      element.isLoading = false;
+      if (result?.success) {
+        element.feed = result.fetched;
+      } else if (result?.err) {
+        element.error = result.err;
       }
     }
   }

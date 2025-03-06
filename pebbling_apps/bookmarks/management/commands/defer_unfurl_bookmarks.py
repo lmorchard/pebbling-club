@@ -45,7 +45,9 @@ class Command(BaseCommand):
 
         # Use iterator to avoid loading all bookmarks into memory at once
         for bookmark in bookmarks.iterator():
-            unfurl_bookmark_metadata.delay(bookmark.id)
+            if bookmark.unfurl_metadata:
+                continue
+            unfurl_bookmark_metadata.apply_async(args=[bookmark.id], priority=9)
             logger.info(
                 f"Deferred unfurling for bookmark ID: {bookmark.id}"
             )  # Use logger for info

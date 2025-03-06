@@ -14,7 +14,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
 
-def get_paginate_limit(request, default_limit=100):
+def get_paginate_limit(request, default_limit=10):
     """Utility function to get pagination limit from query parameters."""
     limit = request.GET.get("limit", default_limit)
     return int(limit) if str(limit).isdigit() else default_limit
