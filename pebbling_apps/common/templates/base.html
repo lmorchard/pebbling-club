@@ -1,4 +1,5 @@
 {% load static %}
+{% load bookmark_tags %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -61,8 +62,8 @@
                                             <a href="{% url 'bookmarks:add' %}">+ New</a>
                                             <a href="{% url "profiles:view" user.username %}">Profile</a>
                                             <a href="{% url "profiles:edit" user.username %}">Settings</a>
-                                            <a href="${bookmarkletSrc}">Bookmarklet</a>
-                                            <a href="${bookmarkletPopupSrc}">Bookmarklet (popup)</a>
+                                            <a href="{% bookmarklet_new_bookmark %}">Bookmarklet</a>
+                                            <a href="{% bookmarklet_new_bookmark popup=True %}">Bookmarklet (popup)</a>
                                             <form action="{% url 'users:logout' %}" method="post">
                                                 <button type="submit">Logout</button>
                                             </form>
