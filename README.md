@@ -1,36 +1,20 @@
-# pebbling-club (django version)
+# pebbling club
 
-## development notes
+a club for [pebbling][] enthusiasts on the web
 
-Trying to jot down notes of needful things before productivity occurs.
-Some of this will end up unnecessary after initial commit.
+or, a social bookmarking service that hopes to network with other socials
 
-I'm trying to bundle common tasks up into a Makefile
-```bash
-make # install dependencies
-make runserver # run development server
-```
+[pebbling]: https://en.wikipedia.org/wiki/Pebbling
 
-```bash
-# create virtual environment (if not already created)
-python -m venv venv
+[![Remix on Glitch](https://cdn.glitch.com/2703baf2-b643-4da7-ab91-7ee2a2d00b5b%2Fremix-button.svg)](https://glitch.com/edit/#!/import/github/lmorchard/pebbling-club)
 
-# activate virtual environment
-. ./venv/bin/activate
+## overall notions
 
-# upgrade pip (if needed)
-pip install --upgrade pip
+- Sift, seek, save, share... with friends? overall pitch?
 
-# install dependencies
-python -m pip install -r requirements.txt
-```
+## Misc dev notions
 
-When installing packages:
-```bash
-pip freeze > requirements.txt
-```
-
-## TODO
-
-- [ ] get code linting and formatting working
-- [ ] get some kind of type system working?
+- separate concerns of data and logic into repository and service layers
+- start each feature as a CLI command first, wherever possible
+- write tests mainly for tricky bits of logic, don't need 100% coverage
+- think about per-user sqlite databases for profile data?
