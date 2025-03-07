@@ -95,7 +95,7 @@ class UnfurlMetadata:
 
     @property
     def image(self):
-        return self._extract_first_metadata(
+        image_url = self._extract_first_metadata(
             [
                 ("opengraph", "og:image"),
                 ("dublincore", "http://purl.org/dc/elements/1.1/image"),
@@ -104,6 +104,9 @@ class UnfurlMetadata:
                 ("microdata", "image"),
             ]
         )
+        if image_url:
+            return urllib.parse.urljoin(self.url, image_url)
+        return None
 
     @property
     def author(self):
