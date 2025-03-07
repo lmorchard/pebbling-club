@@ -18,3 +18,9 @@ or, a social bookmarking service that hopes to network with other socials
 - start each feature as a CLI command first, wherever possible
 - write tests mainly for tricky bits of logic, don't need 100% coverage
 - think about per-user sqlite databases for profile data?
+
+## development notes
+
+This project uses a Makefile to manage development tasks. Take a look in there for details.
+
+Ideally, running `make dev` should get you up and running with a development environment. That should install all python & node dependencies and then run the whole development stack including the server and Celery background job queue.

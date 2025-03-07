@@ -1,6 +1,6 @@
 .PHONY: dev
 
-dev: venv/bin/activate
+dev: venv/bin/activate migrate
 	. venv/bin/activate \
 	&& honcho start -f Procfile-dev
 
@@ -27,11 +27,17 @@ format: venv/bin/activate
 
 migrate: venv/bin/activate
 	. venv/bin/activate \
-	&& mkdir -p data \
+    && mkdir -p data \
 	&& python manage.py createcachetable --database cache_db \
 	&& python manage.py migrate --database=celery_db \
 	&& python manage.py migrate --database=feeds_db \
 	&& python manage.py migrate
+
+migrate_prod:
+	python manage.py createcachetable --database cache_db \
+	&& python manage.py migrate --noinput --database=celery_db \
+	&& python manage.py migrate --noinput --database=feeds_db \
+	&& python manage.py migrate --noinput
 
 freeze:
 	. venv/bin/activate \

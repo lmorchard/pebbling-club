@@ -9,7 +9,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -65,51 +64,6 @@ WSGI_APPLICATION = "pebbling.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-_shared_sqlite_options = {
-    "transaction_mode": "IMMEDIATE",
-    "timeout": 5,  # seconds
-    "init_command": """
-        PRAGMA journal_mode=WAL;
-        PRAGMA synchronous=NORMAL;
-        PRAGMA mmap_size=134217728;
-        PRAGMA journal_size_limit=27103364;
-        PRAGMA cache_size=2000;
-    """,
-}
-
-DATABASES_BASE_DIR = BASE_DIR / "data"
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": DATABASES_BASE_DIR / "main.sqlite3",
-        "OPTIONS": {
-            **_shared_sqlite_options,
-        },
-    },
-    "feeds_db": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": DATABASES_BASE_DIR / "feeds.sqlite3",
-        "OPTIONS": {
-            **_shared_sqlite_options,
-        },
-    },
-    "celery_db": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": DATABASES_BASE_DIR / "celery.sqlite3",
-        "OPTIONS": {
-            **_shared_sqlite_options,
-        },
-    },
-    "cache_db": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": DATABASES_BASE_DIR / "cache.sqlite3",
-        "OPTIONS": {
-            **_shared_sqlite_options,
-        },
-    },
-}
-
 DATABASE_ROUTERS = [
     "pebbling.routers.CacheRouter",
     "pebbling.routers.CeleryRouter",
@@ -126,11 +80,6 @@ CACHES = {
     }
 }
 
-# Celery settings
-CELERY_BEAT_SCHEDULE_FILENAME = str(BASE_DIR / "data" / "celerybeat-schedule")
-CELERY_BROKER_URL = (
-    "sqla+sqlite:///data/celery.sqlite3"  # Use separate SQLite DB for Celery
-)
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"

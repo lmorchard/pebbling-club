@@ -28,6 +28,7 @@ EditorConfig==0.17.0
 extruct==0.18.0
 feedparser==6.0.11
 greenlet==3.1.1
+gunicorn==23.0.0
 honcho==2.0.0
 html5lib==1.1
 html_text==0.7.0
@@ -70,3 +71,4 @@ w3lib==2.3.1
 watchdog==6.0.0
 wcwidth==0.2.13
 webencodings==0.5.1
+whitenoise==6.9.0
