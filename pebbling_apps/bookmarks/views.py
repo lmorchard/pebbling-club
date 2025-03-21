@@ -12,6 +12,13 @@ from pebbling_apps.common.utils import filter_bookmarks
 from pebbling_apps.unfurl.unfurl import UnfurlMetadata
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from enum import Enum
+
+
+class BookmarkAttachmentNames(Enum):
+    NOTES = "notes"
+    FEED = "feed"
+    UNFURL = "unfurl"
 
 
 def get_paginate_limit(request, default_limit=10):

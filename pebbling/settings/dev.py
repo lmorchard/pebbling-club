@@ -16,3 +16,4 @@ SECRET_KEY = env(
 )
 DATA_BASE_DIR = BASE_DIR / "data"
 SQLITE_BASE_DIR = BASE_DIR / "data"
+INTERNAL_IPS = ["127.0.0.1"]

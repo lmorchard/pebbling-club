@@ -54,6 +54,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "pebbling_apps.users.context_processors.timezone_context",
+                "pebbling_apps.bookmarks.context_processors.bookmark_context",
             ],
         },
     },

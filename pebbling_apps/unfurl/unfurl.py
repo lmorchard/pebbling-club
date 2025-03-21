@@ -35,6 +35,10 @@ class UnfurlMetadata:
             "url": self.url,
             "metadata": self.metadata,
             "feeds": self.feeds,
+            "feed": self.feed,
+            "title": self.title,
+            "description": self.description,
+            "image": self.image,
         }
         if not omit_html:
             data["html"] = self.html
@@ -54,7 +58,9 @@ class UnfurlMetadata:
         url_validator = URLValidator()
         url_validator(self.url)
 
-        self.html = requests.get(self.url).text
+        response = requests.get(self.url)
+        response.encoding = response.apparent_encoding  # Ensure correct encoding
+        self.html = response.content  # Use bytes content instead of text
 
     def parse(self):
         """Parse the fetched HTML to extract feeds and metadata."""
@@ -66,7 +72,9 @@ class UnfurlMetadata:
     @property
     def feed(self):
         if len(self.feeds) > 0:
-            return self.feeds[0]
+            # HACK: Sort feeds by whether they contain "comment" in the URL, so that we deprioritize comment feeds
+            sorted_feeds = sorted(self.feeds, key=lambda url: "comment" in url)
+            return sorted_feeds[0]
         return None
 
     @property

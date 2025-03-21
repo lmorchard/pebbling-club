@@ -10,9 +10,11 @@ from urllib.parse import quote, unquote
 from django.db.models import Q
 
 from pebbling_apps.bookmarks.models import Bookmark
+from pebbling_apps.bookmarks.views import BookmarkAttachmentNames
 from .forms import ProfileUpdateForm
 from pebbling_apps.users.models import CustomUser
 from pebbling_apps.common.utils import filter_bookmarks
+import logging
 
 
 @login_required
