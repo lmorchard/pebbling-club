@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('bookmarks', '0004_bookmark_unfurl_metadata'),
+        ("bookmarks", "0004_bookmark_unfurl_metadata"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='bookmark',
-            name='meta',
+            model_name="bookmark",
+            name="meta",
         ),
         migrations.AlterField(
-            model_name='bookmark',
-            name='url',
-            field=models.URLField(verbose_name='URL'),
+            model_name="bookmark",
+            name="url",
+            field=models.URLField(verbose_name="URL"),
         ),
     ]
