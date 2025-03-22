@@ -5,6 +5,7 @@ import requests
 import extruct
 from django.core.validators import URLValidator
 from dataclasses import dataclass, field
+from typing import Union
 import json
 
 
@@ -16,7 +17,9 @@ class UnfurlMetadata:
     html: str = ""
 
     @classmethod
-    def from_json(cls, json_str: str, omit_html: bool = False) -> "UnfurlMetadata":
+    def from_json(
+        cls, json_str: str, omit_html: bool = False
+    ) -> Union["UnfurlMetadata", None]:
         """Create an UnfurlMetadata instance from a JSON string."""
         if not json_str:
             return None

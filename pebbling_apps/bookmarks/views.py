@@ -8,17 +8,18 @@ from .forms import BookmarkForm
 from urllib.parse import quote, unquote
 from django.db import models
 from django.db.models import Q
-from pebbling_apps.common.utils import filter_bookmarks
+from pebbling_apps.common.utils import django_enum, filter_bookmarks
 from pebbling_apps.unfurl.unfurl import UnfurlMetadata
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
-from enum import Enum
+from enum import StrEnum, auto
 
 
-class BookmarkAttachmentNames(Enum):
-    NOTES = "notes"
-    FEED = "feed"
-    UNFURL = "unfurl"
+@django_enum
+class BookmarkAttachmentNames(StrEnum):
+    NOTES = auto()
+    FEED = auto()
+    UNFURL = auto()
 
 
 def get_paginate_limit(request, default_limit=10):

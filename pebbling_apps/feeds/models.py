@@ -34,10 +34,12 @@ class FeedItemManager(models.Manager):
         published = None
         if "published_parsed" in entry:
             try:
-                published = datetime.datetime.fromtimestamp(
-                    time.mktime(entry.published_parsed)
-                )
-                published = timezone.make_aware(published)
+                published_parsed = entry.get("published_parsed")
+                if published_parsed is not None:
+                    published = datetime.datetime.fromtimestamp(
+                        time.mktime(published_parsed)
+                    )
+                    published = timezone.make_aware(published)
             except Exception as e:
                 logger.warning(
                     f"Failed to parse date for entry: {entry.get('id', 'unknown')}: {e}"

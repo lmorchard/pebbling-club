@@ -25,6 +25,12 @@ format: venv/bin/activate
 	&& python -m black . \
 	&& djlint pebbling pebbling_apps --reformat
 
+lint:
+	. venv/bin/activate \
+	&& python -m black . --check \
+	&& djlint pebbling pebbling_apps \
+	&& mypy pebbling pebbling_apps --ignore-missing-imports
+
 migrate: venv/bin/activate
 	. venv/bin/activate \
     && mkdir -p data \

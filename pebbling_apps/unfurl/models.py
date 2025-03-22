@@ -1,5 +1,4 @@
 from django.db import models
-import json
 from .unfurl import UnfurlMetadata
 from .forms import UnfurlMetadataFormField
 
@@ -23,7 +22,7 @@ class UnfurlMetadataField(models.Field):
         """Convert the JSON string back to an UnfurlMetadata instance."""
         if value is None or value == "":  # Handle None or empty string gracefully
             return None
-        return UnfurlMetadata.from_json(value, omit_html=self.omit_html)
+        return UnfurlMetadata.from_json(json_str=value, omit_html=self.omit_html)
 
     def to_python(self, value):
         """Convert the value from the database to an UnfurlMetadata instance."""
