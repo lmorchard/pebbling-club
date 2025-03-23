@@ -47,7 +47,8 @@
                                 </h1>
                             </section>
                             <nav>
-                                {% block before_site_nav %}{% endblock %}
+                                {% block before_site_nav %}
+                                {% endblock before_site_nav %}
                                 <theme-selector title="Enable dark theme">
                                     <label>
                                         <input type="checkbox" />
@@ -83,7 +84,8 @@
                             </nav>
                         </header>
                     {% endif %}
-                    {% block content %}{% endblock %}
+                    {% block content %}
+                    {% endblock content %}
                     {% if not minimal_layout %}
                         <footer>
                             <!-- TBD -->
