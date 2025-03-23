@@ -8,6 +8,7 @@ from pebbling_apps.feeds.tasks import poll_feed
 from pebbling_apps.feeds.services import FeedService
 from pebbling_apps.feeds.models import Feed
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,27 @@ logger = logging.getLogger(__name__)
 @require_GET
 def feeds_fetch_get(request):
     urls = request.GET.getlist("urls")
+    feeds = Feed.objects.filter(url__in=urls)
+
+    feeds_by_url = dict()
+    for feed in feeds:
+        feeds_by_url[feed.url] = dict(
+            success=True,
+            fetched=dict(
+                items=[i.to_dict() for i in feed.items.order_by("-date")[:10]],
+                **feed.to_dict(),
+            ),
+        )
+
+    return JsonResponse(feeds_by_url)
+
+
+@csrf_exempt
+@login_required
+@require_POST
+def feeds_fetch_post(request):
+    # TODO: switch to Django Rest Framework for request parsing
+    urls = json.loads(request.body).get("urls", [])
     service = FeedService()
 
     feed_ids = []
@@ -55,11 +77,3 @@ def feeds_fetch_get(request):
         )
 
     return JsonResponse(feeds_by_url)
-
-
-@login_required
-@csrf_exempt
-@require_POST
-def feeds_fetch_post(request):
-    urls = request.GET.getlist("url")
-    return JsonResponse({"urls": urls})

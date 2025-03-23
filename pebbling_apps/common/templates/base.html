@@ -4,7 +4,8 @@
 <html lang="en">
     <head>
         <title>
-            {% block title %}{% endblock %}
+            {% block title %}
+            {% endblock title %}
             {% if block.title %}-{% endif %}
             Pebbling Club 🐧🪨
         </title>
@@ -27,7 +28,8 @@
             }
             </script>
         {% endif %}
-        {% block html_head %}{% endblock %}
+        {% block html_head %}
+        {% endblock html_head %}
     </head>
     <body>
         <details-closer>
