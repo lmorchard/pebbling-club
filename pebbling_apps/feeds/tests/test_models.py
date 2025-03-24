@@ -11,9 +11,7 @@ class FeedItemManagerTest(TestCase):
 
     def test_update_or_create_from_parsed_creates_new_item_with_published_parsed(self):
         # Prepare entry with a published_parsed date
-        published_parsed = time.gmtime(
-            time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0))
-        )
+        published_parsed = time.gmtime(time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0)))
         entry = {
             "id": "new-unique-guid",
             "link": "http://example.com/new-item",
