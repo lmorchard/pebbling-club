@@ -2,7 +2,6 @@ import datetime
 import time
 from django.test import TestCase
 from django.utils import timezone
-import datetime
 from pebbling_apps.feeds.models import Feed, FeedItem
 
 
@@ -12,9 +11,13 @@ class FeedItemManagerTest(TestCase):
     def setUp(self):
         self.feed = Feed.objects.create(url="http://example.com/feed")
 
-    def test_update_or_create_from_parsed_creates_new_item_with_published_parsed(self):
+    def test_update_or_create_from_parsed_creates_new_item_with_published_parsed(
+        self,
+    ):
         # Prepare entry with a published_parsed date
-        published_parsed = time.gmtime(time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0)))
+        published_parsed = time.gmtime(
+            time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0))
+        )
         entry = {
             "id": "new-unique-guid",
             "link": "http://example.com/new-item",
@@ -34,7 +37,6 @@ class FeedItemManagerTest(TestCase):
             datetime.datetime(2025, 3, 23, 12, 0, 0, tzinfo=datetime.timezone.utc),
         )
 
-
     def test_update_or_create_from_parsed_adds_date_if_missing(self):
         # Create a FeedItem without a date
         feed_item = FeedItem.objects.create(
@@ -45,7 +47,9 @@ class FeedItemManagerTest(TestCase):
         )
 
         # Prepare entry with a published_parsed date
-        published_parsed = time.gmtime(time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0)))
+        published_parsed = time.gmtime(
+            time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0))
+        )
         entry = {
             "id": "no-date-guid",
             "link": "http://example.com/no-date-item",
