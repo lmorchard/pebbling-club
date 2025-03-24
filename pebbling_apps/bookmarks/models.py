@@ -1,6 +1,8 @@
 import hashlib
 from django.conf import settings
 from django.db import models
+from django.conf import settings
+from django.db import connection
 from django.contrib.auth import get_user_model
 from pebbling_apps.common.models import TimestampedModel
 from pebbling_apps.unfurl.models import UnfurlMetadataField
@@ -61,6 +63,33 @@ class BookmarkManager(models.Manager):
         return super().update_or_create(
             defaults=defaults, unique_hash=unique_hash, **kwargs
         )
+
+    def get_bookmark_ids_by_feed_date(self):
+        """Returns bookmark IDs sorted by their associated feed's newest_item_date.
+        Uses SQLite ATTACH to join across databases."""
+        with connection.cursor() as cursor:
+            # Attach the feeds database
+            feeds_db_path = settings.DATABASES["feeds_db"]["NAME"]
+            cursor.execute(f"ATTACH DATABASE '{feeds_db_path}' AS feeds_db")
+
+            # Query across both databases
+            cursor.execute(
+                """
+                SELECT b.id 
+                FROM bookmarks_bookmark b
+                JOIN feeds_db.feeds_feed f ON b.feed_url = f.url
+                WHERE f.disabled = 0
+                ORDER BY f.newest_item_date DESC
+            """
+            )
+
+            # Fetch all bookmark IDs
+            bookmark_ids = [row[0] for row in cursor.fetchall()]
+
+            # Detach the feeds database
+            cursor.execute("DETACH DATABASE feeds_db")
+
+            return bookmark_ids
 
 
 class Bookmark(TimestampedModel):
