@@ -240,7 +240,6 @@ class UnfurlMetadata:
         feed = self.feed or "No Feed"
         feeds = ", ".join(self.feeds) if self.feeds else "No Feeds"
         return f"UnfurlMetadata(title={title}, description={description}, feed={feed}, feeds=[{feeds}])"
-        return f"UnfurlMetadata(title={title}, description={description})"
 
     def __repr__(self):
         return self.__str__()
