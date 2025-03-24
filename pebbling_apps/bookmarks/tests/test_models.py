@@ -23,7 +23,9 @@ class BookmarkManagerTestCase(TestCase):
             owner=self.user,
             defaults={
                 "title": "Example",
-                "unfurl_metadata": UnfurlMetadata(feed_url="http://example.com/feed"),
+                "unfurl_metadata": UnfurlMetadata.from_json(
+                    '{"feed_url": "http://example.com/feed"}'
+                ),
             },
         )
         self.assertTrue(created)
