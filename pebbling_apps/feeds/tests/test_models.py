@@ -6,7 +6,7 @@ from pebbling_apps.feeds.models import Feed, FeedItem
 
 
 class FeedItemManagerTest(TestCase):
-    databases = {'default', 'feeds_db'}
+    databases = {"default", "feeds_db"}
 
     def setUp(self):
         self.feed = Feed.objects.create(url="http://example.com/feed")
