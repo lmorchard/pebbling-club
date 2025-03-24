@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from pebbling_apps.bookmarks.models import Bookmark
+from pebbling_apps.bookmarks.models import Bookmark, BookmarkManager
 
 User = get_user_model()
 
@@ -9,7 +9,11 @@ class BookmarkManagerTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="testuser", password="12345")
 
-    def test_update_or_create_sets_feed_url(self):
+    def test_generate_unique_hash_for_url(self):
+        manager = BookmarkManager()
+        url = "http://example.com"
+        expected_hash = "a9b9f04336ce0181a08e774e01113b31b7b48c48"
+        self.assertEqual(manager.generate_unique_hash_for_url(url), expected_hash)
         # Create a bookmark with unfurl_metadata but no feed_url
         bookmark, created = Bookmark.objects.update_or_create(
             url="http://example.com",
