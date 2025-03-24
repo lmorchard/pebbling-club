@@ -20,7 +20,7 @@ test:
 	. venv/bin/activate \
 	&& python manage.py test
 
-format: venv/bin/activate
+format:
 	. venv/bin/activate \
 	&& python -m black . \
 	&& djlint pebbling pebbling_apps --reformat
@@ -31,7 +31,7 @@ lint:
 	&& djlint pebbling pebbling_apps \
 	&& mypy pebbling pebbling_apps --ignore-missing-imports
 
-migrate: venv/bin/activate
+migrate:
 	. venv/bin/activate \
     && mkdir -p data \
 	&& python manage.py createcachetable --database cache_db \

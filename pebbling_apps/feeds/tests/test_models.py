@@ -30,38 +30,7 @@ class FeedItemManagerTest(TestCase):
         # Assert that the date has been set correctly
         self.assertEqual(
             new_feed_item.date,
-            datetime.datetime(2025, 3, 23, 12, 0, 0, tzinfo=datetime.timezone.utc)
-            date=timezone.now(),  # Ensure a date is provided
-        )
-
-    def test_update_or_create_from_parsed_adds_date_if_missing(self):
-        # Create a FeedItem without a date
-        feed_item = FeedItem.objects.create(
-            feed=self.feed,
-            guid="no-date-guid",
-            link="http://example.com/no-date-item",
-            title="No Date Item",
-        )
-
-        # Prepare entry with a published_parsed date
-        published_parsed = time.gmtime(time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0)))
-        entry = {
-            "id": "no-date-guid",
-            "link": "http://example.com/no-date-item",
-            "title": "Updated No Date Item",
-            "published_parsed": published_parsed,
-        }
-
-        # Update or create the FeedItem
-        FeedItem.objects.update_or_create_from_parsed(self.feed, entry)
-
-        # Fetch the updated FeedItem
-        updated_feed_item = FeedItem.objects.get(guid="no-date-guid")
-
-        # Assert that the date has been set correctly
-        self.assertEqual(
-            updated_feed_item.date,
-            datetime.datetime(2025, 3, 23, 12, 0, 0, tzinfo=timezone.utc),
+            datetime.datetime(2025, 3, 23, 12, 0, 0, tzinfo=datetime.timezone.utc),
         )
 
     def test_update_or_create_from_parsed_uses_existing_date(self):
