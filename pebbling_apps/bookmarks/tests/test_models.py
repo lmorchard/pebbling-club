@@ -16,8 +16,7 @@ class BookmarkManagerTestCase(TestCase):
         expected_hash = "89dce6a446a69d6b9bdc01ac75251e4c322bcdff"
         self.assertEqual(manager.generate_unique_hash_for_url(url), expected_hash)
 
-    def test_update_or_create_feed_url_behavior(self):
-        # Create a bookmark with unfurl_metadata but no feed_url
+    def test_create_bookmark_sets_feed_url_from_unfurl_metadata(self):
         bookmark, created = Bookmark.objects.update_or_create(
             url="http://example.com",
             owner=self.user,
@@ -31,7 +30,16 @@ class BookmarkManagerTestCase(TestCase):
         self.assertTrue(created)
         self.assertEqual(bookmark.feed_url, "http://example.com/feed")
 
-        # Update the bookmark, ensure feed_url is set from unfurl_metadata
+    def test_update_bookmark_preserves_feed_url(self):
+        # First create a bookmark
+        bookmark = Bookmark.objects.create(
+            url="http://example.com",
+            owner=self.user,
+            title="Example",
+            feed_url="http://example.com/feed",
+        )
+
+        # Update the bookmark
         bookmark, created = Bookmark.objects.update_or_create(
             url="http://example.com",
             owner=self.user,
@@ -40,12 +48,17 @@ class BookmarkManagerTestCase(TestCase):
         self.assertFalse(created)
         self.assertEqual(bookmark.feed_url, "http://example.com/feed")
 
-        # Change the feed_url directly and ensure it does not revert to unfurl_metadata
+    def test_manual_feed_url_change_is_preserved(self):
+        bookmark = Bookmark.objects.create(
+            url="http://example.com",
+            owner=self.user,
+            feed_url="http://example.com/feed",
+        )
+
         bookmark.feed_url = "http://example.com/new-feed"
         bookmark.save()
-        self.assertEqual(bookmark.feed_url, "http://example.com/new-feed")
 
-        # Ensure update_or_create does not change the manually set feed_url
+        # Verify update_or_create preserves manual change
         bookmark, created = Bookmark.objects.update_or_create(
             url="http://example.com",
             owner=self.user,
@@ -53,3 +66,21 @@ class BookmarkManagerTestCase(TestCase):
         )
         self.assertFalse(created)
         self.assertEqual(bookmark.feed_url, "http://example.com/new-feed")
+
+    def test_feed_url_updates_when_specified_in_defaults(self):
+        bookmark = Bookmark.objects.create(
+            url="http://example.com",
+            owner=self.user,
+            feed_url="http://example.com/feed",
+        )
+
+        bookmark, created = Bookmark.objects.update_or_create(
+            url="http://example.com",
+            owner=self.user,
+            defaults={
+                "title": "Final Update",
+                "feed_url": "http://example.com/newest-feed",
+            },
+        )
+        self.assertFalse(created)
+        self.assertEqual(bookmark.feed_url, "http://example.com/newest-feed")

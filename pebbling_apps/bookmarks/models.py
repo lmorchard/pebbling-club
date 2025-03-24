@@ -44,14 +44,19 @@ class BookmarkManager(models.Manager):
             unique_hash=unique_hash, owner=kwargs.get("owner")
         ).first()
 
-        if existing_item:
-            if not existing_item.feed_url and existing_item.unfurl_metadata:
-                if existing_item.unfurl_metadata.feed:
-                    existing_item.feed_url = existing_item.unfurl_metadata.feed
-                    existing_item.save(update_fields=["feed_url"])
-        else:
-            if "unfurl_metadata" in defaults and defaults["unfurl_metadata"].feed:
-                defaults["feed_url"] = defaults["unfurl_metadata"].feed
+        if (
+            existing_item
+            and not existing_item.feed_url
+            and existing_item.unfurl_metadata
+            and existing_item.unfurl_metadata.feed
+        ):
+            defaults["feed_url"] = existing_item.unfurl_metadata.feed
+        elif (
+            "unfurl_metadata" in defaults
+            and defaults["unfurl_metadata"].feed
+            and "feed_url" not in defaults
+        ):
+            defaults["feed_url"] = defaults["unfurl_metadata"].feed
 
         return super().update_or_create(
             defaults=defaults, unique_hash=unique_hash, **kwargs
