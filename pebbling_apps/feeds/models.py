@@ -29,7 +29,6 @@ class FeedItemManager(models.Manager):
         """Return all items for a specific feed."""
         return self.filter(feed=feed)
 
-    # Modify this method to first attempt to fetch an existing feed_item, if available. If the feed_item exists, use the existing value for date rather than published_parsed from the entry. AI!
     def update_or_create_from_parsed(self, feed: "Feed", entry: dict) -> tuple:
         """Update or create a FeedItem from a parsed entry."""
         published = None
@@ -45,6 +44,13 @@ class FeedItemManager(models.Manager):
                 logger.warning(
                     f"Failed to parse date for entry: {entry.get('id', 'unknown')}: {e}"
                 )
+
+        # Attempt to fetch an existing FeedItem
+        feed_item = self.filter(feed=feed, guid=entry.get("id", entry.get("link"))).first()
+
+        # If the feed item exists, use the existing date
+        if feed_item:
+            published = feed_item.date
 
         # Update or create the FeedItem
         feed_item, created = self.update_or_create(
