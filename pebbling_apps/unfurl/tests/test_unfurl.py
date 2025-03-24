@@ -79,7 +79,8 @@ class UnfurlMetadataTests(TestCase):
     def test_str_representation(self):
         self.metadata.parse()
         expected_str = (
-            "UnfurlMetadata(title=OG Test Title, description=OG Test Description)"
+            "UnfurlMetadata(title=OG Test Title, description=OG Test Description, "
+            "feed=No Feed, feeds=[No Feeds])"
         )
         self.assertEqual(str(self.metadata), expected_str)
 
