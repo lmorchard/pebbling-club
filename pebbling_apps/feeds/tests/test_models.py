@@ -31,6 +31,8 @@ class FeedItemManagerTest(TestCase):
             datetime.datetime(2025, 3, 23, 12, 0, 0, tzinfo=timezone.utc),
         )
 
+    # Another test: if the FeedItem already exists, but it does not have a date defined, ensure it gets the published_parsed date AI!
+
     def test_update_or_create_from_parsed_uses_existing_date(self):
         # Create a FeedItem with an existing date
         existing_date = timezone.now() - datetime.timedelta(days=1)
