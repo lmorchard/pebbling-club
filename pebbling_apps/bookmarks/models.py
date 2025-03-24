@@ -46,7 +46,7 @@ class BookmarkManager(models.Manager):
         if existing_item:
             if not existing_item.feed_url and existing_item.unfurl_metadata:
                 existing_item.feed_url = existing_item.unfurl_metadata.to_dict().get(
-                    "feed_url"
+                    "feed"
                 )
                 existing_item.save(update_fields=["feed_url"])
 

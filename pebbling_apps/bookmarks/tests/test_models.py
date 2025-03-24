@@ -24,7 +24,7 @@ class BookmarkManagerTestCase(TestCase):
             defaults={
                 "title": "Example",
                 "unfurl_metadata": UnfurlMetadata.from_json(
-                    '{"url": "http://example.com", "feed_url": "http://example.com/feed"}'
+                    '{"url": "http://example.com", "feed": "http://example.com/feed"}'
                 ),
             },
         )
