@@ -16,7 +16,7 @@ class BookmarkManagerTestCase(TestCase):
             defaults={
                 "title": "Example",
                 "unfurl_metadata": {"feed_url": "http://example.com/feed"},
-            }
+            },
         )
         self.assertTrue(created)
         self.assertEqual(bookmark.feed_url, "http://example.com/feed")
