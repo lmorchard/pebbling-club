@@ -30,7 +30,7 @@ class FeedItemManagerTest(TestCase):
         # Assert that the date has been set correctly
         self.assertEqual(
             new_feed_item.date,
-            datetime.datetime(2025, 3, 23, 12, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2025, 3, 23, 12, 0, 0, tzinfo=datetime.timezone.utc)
             date=timezone.now(),  # Ensure a date is provided
         )
 
