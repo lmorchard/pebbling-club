@@ -48,7 +48,7 @@ class BookmarkManager(models.Manager):
             and not existing_item.feed_url
             and existing_item.unfurl_metadata
         ):
-            # Correctly access the feed_url from the UnfurlMetadata data object
+            # AI! You don't need to use to_dict() here, just access the field directly to get the feed_url from unfurl_metadata
             existing_item.feed_url = existing_item.unfurl_metadata.to_dict().get(
                 "feed_url"
             )
