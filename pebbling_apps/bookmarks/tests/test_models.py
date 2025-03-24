@@ -4,6 +4,7 @@ from pebbling_apps.bookmarks.models import Bookmark
 
 User = get_user_model()
 
+
 class BookmarkManagerTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="testuser", password="12345")
