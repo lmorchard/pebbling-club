@@ -48,6 +48,7 @@ class BookmarkManager(models.Manager):
             and not existing_item.feed_url
             and existing_item.unfurl_metadata
         ):
+            # AI! This seems incorrect: UnfurlMetadata is a dataobject and not a dict, and it does not have a feed_url property
             existing_item.feed_url = existing_item.unfurl_metadata.get("feed_url")
             existing_item.save(update_fields=["feed_url"])
 
