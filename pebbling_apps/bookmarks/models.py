@@ -43,6 +43,8 @@ class BookmarkManager(models.Manager):
         existing_item = self.filter(
             unique_hash=unique_hash, owner=kwargs.get("owner")
         ).first()
+
+        # AI! Revise this logic: If the existing item has no feed_url but has unfurl_metadata, set the feed_url. But, also, if there is no existing item, we need to check if the unfurl_metadata has a feed URL and set it accordingly.
         if existing_item:
             if not existing_item.feed_url and existing_item.unfurl_metadata:
                 if existing_item.unfurl_metadata.feed:
