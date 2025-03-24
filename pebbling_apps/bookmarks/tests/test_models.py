@@ -14,6 +14,7 @@ class BookmarkManagerTestCase(TestCase):
         url = "http://example.com"
         expected_hash = "a9b9f04336ce0181a08e774e01113b31b7b48c48"
         self.assertEqual(manager.generate_unique_hash_for_url(url), expected_hash)
+    def test_update_or_create_feed_url_behavior(self):
         # Create a bookmark with unfurl_metadata but no feed_url
         bookmark, created = Bookmark.objects.update_or_create(
             url="http://example.com",
