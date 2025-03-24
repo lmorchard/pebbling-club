@@ -35,6 +35,8 @@ class BookmarkManager(models.Manager):
         """Override update_or_create to handle URL-based lookups."""
         defaults = defaults or {}
 
+        # AI! Fetch the existing item, if it exists. If it does, but its feed_url is empty, and it has unfurl_metadata, set the feed_url to the one in the metadata. Also, add a unit test for all conditions.
+
         if "url" in kwargs:
             # Generate hash from URL and move URL to defaults
             url = kwargs.pop("url")
@@ -59,6 +61,7 @@ class Bookmark(TimestampedModel):
     tags = models.ManyToManyField("bookmarks.Tag", related_name="bookmarks", blank=True)
 
     unfurl_metadata = UnfurlMetadataField(blank=True, null=True, omit_html=omit_html)
+    feed_url = models.URLField(blank=True, null=True, verbose_name="Feed URL")
 
     class Meta:
         unique_together = ["owner", "unique_hash"]
