@@ -234,10 +234,12 @@ class UnfurlMetadata:
                     result.append(url)
         return result
 
-    # AI! Add feed and feeds to the string representation
     def __str__(self):
         title = self.title or "No Title"
         description = self.description or "No Description"
+        feed = self.feed or "No Feed"
+        feeds = ", ".join(self.feeds) if self.feeds else "No Feeds"
+        return f"UnfurlMetadata(title={title}, description={description}, feed={feed}, feeds=[{feeds}])"
         return f"UnfurlMetadata(title={title}, description={description})"
 
     def __repr__(self):
