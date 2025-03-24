@@ -11,9 +11,7 @@ class FeedItemManagerTest(TestCase):
 
     def test_update_or_create_from_parsed_creates_new_item_with_published_parsed(self):
         # Prepare entry with a published_parsed date
-        published_parsed = time.gmtime(
-            time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0))
-        )
+        published_parsed = time.gmtime(time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0)))
         entry = {
             "id": "new-unique-guid",
             "link": "http://example.com/new-item",
@@ -63,7 +61,6 @@ class FeedItemManagerTest(TestCase):
             datetime.datetime(2025, 3, 23, 12, 0, 0, tzinfo=timezone.utc),
         )
 
-    # Another test: if the FeedItem already exists, but it does not have a date defined, ensure it gets the published_parsed date AI!
 
     def test_update_or_create_from_parsed_uses_existing_date(self):
         # Create a FeedItem with an existing date
@@ -77,9 +74,7 @@ class FeedItemManagerTest(TestCase):
         )
 
         # Prepare entry with a different published_parsed date
-        new_published_parsed = time.gmtime(
-            time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0))
-        )
+        new_published_parsed = time.gmtime(time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0)))
         entry = {
             "id": "unique-guid",
             "link": "http://example.com/item",
