@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.utils import timezone
 from pebbling_apps.feeds.models import Feed, FeedItem
 
+
 class FeedItemManagerTest(TestCase):
     def setUp(self):
         self.feed = Feed.objects.create(url="http://example.com/feed")
@@ -20,7 +21,9 @@ class FeedItemManagerTest(TestCase):
         )
 
         # Prepare entry with a different published_parsed date
-        new_published_parsed = time.gmtime(time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0)))
+        new_published_parsed = time.gmtime(
+            time.mktime((2025, 3, 23, 12, 0, 0, 0, 0, 0))
+        )
         entry = {
             "id": "unique-guid",
             "link": "http://example.com/item",

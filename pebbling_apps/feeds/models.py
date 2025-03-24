@@ -46,7 +46,9 @@ class FeedItemManager(models.Manager):
                 )
 
         # Attempt to fetch an existing FeedItem
-        feed_item = self.filter(feed=feed, guid=entry.get("id", entry.get("link"))).first()
+        feed_item = self.filter(
+            feed=feed, guid=entry.get("id", entry.get("link"))
+        ).first()
 
         # If the feed item exists and has a date, use the existing date
         if feed_item and feed_item.date:
