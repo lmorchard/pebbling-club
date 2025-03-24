@@ -31,30 +31,27 @@ class BookmarkManager(models.Manager):
         """Generate a unique hash for a given URL."""
         return hashlib.sha1(url.encode("utf-8")).hexdigest()
 
-    # AI! Can we tweak this method to require a url parameter?
-    def update_or_create(self, defaults=None, **kwargs):
+    def update_or_create(self, url, defaults=None, **kwargs):
         """Override update_or_create to handle URL-based lookups."""
         defaults = defaults or {}
 
-        if "url" in kwargs:
-            # Generate hash from URL and move URL to defaults
-            url = kwargs.pop("url")
-            unique_hash = self.generate_unique_hash_for_url(url)
-            defaults["url"] = url
+        # Generate hash from URL and move URL to defaults
+        unique_hash = self.generate_unique_hash_for_url(url)
+        defaults["url"] = url
 
-            # Fetch existing item
-            existing_item = self.filter(
-                unique_hash=unique_hash, owner=kwargs.get("owner")
-            ).first()
-            if (
-                existing_item
-                and not existing_item.feed_url
-                and existing_item.unfurl_metadata
-            ):
-                existing_item.feed_url = existing_item.unfurl_metadata.get("feed_url")
-                existing_item.save(update_fields=["feed_url"])
+        # Fetch existing item
+        existing_item = self.filter(
+            unique_hash=unique_hash, owner=kwargs.get("owner")
+        ).first()
+        if (
+            existing_item
+            and not existing_item.feed_url
+            and existing_item.unfurl_metadata
+        ):
+            existing_item.feed_url = existing_item.unfurl_metadata.get("feed_url")
+            existing_item.save(update_fields=["feed_url"])
 
-        return super().update_or_create(defaults=defaults, **kwargs)
+        return super().update_or_create(defaults=defaults, unique_hash=unique_hash, **kwargs)
 
 
 class Bookmark(TimestampedModel):
