@@ -48,10 +48,7 @@ class BookmarkManager(models.Manager):
             and not existing_item.feed_url
             and existing_item.unfurl_metadata
         ):
-            # AI! You don't need to use to_dict() here, just access the field directly to get the feed_url from unfurl_metadata
-            existing_item.feed_url = existing_item.unfurl_metadata.to_dict().get(
-                "feed_url"
-            )
+            existing_item.feed_url = existing_item.unfurl_metadata.feed_url
             existing_item.save(update_fields=["feed_url"])
 
         return super().update_or_create(
