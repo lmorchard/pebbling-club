@@ -35,10 +35,19 @@ class BookmarkManager(models.Manager):
         """Override update_or_create to handle URL-based lookups."""
         defaults = defaults or {}
 
-        # AI! Fetch the existing item, if it exists. If it does, but its feed_url is empty, and it has unfurl_metadata, set the feed_url to the one in the metadata. Also, add a unit test for all conditions.
-
         if "url" in kwargs:
             # Generate hash from URL and move URL to defaults
+            url = kwargs.pop("url")
+            unique_hash = self.generate_unique_hash_for_url(url)
+            defaults["url"] = url
+
+            # Fetch existing item
+            existing_item = self.filter(unique_hash=unique_hash, owner=kwargs.get("owner")).first()
+            if existing_item and not existing_item.feed_url and existing_item.unfurl_metadata:
+                existing_item.feed_url = existing_item.unfurl_metadata.get('feed_url')
+                existing_item.save(update_fields=['feed_url'])
+
+            kwargs["unique_hash"] = unique_hash
             url = kwargs.pop("url")
             kwargs["unique_hash"] = self.generate_unique_hash_for_url(url)
             defaults["url"] = url
