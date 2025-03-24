@@ -51,12 +51,8 @@ class BookmarkManager(models.Manager):
                 and existing_item.unfurl_metadata
             ):
                 existing_item.feed_url = existing_item.unfurl_metadata.get("feed_url")
-                existing_item.save(update_fields=['feed_url'])
+                existing_item.save(update_fields=["feed_url"])
 
-            kwargs["unique_hash"] = unique_hash
-            url = kwargs.pop("url")
-            kwargs["unique_hash"] = self.generate_unique_hash_for_url(url)
-            defaults["url"] = url
 
         return super().update_or_create(defaults=defaults, **kwargs)
 

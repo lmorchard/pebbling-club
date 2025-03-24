@@ -19,7 +19,7 @@ class BookmarkManagerTestCase(TestCase):
             }
         )
         self.assertTrue(created)
-        self.assertEqual(bookmark.feed_url, 'http://example.com/feed')
+        self.assertEqual(bookmark.feed_url, "http://example.com/feed")
 
         # Update the bookmark, ensure feed_url is set from unfurl_metadata
         bookmark, created = Bookmark.objects.update_or_create(
@@ -28,4 +28,4 @@ class BookmarkManagerTestCase(TestCase):
             defaults={"title": "Updated Example"},
         )
         self.assertFalse(created)
-        self.assertEqual(bookmark.feed_url, 'http://example.com/feed')
+        self.assertEqual(bookmark.feed_url, "http://example.com/feed")
