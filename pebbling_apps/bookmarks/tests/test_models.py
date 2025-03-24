@@ -15,7 +15,6 @@ class BookmarkManagerTestCase(TestCase):
         expected_hash = "a9b9f04336ce0181a08e774e01113b31b7b48c48"
         self.assertEqual(manager.generate_unique_hash_for_url(url), expected_hash)
 
-    # AI! Update this test to also account for a later change to feed_url which does not match unfurl_metadata
     def test_update_or_create_feed_url_behavior(self):
         # Create a bookmark with unfurl_metadata but no feed_url
         bookmark, created = Bookmark.objects.update_or_create(
@@ -37,3 +36,17 @@ class BookmarkManagerTestCase(TestCase):
         )
         self.assertFalse(created)
         self.assertEqual(bookmark.feed_url, "http://example.com/feed")
+
+        # Change the feed_url directly and ensure it does not revert to unfurl_metadata
+        bookmark.feed_url = "http://example.com/new-feed"
+        bookmark.save()
+        self.assertEqual(bookmark.feed_url, "http://example.com/new-feed")
+
+        # Ensure update_or_create does not change the manually set feed_url
+        bookmark, created = Bookmark.objects.update_or_create(
+            url="http://example.com",
+            owner=self.user,
+            defaults={"title": "Another Update"},
+        )
+        self.assertFalse(created)
+        self.assertEqual(bookmark.feed_url, "http://example.com/new-feed")
