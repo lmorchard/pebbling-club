@@ -9,6 +9,8 @@ class FeedItemManagerTest(TestCase):
     def setUp(self):
         self.feed = Feed.objects.create(url="http://example.com/feed")
 
+    # Can you also add a test that exercises the usage of the `published_parsed` field in the `update_or_create_from_parsed` method when an item doesn't exist already? AI!
+
     def test_update_or_create_from_parsed_uses_existing_date(self):
         # Create a FeedItem with an existing date
         existing_date = timezone.now() - datetime.timedelta(days=1)
