@@ -28,7 +28,7 @@ class BookmarkManagerTestCase(TestCase):
                 ),
             },
         )
-        # AI! log the properties of bookmark for debugging
+        print(f"Bookmark properties: {bookmark.__dict__}")
         self.assertTrue(created)
         self.assertEqual(bookmark.feed_url, "http://example.com/feed")
 
