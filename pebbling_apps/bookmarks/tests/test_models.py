@@ -23,11 +23,12 @@ class BookmarkManagerTestCase(TestCase):
             owner=self.user,
             defaults={
                 "title": "Example",
-                "unfurl_metadata": UnfurlMetadata.from_json(
-                    '{"url": "http://example.com", "feed": "http://example.com/feed"}'
+                "unfurl_metadata": UnfurlMetadata(
+                    url="http://example.com", feeds=["http://example.com/feed"]
                 ),
             },
         )
+        # AI! log the properties of bookmark for debugging
         self.assertTrue(created)
         self.assertEqual(bookmark.feed_url, "http://example.com/feed")
 
