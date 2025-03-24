@@ -31,6 +31,7 @@ class BookmarkManager(models.Manager):
         """Generate a unique hash for a given URL."""
         return hashlib.sha1(url.encode("utf-8")).hexdigest()
 
+    # AI! Write a test for the feed_url behavior in this method
     def update_or_create(self, url, defaults=None, **kwargs):
         """Override update_or_create to handle URL-based lookups."""
         defaults = defaults or {}
