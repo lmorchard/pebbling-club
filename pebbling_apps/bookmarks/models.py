@@ -51,7 +51,9 @@ class BookmarkManager(models.Manager):
             existing_item.feed_url = existing_item.unfurl_metadata.get("feed_url")
             existing_item.save(update_fields=["feed_url"])
 
-        return super().update_or_create(defaults=defaults, unique_hash=unique_hash, **kwargs)
+        return super().update_or_create(
+            defaults=defaults, unique_hash=unique_hash, **kwargs
+        )
 
 
 class Bookmark(TimestampedModel):
