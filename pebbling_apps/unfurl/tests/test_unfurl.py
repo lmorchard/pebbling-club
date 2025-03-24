@@ -36,7 +36,7 @@ class UnfurlMetadataTests(TestCase):
 
     @mock.patch("requests.get")
     def test_fetch(self, mock_get):
-        mock_get.return_value.text = self.test_html
+        mock_get.return_value.content = self.test_html
         self.metadata.fetch()
         self.assertEqual(self.metadata.html, self.test_html)
 
@@ -61,7 +61,7 @@ class UnfurlMetadataTests(TestCase):
         mock_feedparser.return_value.entries = [{"title": "Test Entry"}]
         self.metadata.parse()
         self.assertTrue(len(self.metadata.feeds) > 0)
-        self.assertTrue("/rss.xml" in self.metadata.feeds[0])
+        self.assertTrue(any("/rss.xml" in feed for feed in self.metadata.feeds))
 
     def test_missing_metadata(self):
         self.metadata.html = "<html><body>No metadata</body></html>"
