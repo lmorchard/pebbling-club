@@ -22,8 +22,9 @@ class BookmarkManagerTestCase(TestCase):
             owner=self.user,
             defaults={
                 "title": "Example",
-                # AI! I don't think this is the right way to set up a feed URL for UnfurlMetadataField
-                "unfurl_metadata": {"feed_url": "http://example.com/feed"},
+                "unfurl_metadata": UnfurlMetadataField(
+                    feed_url="http://example.com/feed"
+                ),
             },
         )
         self.assertTrue(created)
