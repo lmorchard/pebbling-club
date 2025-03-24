@@ -29,7 +29,7 @@ class FeedItemManager(models.Manager):
         """Return all items for a specific feed."""
         return self.filter(feed=feed)
 
-    # Modify this function such that if the existing database entry has a date, do not overwrite it with the published_parsed date from the given entry. AI!
+    # Modify this method to first attempt to fetch an existing feed_item, if available. If the feed_item exists, use the existing value for date rather than published_parsed from the entry. AI!
     def update_or_create_from_parsed(self, feed: "Feed", entry: dict) -> tuple:
         """Update or create a FeedItem from a parsed entry."""
         published = None
