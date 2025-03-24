@@ -43,11 +43,7 @@ class BookmarkManager(models.Manager):
         existing_item = self.filter(
             unique_hash=unique_hash, owner=kwargs.get("owner")
         ).first()
-        if (
-            existing_item
-            and not existing_item.feed_url
-            and existing_item.unfurl_metadata
-        ):
+        if existing_item and not existing_item.feed_url and existing_item.unfurl_metadata:
             existing_item.feed_url = existing_item.unfurl_metadata.get("feed_url")
             existing_item.save(update_fields=["feed_url"])
 
