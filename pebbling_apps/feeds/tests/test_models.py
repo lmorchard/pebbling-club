@@ -26,7 +26,10 @@ class FeedItemManagerTest(TestCase):
         new_feed_item = FeedItem.objects.get(guid="new-unique-guid")
 
         # Assert that the date has been set correctly
-        self.assertEqual(new_feed_item.date, datetime.datetime(2025, 3, 23, 12, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual(
+            new_feed_item.date,
+            datetime.datetime(2025, 3, 23, 12, 0, 0, tzinfo=timezone.utc),
+        )
 
     def test_update_or_create_from_parsed_uses_existing_date(self):
         # Create a FeedItem with an existing date
