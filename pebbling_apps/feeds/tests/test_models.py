@@ -34,15 +34,6 @@ class FeedItemManagerTest(TestCase):
             datetime.datetime(2025, 3, 23, 12, 0, 0, tzinfo=datetime.timezone.utc),
         )
 
-    def test_update_or_create_from_parsed_adds_date_if_missing(self):
-        # Create a FeedItem without a date
-        feed_item = FeedItem.objects.create(
-            feed=self.feed,
-            guid="no-date-guid",
-            link="http://example.com/no-date-item",
-            title="No Date Item",
-            date=timezone.now(),  # Ensure a date is provided
-        )
 
     def test_update_or_create_from_parsed_adds_date_if_missing(self):
         # Create a FeedItem without a date
