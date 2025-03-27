@@ -68,7 +68,7 @@ class BookmarkManager(models.Manager):
     def get_bookmark_ids_by_feed_date(self, limit=None, offset=None):
         """Returns bookmark IDs sorted by their associated feed's newest_item_date.
         Uses SQLite ATTACH to join across databases.
-        
+
         Args:
             limit (int, optional): Maximum number of IDs to return
             offset (int, optional): Number of IDs to skip before starting to return
@@ -89,7 +89,7 @@ class BookmarkManager(models.Manager):
                     WHERE f.disabled = 0
                     ORDER BY f.newest_item_date DESC
                 """
-                
+
                 # In SQLite, OFFSET must be used with LIMIT
                 if offset is not None:
                     if limit is not None:
@@ -110,7 +110,8 @@ class BookmarkManager(models.Manager):
 
     def get_bookmarks_by_ids(self, bookmark_ids):
         """Returns a queryset of bookmarks ordered by the given list of IDs.
-        Note: The order of the IDs in the input list is preserved in the output queryset."""
+        Note: The order of the IDs in the input list is preserved in the output queryset.
+        """
         if not bookmark_ids:
             return self.none()
         # Convert list of IDs to a Case/When ordering
@@ -121,7 +122,7 @@ class BookmarkManager(models.Manager):
 
     def get_bookmarks_by_feed_date(self, limit=None, offset=None):
         """Returns a queryset of bookmarks ordered by their associated feed's newest_item_date.
-        
+
         Args:
             limit (int, optional): Maximum number of bookmarks to return
             offset (int, optional): Number of bookmarks to skip before starting to return
