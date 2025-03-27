@@ -68,26 +68,25 @@ class BookmarkManager(models.Manager):
         """Returns bookmark IDs sorted by their associated feed's newest_item_date.
         Uses SQLite ATTACH to join across databases."""
         with connection.cursor() as cursor:
-            # Attach the feeds database
+            # Get the feeds database path and attach it
             feeds_db_path = settings.DATABASES["feeds_db"]["NAME"]
-            cursor.execute(f"ATTACH DATABASE '{feeds_db_path}' AS feeds_db")
+            attached = False
+            try:
+                cursor.execute(f"ATTACH DATABASE '{feeds_db_path}' AS feeds_db")
+                attached = True
 
-            # Query across both databases
-            cursor.execute(
-                """
-                SELECT b.id 
-                FROM bookmarks_bookmark b
-                JOIN feeds_db.feeds_feed f ON b.feed_url = f.url
-                WHERE f.disabled = 0
-                ORDER BY f.newest_item_date DESC
-            """
-            )
-
-            # Fetch all bookmark IDs
-            bookmark_ids = [row[0] for row in cursor.fetchall()]
-
-            # Detach the feeds database
-            cursor.execute("DETACH DATABASE feeds_db")
+                # Single efficient query across both databases
+                cursor.execute("""
+                    SELECT b.id
+                    FROM bookmarks_bookmark b
+                    JOIN feeds_db.feeds_feed f ON b.feed_url = f.url
+                    WHERE f.disabled = 0
+                    ORDER BY f.newest_item_date DESC
+                """)
+                bookmark_ids = [row[0] for row in cursor.fetchall()]
+            finally:
+                if attached:
+                    cursor.execute("DETACH DATABASE feeds_db")
 
             return bookmark_ids
 

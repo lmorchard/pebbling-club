@@ -1,9 +1,12 @@
-from django.conf import settings
-from django.test import TestCase
+from django.test import TransactionTestCase, TestCase
 from django.contrib.auth import get_user_model
-from django.db import connection
 from pebbling_apps.bookmarks.models import Bookmark, BookmarkManager
 from pebbling_apps.unfurl.unfurl import UnfurlMetadata
+from pebbling_apps.feeds.models import Feed
+from django.utils import timezone
+import datetime
+import logging
+
 
 User = get_user_model()
 
@@ -89,8 +92,16 @@ class BookmarkManagerTestCase(TestCase):
         self.assertFalse(created)
         self.assertEqual(bookmark.feed_url, "http://example.com/newest-feed")
 
+
+# Note: This test case requires TransactionTestCase to avoid issues with
+# TestCase using a transaction that results database locking errors
+class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
+    databases = {"default", "feeds_db"}
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser", password="12345")
+
     def test_get_bookmark_ids_by_feed_date(self):
-        # Create bookmarks with different feed URLs
         bookmark1 = Bookmark.objects.create(
             url="http://example1.com",
             owner=self.user,
@@ -104,30 +115,16 @@ class BookmarkManagerTestCase(TestCase):
             feed_url="http://example2.com/feed",
         )
 
-        # Insert test feed data in the feeds database
-        with connection.cursor() as cursor:
-            cursor.execute("BEGIN")
-            feeds_db_path = settings.DATABASES["feeds_db"]["NAME"]
-            cursor.execute(f"ATTACH DATABASE '{feeds_db_path}' AS feeds_db")
-
-            # Insert test feed data with bookmark2's feed being more recent
-            cursor.execute(
-                """
-                INSERT OR REPLACE INTO feeds_db.feeds_feed (url, disabled, newest_item_date)
-                VALUES (?, 0, ?), (?, 0, ?)
-            """,
-                [
-                    "http://example1.com/feed",
-                    "2023-01-01 10:00:00",
-                    "http://example2.com/feed",
-                    "2023-01-02 10:00:00",
-                ],
-            )
-            cursor.execute("COMMIT")
-            cursor.execute("DETACH DATABASE feeds_db")
-
-        # Get sorted bookmark IDs
-        sorted_ids = Bookmark.objects.get_bookmark_ids_by_feed_date()
-
-        # Verify bookmark2 comes first since its feed has a more recent newest_item_date
-        self.assertEqual(sorted_ids, [bookmark2.id, bookmark1.id])
+        Feed.objects.create(
+            url="http://example1.com/feed",
+            disabled=False,
+            newest_item_date=timezone.make_aware(datetime.datetime(2023, 1, 1, 10, 0, 0))
+        )
+        Feed.objects.create(
+            url="http://example2.com/feed",
+            disabled=False,
+            newest_item_date=timezone.make_aware(datetime.datetime(2023, 1, 2, 10, 0, 0))
+        )
+        
+        bookmark_ids = list(Bookmark.objects.get_bookmark_ids_by_feed_date())
+        self.assertEqual(bookmark_ids, [bookmark2.id, bookmark1.id])

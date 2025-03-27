@@ -68,6 +68,12 @@ class FeedItemManager(models.Manager):
                 "json": entry,
             },
         )
+
+        # Update feed's newest_item_date if this item is newer
+        if published and (not feed.newest_item_date or published > feed.newest_item_date):
+            feed.newest_item_date = published
+            feed.save(update_fields=['newest_item_date'])
+
         return feed_item, created
 
 
@@ -84,6 +90,14 @@ class Feed(TimestampedModel):
 
     def __str__(self) -> str:
         return self.title or self.url
+
+    @classmethod
+    def get_active_feed_urls_by_date(cls):
+        """Returns a list of feed URLs ordered by newest_item_date."""
+        return list(cls.objects.using('feeds_db')
+                   .filter(disabled=False)
+                   .order_by('-newest_item_date')
+                   .values_list('url', flat=True))
 
     def update_from_parsed(self, parsed_feed: FeedParserDict) -> None:
         """Update the feed's JSON data and title from the parsed feed."""
@@ -130,7 +144,7 @@ class FeedItem(TimestampedModel):
     first_seen_at = models.DateTimeField(auto_now_add=True)
     json = models.JSONField(blank=True, null=True)
 
-    objects = FeedItemManager()  # Assign the custom manager
+    objects = FeedItemManager()
 
     def __str__(self) -> str:
         return self.title
