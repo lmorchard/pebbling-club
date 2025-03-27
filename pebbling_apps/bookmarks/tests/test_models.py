@@ -92,6 +92,37 @@ class BookmarkManagerTestCase(TestCase):
         self.assertFalse(created)
         self.assertEqual(bookmark.feed_url, "http://example.com/newest-feed")
 
+    def test_get_bookmarks_by_ids(self):
+        # Create test bookmarks
+        bookmark1 = Bookmark.objects.create(
+            url="http://example1.com",
+            owner=self.user,
+            title="Test Bookmark 1"
+        )
+        bookmark2 = Bookmark.objects.create(
+            url="http://example2.com",
+            owner=self.user,
+            title="Test Bookmark 2"
+        )
+
+        # Test get_bookmarks_by_ids preserves order
+        bookmarks = Bookmark.objects.get_bookmarks_by_ids([bookmark1.id, bookmark2.id])
+        self.assertEqual(
+            list(bookmarks.values_list('id', flat=True)), 
+            [bookmark1.id, bookmark2.id]
+        )
+
+        # Test reverse order
+        bookmarks = Bookmark.objects.get_bookmarks_by_ids([bookmark2.id, bookmark1.id])
+        self.assertEqual(
+            list(bookmarks.values_list('id', flat=True)), 
+            [bookmark2.id, bookmark1.id]
+        )
+
+        # Test empty list
+        bookmarks = Bookmark.objects.get_bookmarks_by_ids([])
+        self.assertEqual(list(bookmarks), [])
+
 
 # Note: This test case requires TransactionTestCase to avoid issues with
 # TestCase using a transaction that results database locking errors
@@ -105,26 +136,63 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
         bookmark1 = Bookmark.objects.create(
             url="http://example1.com",
             owner=self.user,
-            title="Example 1",
             feed_url="http://example1.com/feed",
+            title="Test Bookmark 1"
         )
         bookmark2 = Bookmark.objects.create(
             url="http://example2.com",
             owner=self.user,
-            title="Example 2",
             feed_url="http://example2.com/feed",
+            title="Test Bookmark 2"
+        )
+        bookmark3 = Bookmark.objects.create(
+            url="http://example3.com",
+            owner=self.user,
+            feed_url="http://example3.com/feed",
+            title="Test Bookmark 3"
         )
 
         Feed.objects.create(
             url="http://example1.com/feed",
+            title="Feed 1",
             disabled=False,
             newest_item_date=timezone.make_aware(datetime.datetime(2023, 1, 1, 10, 0, 0))
         )
         Feed.objects.create(
             url="http://example2.com/feed",
+            title="Feed 2",
             disabled=False,
             newest_item_date=timezone.make_aware(datetime.datetime(2023, 1, 2, 10, 0, 0))
         )
+        Feed.objects.create(
+            url="http://example3.com/feed",
+            title="Feed 3",
+            disabled=False,
+            newest_item_date=timezone.make_aware(datetime.datetime(2023, 1, 3, 10, 0, 0))
+        )
         
+        # Test get_bookmark_ids_by_feed_date with no limit/offset
         bookmark_ids = list(Bookmark.objects.get_bookmark_ids_by_feed_date())
+        self.assertEqual(bookmark_ids, [bookmark3.id, bookmark2.id, bookmark1.id])
+
+        # Test with limit
+        bookmark_ids = list(Bookmark.objects.get_bookmark_ids_by_feed_date(limit=2))
+        self.assertEqual(bookmark_ids, [bookmark3.id, bookmark2.id])
+
+        # Test with offset
+        bookmark_ids = list(Bookmark.objects.get_bookmark_ids_by_feed_date(offset=1))
         self.assertEqual(bookmark_ids, [bookmark2.id, bookmark1.id])
+
+        # Test with both limit and offset
+        bookmark_ids = list(Bookmark.objects.get_bookmark_ids_by_feed_date(limit=1, offset=1))
+        self.assertEqual(bookmark_ids, [bookmark2.id])
+
+        # Test get_bookmarks_by_feed_date with limit and offset
+        bookmarks = Bookmark.objects.get_bookmarks_by_feed_date(limit=2)
+        self.assertEqual(list(bookmarks), [bookmark3, bookmark2])
+
+        bookmarks = Bookmark.objects.get_bookmarks_by_feed_date(offset=1)
+        self.assertEqual(list(bookmarks), [bookmark2, bookmark1])
+
+        bookmarks = Bookmark.objects.get_bookmarks_by_feed_date(limit=1, offset=1)
+        self.assertEqual(list(bookmarks), [bookmark2])

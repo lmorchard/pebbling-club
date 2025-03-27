@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from pebbling_apps.common.models import TimestampedModel
 from pebbling_apps.unfurl.models import UnfurlMetadataField
 from urllib.parse import urlparse
+from django.db.models import Case, When
 
 
 class TagManager(models.Manager):
@@ -64,9 +65,14 @@ class BookmarkManager(models.Manager):
             defaults=defaults, unique_hash=unique_hash, **kwargs
         )
 
-    def get_bookmark_ids_by_feed_date(self):
+    def get_bookmark_ids_by_feed_date(self, limit=None, offset=None):
         """Returns bookmark IDs sorted by their associated feed's newest_item_date.
-        Uses SQLite ATTACH to join across databases."""
+        Uses SQLite ATTACH to join across databases.
+        
+        Args:
+            limit (int, optional): Maximum number of IDs to return
+            offset (int, optional): Number of IDs to skip before starting to return
+        """
         with connection.cursor() as cursor:
             # Get the feeds database path and attach it
             feeds_db_path = settings.DATABASES["feeds_db"]["NAME"]
@@ -75,20 +81,53 @@ class BookmarkManager(models.Manager):
                 cursor.execute(f"ATTACH DATABASE '{feeds_db_path}' AS feeds_db")
                 attached = True
 
-                # Single efficient query across both databases
-                cursor.execute("""
+                # Build query with optional LIMIT and OFFSET
+                query = """
                     SELECT b.id
                     FROM bookmarks_bookmark b
                     JOIN feeds_db.feeds_feed f ON b.feed_url = f.url
                     WHERE f.disabled = 0
                     ORDER BY f.newest_item_date DESC
-                """)
+                """
+                
+                # In SQLite, OFFSET must be used with LIMIT
+                if offset is not None:
+                    if limit is not None:
+                        query += f" LIMIT {int(limit)} OFFSET {int(offset)}"
+                    else:
+                        # If no limit specified but offset is, use a very large limit
+                        query += f" LIMIT -1 OFFSET {int(offset)}"
+                elif limit is not None:
+                    query += f" LIMIT {int(limit)}"
+
+                cursor.execute(query)
                 bookmark_ids = [row[0] for row in cursor.fetchall()]
             finally:
                 if attached:
                     cursor.execute("DETACH DATABASE feeds_db")
 
             return bookmark_ids
+
+    def get_bookmarks_by_ids(self, bookmark_ids):
+        """Returns a queryset of bookmarks ordered by the given list of IDs.
+        Note: The order of the IDs in the input list is preserved in the output queryset."""
+        if not bookmark_ids:
+            return self.none()
+        # Convert list of IDs to a Case/When ordering
+        preserved_order = Case(
+            *[When(id=id, then=pos) for pos, id in enumerate(bookmark_ids)]
+        )
+        return self.filter(id__in=bookmark_ids).order_by(preserved_order)
+
+    def get_bookmarks_by_feed_date(self, limit=None, offset=None):
+        """Returns a queryset of bookmarks ordered by their associated feed's newest_item_date.
+        
+        Args:
+            limit (int, optional): Maximum number of bookmarks to return
+            offset (int, optional): Number of bookmarks to skip before starting to return
+        """
+        bookmark_ids = self.get_bookmark_ids_by_feed_date(limit=limit, offset=offset)
+        return self.get_bookmarks_by_ids(bookmark_ids)
 
 
 class Bookmark(TimestampedModel):
