@@ -1,11 +1,14 @@
+import contextlib
 from django.db import models
 from django.utils import timezone
 import datetime
 import logging
 import time
 from feedparser import FeedParserDict
-
+from django.conf import settings
+from django.db import connections
 from pebbling_apps.common.models import TimestampedModel
+import sqlite3
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +73,11 @@ class FeedItemManager(models.Manager):
         )
 
         # Update feed's newest_item_date if this item is newer
-        if published and (not feed.newest_item_date or published > feed.newest_item_date):
+        if published and (
+            not feed.newest_item_date or published > feed.newest_item_date
+        ):
             feed.newest_item_date = published
-            feed.save(update_fields=['newest_item_date'])
+            feed.save(update_fields=["newest_item_date"])
 
         return feed_item, created
 
@@ -94,10 +99,12 @@ class Feed(TimestampedModel):
     @classmethod
     def get_active_feed_urls_by_date(cls):
         """Returns a list of feed URLs ordered by newest_item_date."""
-        return list(cls.objects.using('feeds_db')
-                   .filter(disabled=False)
-                   .order_by('-newest_item_date')
-                   .values_list('url', flat=True))
+        return list(
+            cls.objects.using("feeds_db")
+            .filter(disabled=False)
+            .order_by("-newest_item_date")
+            .values_list("url", flat=True)
+        )
 
     def update_from_parsed(self, parsed_feed: FeedParserDict) -> None:
         """Update the feed's JSON data and title from the parsed feed."""
@@ -177,3 +184,97 @@ class FeedItem(TimestampedModel):
         constraints = [
             models.UniqueConstraint(fields=["feed", "guid"], name="unique_feed_item")
         ]
+
+
+class FeedsDatabaseAttachContext:
+    """
+    A context manager for attaching and detaching the feeds database.
+    Does not support nesting - only one database can be attached at a time.
+
+    Usage:
+        with FeedsDatabaseContext() as db_alias:
+            # perform database operations using the alias
+    """
+
+    # Class variables to track attachment state
+    _is_attached = False
+    _current_alias = ""
+
+    def __init__(
+        self,
+        default_database_name="default",
+        attached_database_name="feeds_db",
+        attach_alias="feeds_db",
+        max_retries=3,
+        retry_delay=0.5,
+    ):
+        """
+        Initialize the database attachment parameters.
+
+        :param default_database_name: Database config name of the default database to attach from
+        :param attached_database_name: Database config name of the database to attach
+        :param attach_alias: Alias to use for the attached database
+        :param max_retries: Maximum number of retries if the database is locked
+        :param retry_delay: Delay in seconds between retries
+        """
+        self.default_database_name = default_database_name
+        self.attached_database_name = attached_database_name
+        self.attach_alias = attach_alias
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        self.feeds_db_path = settings.DATABASES[attached_database_name]["NAME"]
+
+    def __enter__(self):
+        """Attach the database and return the alias."""
+        # Guard against nesting by checking if any database is already attached
+        if FeedsDatabaseAttachContext._is_attached:
+            raise RuntimeError(
+                "Database attachment cannot be nested - a database is already attached"
+            )
+
+        attempts = 0
+        while True:
+            attempts += 1
+            try:
+                with connections[self.default_database_name].cursor() as cursor:
+                    cursor.execute(
+                        f"ATTACH DATABASE '{self.feeds_db_path}' AS {self.attach_alias}"
+                    )
+                FeedsDatabaseAttachContext._is_attached = True
+                FeedsDatabaseAttachContext._current_alias = self.attach_alias
+                return self.attach_alias
+            except sqlite3.OperationalError as e:
+                if (
+                    "database is locked" in str(e).lower()
+                    and attempts <= self.max_retries
+                ):
+                    logger.warning(
+                        f"Database locked, retrying attachment (attempt {attempts}/{self.max_retries})..."
+                    )
+                    time.sleep(self.retry_delay)
+                else:
+                    logger.error(
+                        f"Failed to attach database after {attempts} attempts: {e}"
+                    )
+                    raise
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Detach the database."""
+        with connections[self.default_database_name].cursor() as cursor:
+            cursor.execute(f"DETACH DATABASE {self.attach_alias}")
+        FeedsDatabaseAttachContext._is_attached = False
+        FeedsDatabaseAttachContext._current_alias = ""
+
+    @classmethod
+    def get_attached_database_alias(cls):
+        """
+        Get the alias of the attached feeds database.
+        """
+        return cls._current_alias
+
+    @classmethod
+    def is_attached(cls):
+        """
+        Check if any feeds database is currently attached.
+        """
+        return cls._is_attached

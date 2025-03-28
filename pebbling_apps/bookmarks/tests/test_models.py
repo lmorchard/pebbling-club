@@ -2,10 +2,11 @@ from django.test import TransactionTestCase, TestCase
 from django.contrib.auth import get_user_model
 from pebbling_apps.bookmarks.models import Bookmark, BookmarkManager
 from pebbling_apps.unfurl.unfurl import UnfurlMetadata
-from pebbling_apps.feeds.models import Feed
+from pebbling_apps.feeds.models import Feed, FeedsDatabaseAttachContext
 from django.utils import timezone
 import datetime
 import logging
+from django.db import connection
 
 
 User = get_user_model()
@@ -92,37 +93,6 @@ class BookmarkManagerTestCase(TestCase):
         self.assertFalse(created)
         self.assertEqual(bookmark.feed_url, "http://example.com/newest-feed")
 
-    def test_get_bookmarks_by_ids(self):
-        # Create test bookmarks
-        bookmark1 = Bookmark.objects.create(
-            url="http://example1.com",
-            owner=self.user,
-            title="Test Bookmark 1"
-        )
-        bookmark2 = Bookmark.objects.create(
-            url="http://example2.com",
-            owner=self.user,
-            title="Test Bookmark 2"
-        )
-
-        # Test get_bookmarks_by_ids preserves order
-        bookmarks = Bookmark.objects.get_bookmarks_by_ids([bookmark1.id, bookmark2.id])
-        self.assertEqual(
-            list(bookmarks.values_list('id', flat=True)), 
-            [bookmark1.id, bookmark2.id]
-        )
-
-        # Test reverse order
-        bookmarks = Bookmark.objects.get_bookmarks_by_ids([bookmark2.id, bookmark1.id])
-        self.assertEqual(
-            list(bookmarks.values_list('id', flat=True)), 
-            [bookmark2.id, bookmark1.id]
-        )
-
-        # Test empty list
-        bookmarks = Bookmark.objects.get_bookmarks_by_ids([])
-        self.assertEqual(list(bookmarks), [])
-
 
 # Note: This test case requires TransactionTestCase to avoid issues with
 # TestCase using a transaction that results database locking errors
@@ -132,67 +102,140 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="testuser", password="12345")
 
-    def test_get_bookmark_ids_by_feed_date(self):
-        bookmark1 = Bookmark.objects.create(
+        self.bookmark1 = Bookmark.objects.create(
             url="http://example1.com",
             owner=self.user,
             feed_url="http://example1.com/feed",
-            title="Test Bookmark 1"
+            title="Test Bookmark 1",
         )
-        bookmark2 = Bookmark.objects.create(
+        self.bookmark2 = Bookmark.objects.create(
             url="http://example2.com",
             owner=self.user,
             feed_url="http://example2.com/feed",
-            title="Test Bookmark 2"
+            title="Test Bookmark 2",
         )
-        bookmark3 = Bookmark.objects.create(
+        self.bookmark3 = Bookmark.objects.create(
             url="http://example3.com",
             owner=self.user,
             feed_url="http://example3.com/feed",
-            title="Test Bookmark 3"
+            title="Test Bookmark 3",
         )
 
         Feed.objects.create(
             url="http://example1.com/feed",
             title="Feed 1",
             disabled=False,
-            newest_item_date=timezone.make_aware(datetime.datetime(2023, 1, 1, 10, 0, 0))
+            newest_item_date=timezone.make_aware(
+                datetime.datetime(2023, 1, 1, 10, 0, 0)
+            ),
         )
         Feed.objects.create(
             url="http://example2.com/feed",
             title="Feed 2",
             disabled=False,
-            newest_item_date=timezone.make_aware(datetime.datetime(2023, 1, 2, 10, 0, 0))
+            newest_item_date=timezone.make_aware(
+                datetime.datetime(2023, 1, 2, 10, 0, 0)
+            ),
         )
         Feed.objects.create(
             url="http://example3.com/feed",
             title="Feed 3",
             disabled=False,
-            newest_item_date=timezone.make_aware(datetime.datetime(2023, 1, 3, 10, 0, 0))
+            newest_item_date=timezone.make_aware(
+                datetime.datetime(2023, 1, 3, 10, 0, 0)
+            ),
         )
-        
-        # Test get_bookmark_ids_by_feed_date with no limit/offset
-        bookmark_ids = list(Bookmark.objects.get_bookmark_ids_by_feed_date())
-        self.assertEqual(bookmark_ids, [bookmark3.id, bookmark2.id, bookmark1.id])
 
-        # Test with limit
-        bookmark_ids = list(Bookmark.objects.get_bookmark_ids_by_feed_date(limit=2))
-        self.assertEqual(bookmark_ids, [bookmark3.id, bookmark2.id])
+    def test_with_feed_newest_item_date(self):
+        with FeedsDatabaseAttachContext.attach():
+            # Get bookmarks with annotated feed dates
+            bookmarks = list(Bookmark.objects.all().with_feed_newest_item_date())
 
-        # Test with offset
-        bookmark_ids = list(Bookmark.objects.get_bookmark_ids_by_feed_date(offset=1))
-        self.assertEqual(bookmark_ids, [bookmark2.id, bookmark1.id])
+            # Verify all bookmarks are returned
+            self.assertEqual(len(bookmarks), 3)
 
-        # Test with both limit and offset
-        bookmark_ids = list(Bookmark.objects.get_bookmark_ids_by_feed_date(limit=1, offset=1))
-        self.assertEqual(bookmark_ids, [bookmark2.id])
+            # Create a dictionary mapping bookmark ID to the queryset results for easier lookup
+            bookmark_dict = {bookmark.id: bookmark for bookmark in bookmarks}
 
-        # Test get_bookmarks_by_feed_date with limit and offset
-        bookmarks = Bookmark.objects.get_bookmarks_by_feed_date(limit=2)
-        self.assertEqual(list(bookmarks), [bookmark3, bookmark2])
+            # Get expected datetime values
+            expected_date1 = datetime.datetime(2023, 1, 1, 10, 0, 0)
+            expected_date2 = datetime.datetime(2023, 1, 2, 10, 0, 0)
+            expected_date3 = datetime.datetime(2023, 1, 3, 10, 0, 0)
 
-        bookmarks = Bookmark.objects.get_bookmarks_by_feed_date(offset=1)
-        self.assertEqual(list(bookmarks), [bookmark2, bookmark1])
+            # Check only date and time parts without timezone info to avoid issues
+            # with different timezone representations
+            self.assertEqual(
+                bookmark_dict[self.bookmark1.id].feed_newest_item_date.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                expected_date1.strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            self.assertEqual(
+                bookmark_dict[self.bookmark2.id].feed_newest_item_date.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                expected_date2.strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            self.assertEqual(
+                bookmark_dict[self.bookmark3.id].feed_newest_item_date.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                expected_date3.strftime("%Y-%m-%d %H:%M:%S"),
+            )
 
-        bookmarks = Bookmark.objects.get_bookmarks_by_feed_date(limit=1, offset=1)
-        self.assertEqual(list(bookmarks), [bookmark2])
+            # Test ordering by the annotated field
+            ordered_bookmarks = list(
+                Bookmark.objects.all()
+                .with_feed_newest_item_date()
+                .order_by("-feed_newest_item_date")
+            )
+            self.assertEqual(len(ordered_bookmarks), 3)
+            self.assertEqual(ordered_bookmarks[0].id, self.bookmark3.id)
+            self.assertEqual(ordered_bookmarks[1].id, self.bookmark2.id)
+            self.assertEqual(ordered_bookmarks[2].id, self.bookmark1.id)
+
+    def test_order_by_feed_newest_item_date(self):
+        with FeedsDatabaseAttachContext():
+            # Get bookmarks ordered by newest item date
+            bookmarks = list(Bookmark.objects.all().order_by_feed_newest_item_date())
+
+            # Verify all bookmarks are returned
+            self.assertEqual(len(bookmarks), 3)
+
+            # Check the order of bookmarks
+            self.assertEqual(bookmarks[0].id, self.bookmark3.id)
+            self.assertEqual(bookmarks[1].id, self.bookmark2.id)
+            self.assertEqual(bookmarks[2].id, self.bookmark1.id)
+
+    def test_exclude_null_feed_dates(self):
+        # Create a bookmark without a matching feed in the feeds database
+        bookmark_no_feed = Bookmark.objects.create(
+            url="http://example-no-feed.com",
+            owner=self.user,
+            feed_url="http://example-no-feed.com/feed",
+            title="Test Bookmark No Feed",
+        )
+
+        with FeedsDatabaseAttachContext():
+            # Get all bookmarks with feed dates
+            all_bookmarks = list(Bookmark.objects.all().with_feed_newest_item_date())
+            self.assertEqual(len(all_bookmarks), 4)  # All 4 bookmarks should be present
+
+            # Only bookmarks with non-null feed dates
+            filtered_bookmarks = list(
+                Bookmark.objects.all()
+                .with_feed_newest_item_date()
+                .exclude_null_feed_dates()
+            )
+            self.assertEqual(
+                len(filtered_bookmarks), 3
+            )  # Only original 3 bookmarks should remain
+
+            # Verify the bookmark with no feed is not in the filtered results
+            filtered_ids = [bookmark.id for bookmark in filtered_bookmarks]
+            self.assertNotIn(bookmark_no_feed.id, filtered_ids)
+
+            # Verify all other bookmarks are in the filtered results
+            self.assertIn(self.bookmark1.id, filtered_ids)
+            self.assertIn(self.bookmark2.id, filtered_ids)
+            self.assertIn(self.bookmark3.id, filtered_ids)
