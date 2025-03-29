@@ -2,11 +2,9 @@ from django.test import TransactionTestCase, TestCase
 from django.contrib.auth import get_user_model
 from pebbling_apps.bookmarks.models import Bookmark, BookmarkManager
 from pebbling_apps.unfurl.unfurl import UnfurlMetadata
-from pebbling_apps.feeds.models import Feed, FeedsDatabaseAttachContext
+from pebbling_apps.feeds.models import Feed
 from django.utils import timezone
 import datetime
-import logging
-from django.db import connection
 
 
 User = get_user_model()
@@ -147,9 +145,9 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
         )
 
     def test_with_feed_newest_item_date(self):
-        with FeedsDatabaseAttachContext.attach():
+        with Bookmark.objects.get_queryset_with_feeds_db() as queryset:
             # Get bookmarks with annotated feed dates
-            bookmarks = list(Bookmark.objects.all().with_feed_newest_item_date())
+            bookmarks = list(queryset.with_feed_newest_item_date())
 
             # Verify all bookmarks are returned
             self.assertEqual(len(bookmarks), 3)
@@ -185,9 +183,7 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
 
             # Test ordering by the annotated field
             ordered_bookmarks = list(
-                Bookmark.objects.all()
-                .with_feed_newest_item_date()
-                .order_by("-feed_newest_item_date")
+                queryset.with_feed_newest_item_date().order_by("-feed_newest_item_date")
             )
             self.assertEqual(len(ordered_bookmarks), 3)
             self.assertEqual(ordered_bookmarks[0].id, self.bookmark3.id)
@@ -195,9 +191,9 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
             self.assertEqual(ordered_bookmarks[2].id, self.bookmark1.id)
 
     def test_order_by_feed_newest_item_date(self):
-        with FeedsDatabaseAttachContext():
+        with Bookmark.objects.get_queryset_with_feeds_db() as queryset:
             # Get bookmarks ordered by newest item date
-            bookmarks = list(Bookmark.objects.all().order_by_feed_newest_item_date())
+            bookmarks = list(queryset.order_by_feed_newest_item_date())
 
             # Verify all bookmarks are returned
             self.assertEqual(len(bookmarks), 3)
@@ -216,16 +212,14 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
             title="Test Bookmark No Feed",
         )
 
-        with FeedsDatabaseAttachContext():
+        with Bookmark.objects.get_queryset_with_feeds_db() as queryset:
             # Get all bookmarks with feed dates
-            all_bookmarks = list(Bookmark.objects.all().with_feed_newest_item_date())
+            all_bookmarks = list(queryset.with_feed_newest_item_date())
             self.assertEqual(len(all_bookmarks), 4)  # All 4 bookmarks should be present
 
             # Only bookmarks with non-null feed dates
             filtered_bookmarks = list(
-                Bookmark.objects.all()
-                .with_feed_newest_item_date()
-                .exclude_null_feed_dates()
+                queryset.with_feed_newest_item_date().exclude_null_feed_dates()
             )
             self.assertEqual(
                 len(filtered_bookmarks), 3
@@ -239,3 +233,37 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
             self.assertIn(self.bookmark1.id, filtered_ids)
             self.assertIn(self.bookmark2.id, filtered_ids)
             self.assertIn(self.bookmark3.id, filtered_ids)
+
+    def test_with_feeds_db_context_manager(self):
+        """Test the with_feeds_db context manager."""
+
+        # Use the context manager to get bookmarks ordered by feed date
+        with Bookmark.objects.get_queryset_with_feeds_db() as queryset:
+            # Test ordering by the feed date
+            ordered_bookmarks = list(queryset.order_by_feed_newest_item_date())
+
+            # Verify the bookmarks are ordered correctly (newest first)
+            self.assertEqual(len(ordered_bookmarks), 3)  # Only the 3 with feeds
+            self.assertEqual(ordered_bookmarks[0].id, self.bookmark3.id)
+            self.assertEqual(ordered_bookmarks[1].id, self.bookmark2.id)
+            self.assertEqual(ordered_bookmarks[2].id, self.bookmark1.id)
+
+    def test_error_without_context_manager(self):
+        """Test that using feed-related methods without the context manager raises an error."""
+
+        # Try to use feed-related methods without the context manager
+        queryset = Bookmark.objects.all()
+
+        # Verify that attempting to call with_feed_newest_item_date raises RuntimeError
+        with self.assertRaises(RuntimeError) as context:
+            queryset.with_feed_newest_item_date()
+
+        # Verify the error message
+        self.assertIn("Feeds database must be attached", str(context.exception))
+
+        # Also verify that order_by_feed_newest_item_date raises RuntimeError
+        with self.assertRaises(RuntimeError) as context:
+            queryset.order_by_feed_newest_item_date()
+
+        # Verify the error message
+        self.assertIn("Feeds database must be attached", str(context.exception))

@@ -1,11 +1,12 @@
 import hashlib
+import contextlib
+import functools
 from django.conf import settings
 from django.db import models
 from django.conf import settings
-from django.db import connection
+from django.db import connection, connections
 from django.contrib.auth import get_user_model
 from pebbling_apps.common.models import TimestampedModel
-from pebbling_apps.feeds.models import FeedsDatabaseAttachContext
 from pebbling_apps.unfurl.models import UnfurlMetadataField
 from urllib.parse import urlparse
 from django.db.models import Case, When
@@ -32,26 +33,29 @@ class Tag(TimestampedModel):
         return self.name
 
 
+def requires_feeds_db(method):
+    """Decorator that checks if feeds_db_alias is set before executing the method."""
+
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if not self.feeds_db_alias:
+            raise RuntimeError("Feeds database must be attached before querying")
+        return method(self, *args, **kwargs)
+
+    return wrapper
+
+
 class BookmarkQuerySet(models.QuerySet):
+    def __init__(self, *args, **kwargs):
+        self.feeds_db_alias = kwargs.pop("feeds_db_alias", None)
+        super().__init__(*args, **kwargs)
+
+    @requires_feeds_db
     def with_feed_newest_item_date(self) -> "BookmarkQuerySet":
-        """
-        Annotate bookmarks with their feed's newest item date.
-
-        Requires the feeds database to be attached via FeedsDatabaseContext.
-
-        with FeedsDatabaseAttachContext():
-            # Get bookmarks with annotated feed dates
-            bookmarks = Bookmark.objects.all().with_feed_newest_item_date()
-        """
-        if not FeedsDatabaseAttachContext.is_attached():
-            raise RuntimeError(
-                "Feeds database must be attached using FeedsDatabaseContext before querying"
-            )
-
         clone = self._chain()
 
         # Use RawSQL to select the newest_item_date from the feeds database
-        db_alias = FeedsDatabaseAttachContext.get_attached_database_alias()
+        db_alias = self.feeds_db_alias
         clone = clone.annotate(
             feed_newest_item_date=RawSQL(
                 f"""
@@ -63,20 +67,15 @@ class BookmarkQuerySet(models.QuerySet):
             )
         )
 
+        # HACK: cloning & annotation seems to lose the feeds_db_alias
+        clone.feeds_db_alias = self.feeds_db_alias
         return clone
 
+    @requires_feeds_db
     def exclude_null_feed_dates(self) -> "BookmarkQuerySet":
-        """
-        Filter out bookmarks where the feed_newest_item_date is null.
-
-        Must be called after with_feed_newest_item_date().
-
-        with FeedsDatabaseAttachContext():
-            # Get bookmarks with non-null feed dates
-            bookmarks = Bookmark.objects.all().with_feed_newest_item_date().exclude_null_feed_dates()
-        """
         return self.exclude(feed_newest_item_date__isnull=True)
 
+    @requires_feeds_db
     def order_by_feed_newest_item_date(self, descending=True) -> "BookmarkQuerySet":
         order_prefix = "-" if descending else ""
         return self.with_feed_newest_item_date().order_by(
@@ -85,15 +84,40 @@ class BookmarkQuerySet(models.QuerySet):
 
 
 class BookmarkManager(models.Manager):
-    def get_queryset(self) -> "BookmarkQuerySet":
+    def get_queryset(self, feeds_db_alias=None) -> "BookmarkQuerySet":
         """
         Override get_queryset to use the custom BookmarkQuerySet
         """
-        return BookmarkQuerySet(self.model, using=self._db)
+        return BookmarkQuerySet(
+            self.model, using=self._db, feeds_db_alias=feeds_db_alias
+        )
 
     def generate_unique_hash_for_url(self, url):
         """Generate a unique hash for a given URL."""
         return hashlib.sha1(url.encode("utf-8")).hexdigest()
+
+    @contextlib.contextmanager
+    def get_queryset_with_feeds_db(
+        self, feeds_db_alias="feeds_db", feeds_db_name="feeds_db"
+    ):
+        """
+        Context manager that attaches the feeds database and yields a queryset
+        with feed-related capabilities.
+
+        Usage:
+            with Bookmark.objects.with_feeds_db() as queryset:
+                # Get bookmarks with feed dates
+                bookmarks = queryset.order_by_feed_newest_item_date()
+        """
+        # TODO: rework this to handle non-SQLite databases
+        # if not settings.DATABASES[self.db]["ENGINE"] == "django.db.backends.sqlite3":
+        cursor = connections[self.db].cursor()
+        feeds_db_path = settings.DATABASES[feeds_db_name]["NAME"]
+        try:
+            cursor.execute(f"ATTACH DATABASE '{feeds_db_path}' AS {feeds_db_alias}")
+            yield self.get_queryset(feeds_db_alias=feeds_db_alias)
+        finally:
+            cursor.execute(f"DETACH DATABASE {feeds_db_alias}")
 
     def update_or_create(self, url, defaults=None, **kwargs):
         """Override update_or_create to handle URL-based lookups."""
