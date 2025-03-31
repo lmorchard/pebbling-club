@@ -33,25 +33,14 @@ class Tag(TimestampedModel):
         return self.name
 
 
-def requires_feeds_db(method):
-    """Decorator that checks if feeds_db_alias is set before executing the method."""
+class BookmarkFeedsQuerySet(models.QuerySet):
+    """QuerySet for bookmarks with feed-related capabilities."""
 
-    @functools.wraps(method)
-    def wrapper(self, *args, **kwargs):
-        if not self.feeds_db_alias:
-            raise RuntimeError("Feeds database must be attached before querying")
-        return method(self, *args, **kwargs)
-
-    return wrapper
-
-
-class BookmarkQuerySet(models.QuerySet):
     def __init__(self, *args, **kwargs):
         self.feeds_db_alias = kwargs.pop("feeds_db_alias", None)
         super().__init__(*args, **kwargs)
 
-    @requires_feeds_db
-    def with_feed_newest_item_date(self) -> "BookmarkQuerySet":
+    def with_feed_newest_item_date(self) -> "BookmarkFeedsQuerySet":
         clone = self._chain()
 
         # Use RawSQL to select the newest_item_date from the feeds database
@@ -59,9 +48,9 @@ class BookmarkQuerySet(models.QuerySet):
         clone = clone.annotate(
             feed_newest_item_date=RawSQL(
                 f"""
-                SELECT {db_alias}.feeds_feed.newest_item_date
-                FROM {db_alias}.feeds_feed
-                WHERE {db_alias}.feeds_feed.url = bookmarks_bookmark.feed_url
+                    SELECT {db_alias}.feeds_feed.newest_item_date
+                    FROM {db_alias}.feeds_feed
+                    WHERE {db_alias}.feeds_feed.url = bookmarks_bookmark.feed_url
                 """,
                 [],
             )
@@ -71,12 +60,12 @@ class BookmarkQuerySet(models.QuerySet):
         clone.feeds_db_alias = self.feeds_db_alias
         return clone
 
-    @requires_feeds_db
-    def exclude_null_feed_dates(self) -> "BookmarkQuerySet":
+    def exclude_null_feed_dates(self) -> "BookmarkFeedsQuerySet":
         return self.exclude(feed_newest_item_date__isnull=True)
 
-    @requires_feeds_db
-    def order_by_feed_newest_item_date(self, descending=True) -> "BookmarkQuerySet":
+    def order_by_feed_newest_item_date(
+        self, descending=True
+    ) -> "BookmarkFeedsQuerySet":
         order_prefix = "-" if descending else ""
         return self.with_feed_newest_item_date().order_by(
             f"{order_prefix}feed_newest_item_date"
@@ -84,13 +73,6 @@ class BookmarkQuerySet(models.QuerySet):
 
 
 class BookmarkManager(models.Manager):
-    def get_queryset(self, feeds_db_alias=None) -> "BookmarkQuerySet":
-        """
-        Override get_queryset to use the custom BookmarkQuerySet
-        """
-        return BookmarkQuerySet(
-            self.model, using=self._db, feeds_db_alias=feeds_db_alias
-        )
 
     def generate_unique_hash_for_url(self, url):
         """Generate a unique hash for a given URL."""
@@ -115,7 +97,9 @@ class BookmarkManager(models.Manager):
         feeds_db_path = settings.DATABASES[feeds_db_name]["NAME"]
         try:
             cursor.execute(f"ATTACH DATABASE '{feeds_db_path}' AS {feeds_db_alias}")
-            yield self.get_queryset(feeds_db_alias=feeds_db_alias)
+            yield BookmarkFeedsQuerySet(
+                self.model, using=self._db, feeds_db_alias=feeds_db_alias
+            )
         finally:
             cursor.execute(f"DETACH DATABASE {feeds_db_alias}")
 

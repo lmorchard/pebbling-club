@@ -247,23 +247,3 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
             self.assertEqual(ordered_bookmarks[0].id, self.bookmark3.id)
             self.assertEqual(ordered_bookmarks[1].id, self.bookmark2.id)
             self.assertEqual(ordered_bookmarks[2].id, self.bookmark1.id)
-
-    def test_error_without_context_manager(self):
-        """Test that using feed-related methods without the context manager raises an error."""
-
-        # Try to use feed-related methods without the context manager
-        queryset = Bookmark.objects.all()
-
-        # Verify that attempting to call with_feed_newest_item_date raises RuntimeError
-        with self.assertRaises(RuntimeError) as context:
-            queryset.with_feed_newest_item_date()
-
-        # Verify the error message
-        self.assertIn("Feeds database must be attached", str(context.exception))
-
-        # Also verify that order_by_feed_newest_item_date raises RuntimeError
-        with self.assertRaises(RuntimeError) as context:
-            queryset.order_by_feed_newest_item_date()
-
-        # Verify the error message
-        self.assertIn("Feeds database must be attached", str(context.exception))
