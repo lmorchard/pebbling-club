@@ -14,13 +14,10 @@ from django.db.models import Q
 from pebbling_apps.bookmarks.models import Bookmark, BookmarkSort
 from pebbling_apps.bookmarks.views import (
     BookmarkAttachmentNames,
-    BookmarksQueryPageListView,
+    BookmarkQueryListView,
 )
-from pebbling_apps.common.views import QueryPageListView
 from .forms import ProfileUpdateForm
 from pebbling_apps.users.models import CustomUser
-from pebbling_apps.common.utils import filter_bookmarks
-import logging
 
 
 @login_required
@@ -43,28 +40,27 @@ def profile_edit(request, username):
     return render(request, "profiles/profile_edit.html", {"form": form})
 
 
-class ProfileBookmarkListView(BookmarksQueryPageListView):
+class ProfileBookmarkListView(BookmarkQueryListView):
     model = Bookmark
     template_name = "profiles/profile_view.html"
     context_object_name = "bookmarks"
 
-    def get_queryset(self):
+    def get_query_kwargs(self):
         username = self.kwargs.get("username")
         user = get_object_or_404(CustomUser, username=username)
 
-        return Bookmark.objects.query_page(
-            **self.get_query_page_kwargs(),
-            owner=user,
-        )
+        return {
+            **super().get_query_kwargs(),
+            "owner": user,
+        }
 
 
-class ProfileTagDetailView(BookmarksQueryPageListView):
+class ProfileTagDetailView(BookmarkQueryListView):
     model = Bookmark
     template_name = "profiles/tag_detail.html"
     context_object_name = "bookmarks"
 
-    def get_queryset(self):
-        """Return all bookmarks linked to a specific tag."""
+    def get_query_kwargs(self):
         username = self.kwargs.get("username")  # Get the username from the URL
         user = get_object_or_404(CustomUser, username=username)  # Look up the user
         self.tag_name = unquote(
@@ -72,16 +68,8 @@ class ProfileTagDetailView(BookmarksQueryPageListView):
         )  # Double-decode to restore the original tag name
         self.tag = get_object_or_404(Tag, name=self.tag_name, owner=user)
 
-        return Bookmark.objects.query_page(
-            **self.get_query_page_kwargs(),
-            owner=user,
-            tags=[self.tag_name],
-        )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["tag_name"] = self.tag_name
-        context["search_query"] = self.request.GET.get(
-            "q", ""
-        )  # Pass the search query to the context
-        return context
+        return {
+            **super().get_query_kwargs(),
+            "owner": user,
+            "tags": [self.tag_name],
+        }

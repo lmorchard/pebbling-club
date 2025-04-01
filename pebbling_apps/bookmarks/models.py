@@ -39,58 +39,38 @@ class Tag(TimestampedModel):
 class BookmarkSort(StrEnum):
     """Enum for sorting bookmarks."""
 
+    DATE = auto()
     DATE_ASC = auto()
     DATE_DESC = auto()
+    TITLE = auto()
     TITLE_ASC = auto()
     TITLE_DESC = auto()
+    FEED = auto()
     FEED_ASC = auto()
     FEED_DESC = auto()
 
 
-class BookmarkFeedsQuerySet(models.QuerySet):
-    """QuerySet for bookmarks with feed-related capabilities."""
-
-    def __init__(self, *args, **kwargs):
-        self.feeds_db_alias = kwargs.pop("feeds_db_alias", None)
-        super().__init__(*args, **kwargs)
-
-    def _clone(self):
-        """Override _clone to preserve custom attributes."""
-        clone = super()._clone()
-        clone.feeds_db_alias = self.feeds_db_alias
-        return clone
-
-    def with_feed_newest_item_date(self) -> "BookmarkFeedsQuerySet":
-        clone = self._clone()
-
-        # Use RawSQL to select the newest_item_date from the feeds database
-        db_alias = self.feeds_db_alias
-        clone = clone.annotate(
-            feed_newest_item_date=RawSQL(
-                f"""
-                    SELECT {db_alias}.feeds_feed.newest_item_date
-                    FROM {db_alias}.feeds_feed
-                    WHERE {db_alias}.feeds_feed.url = bookmarks_bookmark.feed_url
-                """,
-                [],
-            )
-        )
-
-        return clone
-
-    def exclude_null_feed_dates(self) -> "BookmarkFeedsQuerySet":
-        return self.exclude(feed_newest_item_date__isnull=True)
-
-    def order_by_feed_newest_item_date(
-        self, descending=True
-    ) -> "BookmarkFeedsQuerySet":
-        order_prefix = "-" if descending else ""
-        return self.with_feed_newest_item_date().order_by(
-            f"{order_prefix}feed_newest_item_date"
-        )
+BOOKMARK_SORT_COLUMNS = {
+    BookmarkSort.DATE: "-created_at",
+    BookmarkSort.DATE_ASC: "created_at",
+    BookmarkSort.DATE_DESC: "-created_at",
+    BookmarkSort.TITLE: "title",
+    BookmarkSort.TITLE_ASC: "title",
+    BookmarkSort.TITLE_DESC: "-title",
+    BookmarkSort.FEED: "-newest_item_date",
+    BookmarkSort.FEED_ASC: "newest_item_date",
+    BookmarkSort.FEED_DESC: "-newest_item_date",
+}
 
 
-class BookmarkFeedsQuerySetWrapped(models.QuerySet):
+class BookmarkWithFeedsQuerySet(models.QuerySet):
+    """
+    Custom QuerySet for Bookmark model that interacts with the feeds database.
+
+    Kind of hacky and some queryset methods may be broken, mainly intended
+    to support the option to sort bookmarks by last new feed item date.
+    """
+
     def __init__(self, *args, **kwargs):
         self.feeds_db_alias = kwargs.pop("feeds_db_alias", None)
         self.feeds_db_path = kwargs.pop("feeds_db_path", None)
@@ -103,28 +83,38 @@ class BookmarkFeedsQuerySetWrapped(models.QuerySet):
         clone.feeds_db_path = self.feeds_db_path
         return clone
 
-    def _fetch_all(self):
+    def _attach_db(self):
         if self.feeds_db_path and self.feeds_db_alias:
-            cursor = connection.cursor()
-            """
-            cursor.execute(
-                "ATTACH DATABASE ? AS ?", [str(self.feeds_db_path), self.feeds_db_alias]
-            )
-            """
-            cursor.execute(
-                f"ATTACH DATABASE '{self.feeds_db_path}' AS {self.feeds_db_alias}"
-            )
+            with connections[self.db].cursor() as cursor:
+                cursor.execute(
+                    "ATTACH DATABASE %s AS %s",
+                    [str(self.feeds_db_path), self.feeds_db_alias],
+                )
 
-            try:
-                super()._fetch_all()
-            finally:
-                # cursor.execute("DETACH DATABASE ?", [self.feeds_db_alias])
-                cursor.execute(f"DETACH DATABASE {self.feeds_db_alias}")
+    def _detach_db(self):
+        if self.feeds_db_path and self.feeds_db_alias:
+            with connections[self.db].cursor() as cursor:
+                cursor.execute("DETACH DATABASE %s", [self.feeds_db_alias])
 
-        else:
+    def _fetch_all(self):
+        self._attach_db()
+        try:
             super()._fetch_all()
+        finally:
+            self._detach_db()
 
-    def with_feed_newest_item_date(self) -> "BookmarkFeedsQuerySet":
+    def count(self):
+        if self._result_cache is not None:
+            return len(self._result_cache)
+
+        self._attach_db()
+        try:
+            count = self.query.get_count(using=self.db)
+        finally:
+            self._detach_db()
+        return count
+
+    def with_feed_newest_item_date(self) -> "BookmarkWithFeedsQuerySet":
         clone = self._clone()
 
         # Use RawSQL to select the newest_item_date from the feeds database
@@ -142,12 +132,12 @@ class BookmarkFeedsQuerySetWrapped(models.QuerySet):
 
         return clone
 
-    def exclude_null_feed_dates(self) -> "BookmarkFeedsQuerySet":
+    def exclude_null_feed_dates(self) -> "BookmarkWithFeedsQuerySet":
         return self.exclude(feed_newest_item_date__isnull=True)
 
     def order_by_feed_newest_item_date(
         self, descending=True
-    ) -> "BookmarkFeedsQuerySet":
+    ) -> "BookmarkWithFeedsQuerySet":
         order_prefix = "-" if descending else ""
         return self.with_feed_newest_item_date().order_by(
             f"{order_prefix}feed_newest_item_date"
@@ -164,46 +154,13 @@ class BookmarkManager(models.Manager):
         self, feeds_db_alias="feeds_db", feeds_db_name="feeds_db"
     ):
         feeds_db_path = settings.DATABASES[feeds_db_name]["NAME"]
-        return BookmarkFeedsQuerySetWrapped(
+        return BookmarkWithFeedsQuerySet(
             model=self.model,
             using=self._db,
             hints=self._hints,
             feeds_db_path=feeds_db_path,
             feeds_db_alias=feeds_db_alias,
         )
-
-    @contextlib.contextmanager
-    def use_queryset(self):
-        """
-        Context manager that yields a queryset for the Bookmark model.
-        This is useful mainly as a null-op alongside logic that uses the feeds database.
-        """
-        yield self.get_queryset()
-
-    @contextlib.contextmanager
-    def use_queryset_with_feeds_db(
-        self, feeds_db_alias="feeds_db", feeds_db_name="feeds_db"
-    ):
-        """
-        Context manager that attaches the feeds database and yields a queryset
-        with feed-related capabilities.
-
-        Usage:
-            with Bookmark.objects.with_feeds_db() as queryset:
-                # Get bookmarks with feed dates
-                bookmarks = queryset.order_by_feed_newest_item_date()
-        """
-        # TODO: rework this to handle non-SQLite databases
-        # if not settings.DATABASES[self.db]["ENGINE"] == "django.db.backends.sqlite3":
-        cursor = connections[self.db].cursor()
-        feeds_db_path = settings.DATABASES[feeds_db_name]["NAME"]
-        try:
-            cursor.execute(f"ATTACH DATABASE '{feeds_db_path}' AS {feeds_db_alias}")
-            yield BookmarkFeedsQuerySet(
-                self.model, using=self._db, feeds_db_alias=feeds_db_alias
-            )
-        finally:
-            cursor.execute(f"DETACH DATABASE {feeds_db_alias}")
 
     def update_or_create(self, url, defaults=None, **kwargs):
         """Override update_or_create to handle URL-based lookups."""
@@ -236,23 +193,24 @@ class BookmarkManager(models.Manager):
             defaults=defaults, unique_hash=unique_hash, **kwargs
         )
 
-    def query_page(
+    def query(
         self,
         owner=None,
         tags=None,
         search=None,
         sort=BookmarkSort.DATE_DESC,
-        limit=10,
-        page_number=1,
     ):
-        """
-        Query bookmarks based on owner, tags, and search string.
-        """
-
-        if sort == BookmarkSort.FEED_ASC or sort == BookmarkSort.FEED_DESC:
-            queryset = self.get_queryset_with_feeds_db()
-        else:
-            queryset = self.get_queryset()
+        if sort in (BookmarkSort.FEED, BookmarkSort.FEED_ASC, BookmarkSort.FEED_DESC):
+            queryset = (
+                self.get_queryset_with_feeds_db()
+                .with_feed_newest_item_date()
+                .exclude_null_feed_dates()
+                .order_by_feed_newest_item_date(
+                    descending=sort != BookmarkSort.FEED_DESC
+                )
+            )
+        elif sort in BOOKMARK_SORT_COLUMNS:
+            queryset = self.get_queryset().order_by(BOOKMARK_SORT_COLUMNS[sort])
 
         if owner:
             queryset = queryset.filter(owner=owner)
@@ -278,32 +236,7 @@ class BookmarkManager(models.Manager):
                 )
             ).order_by("search_rank")
 
-        sort_options = {
-            BookmarkSort.DATE_ASC: "created_at",
-            BookmarkSort.DATE_DESC: "-created_at",
-            BookmarkSort.TITLE_ASC: "title",
-            BookmarkSort.TITLE_DESC: "-title",
-            BookmarkSort.FEED_ASC: "newest_item_date",
-            BookmarkSort.FEED_DESC: "-newest_item_date",
-        }
-
-        if sort == BookmarkSort.FEED_ASC or sort == BookmarkSort.FEED_DESC:
-            queryset = (
-                queryset.with_feed_newest_item_date().order_by_feed_newest_item_date(
-                    descending=sort == BookmarkSort.FEED_DESC
-                )
-            )
-        elif sort in sort_options:
-            queryset = queryset.order_by(sort_options[sort])
-
-        offset = (page_number - 1) * limit
-
-        return QueryPage(
-            object_list=list(queryset[offset : offset + limit]),
-            count=queryset.count(),
-            limit=limit,
-            page_number=page_number,
-        )
+        return queryset
 
 
 class Bookmark(TimestampedModel):

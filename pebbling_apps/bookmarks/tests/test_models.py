@@ -145,63 +145,64 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
         )
 
     def test_with_feed_newest_item_date(self):
-        with Bookmark.objects.use_queryset_with_feeds_db() as queryset:
-            # Get bookmarks with annotated feed dates
-            bookmarks = list(queryset.with_feed_newest_item_date())
+        queryset = Bookmark.objects.get_queryset_with_feeds_db()
+        bookmarks = list(queryset.with_feed_newest_item_date())
 
-            # Verify all bookmarks are returned
-            self.assertEqual(len(bookmarks), 3)
+        self.assertEqual(len(bookmarks), 3)
 
-            # Create a dictionary mapping bookmark ID to the queryset results for easier lookup
-            bookmark_dict = {bookmark.id: bookmark for bookmark in bookmarks}
+        bookmark_dict = {bookmark.id: bookmark for bookmark in bookmarks}
 
-            # Get expected datetime values
-            expected_date1 = datetime.datetime(2023, 1, 1, 10, 0, 0)
-            expected_date2 = datetime.datetime(2023, 1, 2, 10, 0, 0)
-            expected_date3 = datetime.datetime(2023, 1, 3, 10, 0, 0)
+        expected_date1 = datetime.datetime(2023, 1, 1, 10, 0, 0)
+        expected_date2 = datetime.datetime(2023, 1, 2, 10, 0, 0)
+        expected_date3 = datetime.datetime(2023, 1, 3, 10, 0, 0)
 
-            # Check only date and time parts without timezone info to avoid issues
-            # with different timezone representations
-            self.assertEqual(
-                bookmark_dict[self.bookmark1.id].feed_newest_item_date.strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ),
-                expected_date1.strftime("%Y-%m-%d %H:%M:%S"),
-            )
-            self.assertEqual(
-                bookmark_dict[self.bookmark2.id].feed_newest_item_date.strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ),
-                expected_date2.strftime("%Y-%m-%d %H:%M:%S"),
-            )
-            self.assertEqual(
-                bookmark_dict[self.bookmark3.id].feed_newest_item_date.strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ),
-                expected_date3.strftime("%Y-%m-%d %H:%M:%S"),
-            )
+        self.assertEqual(
+            bookmark_dict[self.bookmark1.id].feed_newest_item_date.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            expected_date1.strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        self.assertEqual(
+            bookmark_dict[self.bookmark2.id].feed_newest_item_date.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            expected_date2.strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        self.assertEqual(
+            bookmark_dict[self.bookmark3.id].feed_newest_item_date.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            expected_date3.strftime("%Y-%m-%d %H:%M:%S"),
+        )
 
-            # Test ordering by the annotated field
-            ordered_bookmarks = list(
-                queryset.with_feed_newest_item_date().order_by("-feed_newest_item_date")
-            )
-            self.assertEqual(len(ordered_bookmarks), 3)
-            self.assertEqual(ordered_bookmarks[0].id, self.bookmark3.id)
-            self.assertEqual(ordered_bookmarks[1].id, self.bookmark2.id)
-            self.assertEqual(ordered_bookmarks[2].id, self.bookmark1.id)
+        # Test ordering by the annotated field
+        ordered_bookmarks = list(
+            queryset.with_feed_newest_item_date().order_by("-feed_newest_item_date")
+        )
+        self.assertEqual(len(ordered_bookmarks), 3)
+        self.assertEqual(ordered_bookmarks[0].id, self.bookmark3.id)
+        self.assertEqual(ordered_bookmarks[1].id, self.bookmark2.id)
+        self.assertEqual(ordered_bookmarks[2].id, self.bookmark1.id)
 
     def test_order_by_feed_newest_item_date(self):
-        with Bookmark.objects.use_queryset_with_feeds_db() as queryset:
-            # Get bookmarks ordered by newest item date
-            bookmarks = list(queryset.order_by_feed_newest_item_date())
+        queryset = Bookmark.objects.get_queryset_with_feeds_db()
+        bookmarks = list(queryset.order_by_feed_newest_item_date())
 
-            # Verify all bookmarks are returned
-            self.assertEqual(len(bookmarks), 3)
+        self.assertEqual(len(bookmarks), 3)
 
-            # Check the order of bookmarks
-            self.assertEqual(bookmarks[0].id, self.bookmark3.id)
-            self.assertEqual(bookmarks[1].id, self.bookmark2.id)
-            self.assertEqual(bookmarks[2].id, self.bookmark1.id)
+        self.assertEqual(bookmarks[0].id, self.bookmark3.id)
+        self.assertEqual(bookmarks[1].id, self.bookmark2.id)
+        self.assertEqual(bookmarks[2].id, self.bookmark1.id)
+
+    def test_order_by_feed_newest_item_date_asc(self):
+        """Test using the queryset with feeds database."""
+        queryset = Bookmark.objects.get_queryset_with_feeds_db()
+        bookmarks = list(queryset.order_by_feed_newest_item_date(False))
+
+        self.assertEqual(len(bookmarks), 3)
+        self.assertEqual(bookmarks[0].id, self.bookmark1.id)
+        self.assertEqual(bookmarks[1].id, self.bookmark2.id)
+        self.assertEqual(bookmarks[2].id, self.bookmark3.id)
 
     def test_exclude_null_feed_dates(self):
         # Create a bookmark without a matching feed in the feeds database
@@ -212,38 +213,24 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
             title="Test Bookmark No Feed",
         )
 
-        with Bookmark.objects.use_queryset_with_feeds_db() as queryset:
-            # Get all bookmarks with feed dates
-            all_bookmarks = list(queryset.with_feed_newest_item_date())
-            self.assertEqual(len(all_bookmarks), 4)  # All 4 bookmarks should be present
+        queryset = Bookmark.objects.get_queryset_with_feeds_db()
+        # Get all bookmarks with feed dates
+        all_bookmarks = list(queryset.with_feed_newest_item_date())
+        self.assertEqual(len(all_bookmarks), 4)  # All 4 bookmarks should be present
 
-            # Only bookmarks with non-null feed dates
-            filtered_bookmarks = list(
-                queryset.with_feed_newest_item_date().exclude_null_feed_dates()
-            )
-            self.assertEqual(
-                len(filtered_bookmarks), 3
-            )  # Only original 3 bookmarks should remain
+        # Only bookmarks with non-null feed dates
+        filtered_bookmarks = list(
+            queryset.with_feed_newest_item_date().exclude_null_feed_dates()
+        )
+        self.assertEqual(
+            len(filtered_bookmarks), 3
+        )  # Only original 3 bookmarks should remain
 
-            # Verify the bookmark with no feed is not in the filtered results
-            filtered_ids = [bookmark.id for bookmark in filtered_bookmarks]
-            self.assertNotIn(bookmark_no_feed.id, filtered_ids)
+        # Verify the bookmark with no feed is not in the filtered results
+        filtered_ids = [bookmark.id for bookmark in filtered_bookmarks]
+        self.assertNotIn(bookmark_no_feed.id, filtered_ids)
 
-            # Verify all other bookmarks are in the filtered results
-            self.assertIn(self.bookmark1.id, filtered_ids)
-            self.assertIn(self.bookmark2.id, filtered_ids)
-            self.assertIn(self.bookmark3.id, filtered_ids)
-
-    def test_with_feeds_db_context_manager(self):
-        """Test the with_feeds_db context manager."""
-
-        # Use the context manager to get bookmarks ordered by feed date
-        with Bookmark.objects.use_queryset_with_feeds_db() as queryset:
-            # Test ordering by the feed date
-            ordered_bookmarks = list(queryset.order_by_feed_newest_item_date())
-
-            # Verify the bookmarks are ordered correctly (newest first)
-            self.assertEqual(len(ordered_bookmarks), 3)  # Only the 3 with feeds
-            self.assertEqual(ordered_bookmarks[0].id, self.bookmark3.id)
-            self.assertEqual(ordered_bookmarks[1].id, self.bookmark2.id)
-            self.assertEqual(ordered_bookmarks[2].id, self.bookmark1.id)
+        # Verify all other bookmarks are in the filtered results
+        self.assertIn(self.bookmark1.id, filtered_ids)
+        self.assertIn(self.bookmark2.id, filtered_ids)
+        self.assertIn(self.bookmark3.id, filtered_ids)
