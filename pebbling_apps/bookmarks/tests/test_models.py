@@ -145,7 +145,7 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
         )
 
     def test_with_feed_newest_item_date(self):
-        with Bookmark.objects.get_queryset_with_feeds_db() as queryset:
+        with Bookmark.objects.use_queryset_with_feeds_db() as queryset:
             # Get bookmarks with annotated feed dates
             bookmarks = list(queryset.with_feed_newest_item_date())
 
@@ -191,7 +191,7 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
             self.assertEqual(ordered_bookmarks[2].id, self.bookmark1.id)
 
     def test_order_by_feed_newest_item_date(self):
-        with Bookmark.objects.get_queryset_with_feeds_db() as queryset:
+        with Bookmark.objects.use_queryset_with_feeds_db() as queryset:
             # Get bookmarks ordered by newest item date
             bookmarks = list(queryset.order_by_feed_newest_item_date())
 
@@ -212,7 +212,7 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
             title="Test Bookmark No Feed",
         )
 
-        with Bookmark.objects.get_queryset_with_feeds_db() as queryset:
+        with Bookmark.objects.use_queryset_with_feeds_db() as queryset:
             # Get all bookmarks with feed dates
             all_bookmarks = list(queryset.with_feed_newest_item_date())
             self.assertEqual(len(all_bookmarks), 4)  # All 4 bookmarks should be present
@@ -238,7 +238,7 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
         """Test the with_feeds_db context manager."""
 
         # Use the context manager to get bookmarks ordered by feed date
-        with Bookmark.objects.get_queryset_with_feeds_db() as queryset:
+        with Bookmark.objects.use_queryset_with_feeds_db() as queryset:
             # Test ordering by the feed date
             ordered_bookmarks = list(queryset.order_by_feed_newest_item_date())
 

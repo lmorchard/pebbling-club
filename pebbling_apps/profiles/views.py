@@ -9,7 +9,7 @@ from pebbling_apps.bookmarks.forms import BookmarkForm
 from urllib.parse import quote, unquote
 from django.db.models import Q
 
-from pebbling_apps.bookmarks.models import Bookmark
+from pebbling_apps.bookmarks.models import Bookmark, BookmarkSort
 from pebbling_apps.bookmarks.views import BookmarkAttachmentNames
 from .forms import ProfileUpdateForm
 from pebbling_apps.users.models import CustomUser
@@ -54,11 +54,13 @@ class ProfileBookmarkListView(ListView):
     def get_queryset(self):
         username = self.kwargs.get("username")
         user = get_object_or_404(CustomUser, username=username)
-        queryset = Bookmark.objects.filter(owner=user).order_by("-created_at")
 
-        query = self.request.GET.get("q")
-        queryset = filter_bookmarks(queryset, query)  # Use the utility function
-        return queryset
+        return Bookmark.objects.query(
+            owner=user,
+            search=self.request.GET.get("q"),
+            sort=self.request.GET.get("sort", BookmarkSort.DATE_DESC),
+            limit=get_paginate_limit(self.request),
+        )
 
 
 class ProfileTagDetailView(ListView):
@@ -78,16 +80,13 @@ class ProfileTagDetailView(ListView):
         )  # Double-decode to restore the original tag name
         self.tag = get_object_or_404(Tag, name=self.tag_name, owner=user)
 
-        queryset = self.tag.bookmarks.all().order_by("-created_at")
-
-        # Filter bookmarks based on the search query
-        query = self.request.GET.get("q")
-        if query:
-            queryset = filter_bookmarks(
-                queryset, query
-            )  # Use the utility function to filter bookmarks
-
-        return queryset
+        return Bookmark.objects.query(
+            owner=user,
+            tags=[self.tag_name],
+            search=self.request.GET.get("q"),
+            sort=self.request.GET.get("sort", BookmarkSort.DATE_DESC),
+            limit=get_paginate_limit(self.request),
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
