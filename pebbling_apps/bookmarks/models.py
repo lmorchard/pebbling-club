@@ -90,11 +90,87 @@ class BookmarkFeedsQuerySet(models.QuerySet):
         )
 
 
+class BookmarkFeedsQuerySetWrapped(models.QuerySet):
+    def __init__(self, *args, **kwargs):
+        self.feeds_db_alias = kwargs.pop("feeds_db_alias", None)
+        self.feeds_db_path = kwargs.pop("feeds_db_path", None)
+        super().__init__(*args, **kwargs)
+
+    def _clone(self):
+        """Override _clone to preserve custom attributes."""
+        clone = super()._clone()
+        clone.feeds_db_alias = self.feeds_db_alias
+        clone.feeds_db_path = self.feeds_db_path
+        return clone
+
+    def _fetch_all(self):
+        if self.feeds_db_path and self.feeds_db_alias:
+            cursor = connection.cursor()
+            """
+            cursor.execute(
+                "ATTACH DATABASE ? AS ?", [str(self.feeds_db_path), self.feeds_db_alias]
+            )
+            """
+            cursor.execute(
+                f"ATTACH DATABASE '{self.feeds_db_path}' AS {self.feeds_db_alias}"
+            )
+
+            try:
+                super()._fetch_all()
+            finally:
+                # cursor.execute("DETACH DATABASE ?", [self.feeds_db_alias])
+                cursor.execute(f"DETACH DATABASE {self.feeds_db_alias}")
+
+        else:
+            super()._fetch_all()
+
+    def with_feed_newest_item_date(self) -> "BookmarkFeedsQuerySet":
+        clone = self._clone()
+
+        # Use RawSQL to select the newest_item_date from the feeds database
+        db_alias = self.feeds_db_alias
+        clone = clone.annotate(
+            feed_newest_item_date=RawSQL(
+                f"""
+                    SELECT {db_alias}.feeds_feed.newest_item_date
+                    FROM {db_alias}.feeds_feed
+                    WHERE {db_alias}.feeds_feed.url = bookmarks_bookmark.feed_url
+                """,
+                [],
+            )
+        )
+
+        return clone
+
+    def exclude_null_feed_dates(self) -> "BookmarkFeedsQuerySet":
+        return self.exclude(feed_newest_item_date__isnull=True)
+
+    def order_by_feed_newest_item_date(
+        self, descending=True
+    ) -> "BookmarkFeedsQuerySet":
+        order_prefix = "-" if descending else ""
+        return self.with_feed_newest_item_date().order_by(
+            f"{order_prefix}feed_newest_item_date"
+        )
+
+
 class BookmarkManager(models.Manager):
 
     def generate_unique_hash_for_url(self, url):
         """Generate a unique hash for a given URL."""
         return hashlib.sha1(url.encode("utf-8")).hexdigest()
+
+    def get_queryset_with_feeds_db(
+        self, feeds_db_alias="feeds_db", feeds_db_name="feeds_db"
+    ):
+        feeds_db_path = settings.DATABASES[feeds_db_name]["NAME"]
+        return BookmarkFeedsQuerySetWrapped(
+            model=self.model,
+            using=self._db,
+            hints=self._hints,
+            feeds_db_path=feeds_db_path,
+            feeds_db_alias=feeds_db_alias,
+        )
 
     @contextlib.contextmanager
     def use_queryset(self):
@@ -174,59 +250,60 @@ class BookmarkManager(models.Manager):
         """
 
         if sort == BookmarkSort.FEED_ASC or sort == BookmarkSort.FEED_DESC:
-            queryset_context = self.use_queryset_with_feeds_db()
+            queryset = self.get_queryset_with_feeds_db()
         else:
-            queryset_context = self.use_queryset()
+            queryset = self.get_queryset()
 
-        with queryset_context as queryset:
-            if owner:
-                queryset = queryset.filter(owner=owner)
+        if owner:
+            queryset = queryset.filter(owner=owner)
 
-            if tags:
-                tag_ids = Tag.objects.filter(name__in=tags).values_list("id", flat=True)
-                queryset = queryset.filter(tags__id__in=tag_ids)
+        if tags:
+            tag_ids = Tag.objects.filter(name__in=tags).values_list("id", flat=True)
+            queryset = queryset.filter(tags__id__in=tag_ids)
 
-            if search:
-                queryset = queryset.filter(
-                    Q(title__icontains=search)
-                    | Q(url__icontains=search)
-                    | Q(description__icontains=search)
-                    | Q(tags__name__icontains=search)
-                ).distinct()
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search)
+                | Q(url__icontains=search)
+                | Q(description__icontains=search)
+                | Q(tags__name__icontains=search)
+            ).distinct()
 
-                queryset = queryset.annotate(
-                    search_rank=Case(
-                        When(title__icontains=search, then=Value(1)),
-                        When(description__icontains=search, then=Value(2)),
-                        default=Value(3),
-                        output_field=models.IntegerField(),
-                    )
-                ).order_by("search_rank")
+            queryset = queryset.annotate(
+                search_rank=Case(
+                    When(title__icontains=search, then=Value(1)),
+                    When(description__icontains=search, then=Value(2)),
+                    default=Value(3),
+                    output_field=models.IntegerField(),
+                )
+            ).order_by("search_rank")
 
-            sort_options = {
-                BookmarkSort.DATE_ASC: "created_at",
-                BookmarkSort.DATE_DESC: "-created_at",
-                BookmarkSort.TITLE_ASC: "title",
-                BookmarkSort.TITLE_DESC: "-title",
-                BookmarkSort.FEED_ASC: "newest_item_date",
-                BookmarkSort.FEED_DESC: "-newest_item_date",
-            }
+        sort_options = {
+            BookmarkSort.DATE_ASC: "created_at",
+            BookmarkSort.DATE_DESC: "-created_at",
+            BookmarkSort.TITLE_ASC: "title",
+            BookmarkSort.TITLE_DESC: "-title",
+            BookmarkSort.FEED_ASC: "newest_item_date",
+            BookmarkSort.FEED_DESC: "-newest_item_date",
+        }
 
-            if sort == BookmarkSort.FEED_ASC or sort == BookmarkSort.FEED_DESC:
-                queryset = queryset.with_feed_newest_item_date().order_by_feed_newest_item_date(
+        if sort == BookmarkSort.FEED_ASC or sort == BookmarkSort.FEED_DESC:
+            queryset = (
+                queryset.with_feed_newest_item_date().order_by_feed_newest_item_date(
                     descending=sort == BookmarkSort.FEED_DESC
                 )
-            elif sort in sort_options:
-                queryset = queryset.order_by(sort_options[sort])
-
-            offset = (page_number - 1) * limit
-
-            return QueryPage(
-                object_list=list(queryset[offset : offset + limit]),
-                count=queryset.count(),
-                limit=limit,
-                page_number=page_number,
             )
+        elif sort in sort_options:
+            queryset = queryset.order_by(sort_options[sort])
+
+        offset = (page_number - 1) * limit
+
+        return QueryPage(
+            object_list=list(queryset[offset : offset + limit]),
+            count=queryset.count(),
+            limit=limit,
+            page_number=page_number,
+        )
 
 
 class Bookmark(TimestampedModel):
