@@ -3,6 +3,7 @@ from django.urls import reverse_lazy
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.core.exceptions import PermissionDenied
+import logging
 
 from .models import Bookmark, BookmarkSort, Tag
 from .forms import BookmarkForm
@@ -23,6 +24,10 @@ class BookmarkAttachmentNames(StrEnum):
     UNFURL = auto()
 
 
+# Create logger for this app
+logger = logging.getLogger("pebbling_apps.bookmarks")
+
+
 class BookmarkQueryListView(ListView):
     def get_paginate_by(self, queryset=None):
         limit = self.request.GET.get("limit", 10)
@@ -38,10 +43,13 @@ class BookmarkQueryListView(ListView):
         return Bookmark.objects.query(**self.get_query_kwargs())
 
     def get_context_data(self, **kwargs):
-        query_kwargs = self.get_query_kwargs()
         context = super().get_context_data(**kwargs)
-        context["tag_name"] = query_kwargs.get("tags", None)
-        context["search_query"] = query_kwargs.get("search", None)
+
+        # Copy all the bookmark query kwargs to the template context with a prefix
+        query_kwargs = self.get_query_kwargs()
+        for key, value in query_kwargs.items():
+            context[f"bookmark_query_{key}"] = value
+
         return context
 
 
