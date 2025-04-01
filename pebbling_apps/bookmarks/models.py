@@ -198,9 +198,12 @@ class BookmarkManager(models.Manager):
         owner=None,
         tags=None,
         search=None,
-        sort=BookmarkSort.DATE_DESC,
+        since=None,
+        sort=BookmarkSort.DATE,
     ):
         if sort in (BookmarkSort.FEED, BookmarkSort.FEED_ASC, BookmarkSort.FEED_DESC):
+            # Feed-related sorting is weird - attach the feeds database, sort
+            # and filter based on the newest_item_date column
             queryset = (
                 self.get_queryset_with_feeds_db()
                 .with_feed_newest_item_date()
@@ -209,8 +212,12 @@ class BookmarkManager(models.Manager):
                     descending=sort != BookmarkSort.FEED_DESC
                 )
             )
+            if since:
+                queryset = queryset.filter(feed_newest_item_date__gte=since)
         elif sort in BOOKMARK_SORT_COLUMNS:
             queryset = self.get_queryset().order_by(BOOKMARK_SORT_COLUMNS[sort])
+            if since:
+                queryset = queryset.filter(created_at__gte=since)
 
         if owner:
             queryset = queryset.filter(owner=owner)

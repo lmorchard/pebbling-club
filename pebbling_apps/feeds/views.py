@@ -4,6 +4,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from pebbling_apps.common.utils import parse_since
 from pebbling_apps.feeds.tasks import poll_feed
 from pebbling_apps.feeds.services import FeedService
 from pebbling_apps.feeds.models import Feed
@@ -13,22 +14,12 @@ import json
 logger = logging.getLogger(__name__)
 
 
-# TODO: rework this so that only POST does actual writes and polls and updates - get should just fetch what's there
 @require_GET
 def feeds_fetch_get(request):
+    since = parse_since(request.GET.get("since"))
     urls = request.GET.getlist("urls")
     feeds = Feed.objects.filter(url__in=urls)
-
-    feeds_by_url = dict()
-    for feed in feeds:
-        feeds_by_url[feed.url] = dict(
-            success=True,
-            fetched=dict(
-                items=[i.to_dict() for i in feed.items.order_by("-date")[:10]],
-                **feed.to_dict(),
-            ),
-        )
-
+    feeds_by_url = get_feed_items_by_url(feeds, since)
     return JsonResponse(feeds_by_url)
 
 
@@ -37,7 +28,9 @@ def feeds_fetch_get(request):
 @require_POST
 def feeds_fetch_post(request):
     # TODO: switch to Django Rest Framework for request parsing
-    urls = json.loads(request.body).get("urls", [])
+    body = json.loads(request.body)
+    since = parse_since(body.get("since"))
+    urls = body.get("urls", [])
     service = FeedService()
 
     feed_ids = []
@@ -63,17 +56,44 @@ def feeds_fetch_post(request):
             # Log error but continue - we'll still return the feeds
             logger.error(f"Error waiting for feed poll tasks: {e}")
 
-    # Re-fetch feeds to get updated data
     feeds = Feed.objects.filter(id__in=feed_ids)
-
-    feeds_by_url = dict()
-    for feed in feeds:
-        feeds_by_url[feed.url] = dict(
-            success=True,
-            fetched=dict(
-                items=[i.to_dict() for i in feed.items.order_by("-date")[:10]],
-                **feed.to_dict(),
-            ),
-        )
+    feeds_by_url = get_feed_items_by_url(feeds, since)
 
     return JsonResponse(feeds_by_url)
+
+
+def get_feed_items_by_url(feeds, since=None, feed_ids=None):
+    """
+    Returns feeds by URL with their items, filtered by date if since is provided.
+
+    Args:
+        urls (list): List of feed URLs to fetch
+        since (datetime, optional): Only include items newer than this date
+        feed_ids (list, optional): List of feed IDs to filter by instead of URLs
+
+    Returns:
+        dict: Dictionary mapping feed URLs to their data
+    """
+    if since:
+        feeds = feeds.filter(newest_item_date__gte=since)
+
+    feeds_by_url = {}
+    for feed in feeds:
+        # First determine which items to include
+        items_query = feed.items
+        if since:
+            items_query = items_query.filter(date__gte=since)
+
+        # Get the most recent 10 items
+        items = items_query.order_by("-date")[:10]
+
+        # Build the response dictionary
+        feeds_by_url[feed.url] = {
+            "success": True,
+            "fetched": {
+                "items": [item.to_dict() for item in items],
+                **feed.to_dict(),
+            },
+        }
+
+    return feeds_by_url

@@ -10,11 +10,15 @@ from .forms import BookmarkForm
 from urllib.parse import quote, unquote
 from django.db import models
 from django.db.models import Q
-from pebbling_apps.common.utils import django_enum
+from pebbling_apps.common.utils import django_enum, parse_since
 from pebbling_apps.unfurl.unfurl import UnfurlMetadata
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from enum import StrEnum, auto
+
+from durations_nlp import Duration
+from durations_nlp.helpers import valid_duration
+import datetime
 
 
 @django_enum
@@ -34,10 +38,16 @@ class BookmarkQueryListView(ListView):
         return int(limit) if str(limit).isdigit() else 10
 
     def get_query_kwargs(self):
-        return {
+        kwargs = {
             "search": self.request.GET.get("q"),
             "sort": self.request.GET.get("sort", BookmarkSort.DATE_DESC),
         }
+
+        since = self.request.GET.get("since")
+        if since:
+            kwargs["since"] = parse_since(since)
+
+        return kwargs
 
     def get_queryset(self):
         return Bookmark.objects.query(**self.get_query_kwargs())
@@ -51,12 +61,6 @@ class BookmarkQueryListView(ListView):
             context[f"bookmark_query_{key}"] = value
 
         return context
-
-
-def get_paginate_limit(request, default_limit=10):
-    """Utility function to get pagination limit from query parameters."""
-    limit = request.GET.get("limit", default_limit)
-    return int(limit) if str(limit).isdigit() else default_limit
 
 
 # Create View: Add a new bookmark
@@ -202,7 +206,9 @@ class TagListView(ListView):
     context_object_name = "tags"
 
     def get_paginate_by(self, queryset):
-        return get_paginate_limit(self.request)
+        default_limit = 100
+        limit = self.request.GET.get("limit", default_limit)
+        return int(limit) if str(limit).isdigit() else default_limit
 
     def get_queryset(self):
         """Return tags only for the logged-in user."""
