@@ -7,7 +7,7 @@ from django.db import models
 from django.conf import settings
 from django.db import connection, connections
 from django.contrib.auth import get_user_model
-from pebbling_apps.common.models import TimestampedModel
+from pebbling_apps.common.models import QueryPage, TimestampedModel
 from pebbling_apps.common.utils import django_enum
 from pebbling_apps.unfurl.models import UnfurlMetadataField
 from urllib.parse import urlparse
@@ -160,14 +160,14 @@ class BookmarkManager(models.Manager):
             defaults=defaults, unique_hash=unique_hash, **kwargs
         )
 
-    def query(
+    def query_page(
         self,
         owner=None,
         tags=None,
         search=None,
         sort=BookmarkSort.DATE_DESC,
         limit=10,
-        page=0,
+        page_number=1,
     ):
         """
         Query bookmarks based on owner, tags, and search string.
@@ -219,22 +219,14 @@ class BookmarkManager(models.Manager):
             elif sort in sort_options:
                 queryset = queryset.order_by(sort_options[sort])
 
-            offset = page * limit
-            queryset = queryset[offset : offset + limit]
+            offset = (page_number - 1) * limit
 
-            total = queryset.count()
-
-            return list(queryset)
-
-            """
-            # Return paginated results with metadata
-            return {
-                "items": list(queryset),
-                "total": total,
-                "page": page,
-                "pages": (total + limit - 1) // limit,
-            }
-            """
+            return QueryPage(
+                object_list=list(queryset[offset : offset + limit]),
+                count=queryset.count(),
+                limit=limit,
+                page_number=page_number,
+            )
 
 
 class Bookmark(TimestampedModel):
