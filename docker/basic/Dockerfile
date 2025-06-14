@@ -50,23 +50,31 @@ ENV PATH="/venv/bin:$PATH" \
     CELERY_BEAT_SCHEDULE_FILENAME=/app/data/celerybeat-schedule \
     CELERY_BROKER_URL=sqla+sqlite:////app/data/celery.sqlite3
 
+# Create user early to avoid cache invalidation
+RUN useradd -ms /bin/bash django
+
+# Copy only dependency files first for better caching
 COPY pyproject.toml ./
 
-# Create and activate virtual environment
+# Create and activate virtual environment - this layer will only be rebuilt if pyproject.toml changes
 RUN uv venv --python=python3.13 && \
     . .venv/bin/activate && \
     uv sync && \
     uv pip install gunicorn honcho
 
+# Copy configuration files - these change less frequently than application code
 COPY docker/basic/Procfile /app/Procfile
 COPY docker/basic/nginx.conf /etc/nginx/nginx.conf
-COPY . .
-COPY --from=frontend-builder /app/frontend/build/ /app/frontend/build/
 
-# Collect static files as django user
-RUN useradd -ms /bin/bash django
+# Create necessary directories with appropriate permissions
 RUN mkdir -p /app/run /app/static /app/media /app/data && \
     chown -R django:django /app/run /app/static /app/media /app/data
+
+# Now copy application code - this will invalidate cache from this point forward
+COPY --chown=django:django . .
+
+# Copy frontend build artifacts
+COPY --from=frontend-builder --chown=django:django /app/frontend/build/ /app/frontend/build/
 USER django
 RUN uv run manage.py collectstatic --noinput
 
