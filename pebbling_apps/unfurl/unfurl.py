@@ -5,6 +5,7 @@ import requests
 import extruct
 from django.core.validators import URLValidator
 from dataclasses import dataclass, field
+from typing import Union
 import json
 
 
@@ -16,7 +17,9 @@ class UnfurlMetadata:
     html: str = ""
 
     @classmethod
-    def from_json(cls, json_str: str, omit_html: bool = False) -> "UnfurlMetadata":
+    def from_json(
+        cls, json_str: str, omit_html: bool = False
+    ) -> Union["UnfurlMetadata", None]:
         """Create an UnfurlMetadata instance from a JSON string."""
         if not json_str:
             return None
@@ -35,6 +38,10 @@ class UnfurlMetadata:
             "url": self.url,
             "metadata": self.metadata,
             "feeds": self.feeds,
+            "feed": self.feed,
+            "title": self.title,
+            "description": self.description,
+            "image": self.image,
         }
         if not omit_html:
             data["html"] = self.html
@@ -54,7 +61,9 @@ class UnfurlMetadata:
         url_validator = URLValidator()
         url_validator(self.url)
 
-        self.html = requests.get(self.url).text
+        response = requests.get(self.url)
+        response.encoding = response.apparent_encoding  # Ensure correct encoding
+        self.html = response.content  # Use bytes content instead of text
 
     def parse(self):
         """Parse the fetched HTML to extract feeds and metadata."""
@@ -66,7 +75,9 @@ class UnfurlMetadata:
     @property
     def feed(self):
         if len(self.feeds) > 0:
-            return self.feeds[0]
+            # HACK: Sort feeds by whether they contain "comment" in the URL, so that we deprioritize comment feeds
+            sorted_feeds = sorted(self.feeds, key=lambda url: "comment" in url)
+            return sorted_feeds[0]
         return None
 
     @property
@@ -226,7 +237,9 @@ class UnfurlMetadata:
     def __str__(self):
         title = self.title or "No Title"
         description = self.description or "No Description"
-        return f"UnfurlMetadata(title={title}, description={description})"
+        feed = self.feed or "No Feed"
+        feeds = ", ".join(self.feeds) if self.feeds else "No Feeds"
+        return f"UnfurlMetadata(title={title}, description={description}, feed={feed}, feeds=[{feeds}])"
 
     def __repr__(self):
         return self.__str__()

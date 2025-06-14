@@ -2,17 +2,22 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.shortcuts import render, get_object_or_404
+from django.http import Http404
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import InvalidPage, Paginator
 from pebbling_apps.bookmarks.models import Bookmark, Tag
 from pebbling_apps.bookmarks.forms import BookmarkForm
 from urllib.parse import quote, unquote
 from django.db.models import Q
 
-from pebbling_apps.bookmarks.models import Bookmark
+from pebbling_apps.bookmarks.models import Bookmark, BookmarkSort
+from pebbling_apps.bookmarks.views import (
+    BookmarkAttachmentNames,
+    BookmarkQueryListView,
+)
 from .forms import ProfileUpdateForm
 from pebbling_apps.users.models import CustomUser
-from pebbling_apps.common.utils import filter_bookmarks
 
 
 @login_required
@@ -35,40 +40,27 @@ def profile_edit(request, username):
     return render(request, "profiles/profile_edit.html", {"form": form})
 
 
-def get_paginate_limit(request, default_limit=100):
-    """Utility function to get pagination limit from query parameters."""
-    limit = request.GET.get("limit", default_limit)
-    return int(limit) if str(limit).isdigit() else default_limit
-
-
-class ProfileBookmarkListView(ListView):
+class ProfileBookmarkListView(BookmarkQueryListView):
     model = Bookmark
     template_name = "profiles/profile_view.html"
     context_object_name = "bookmarks"
 
-    def get_paginate_by(self, queryset):
-        return get_paginate_limit(self.request)
-
-    def get_queryset(self):
+    def get_query_kwargs(self):
         username = self.kwargs.get("username")
         user = get_object_or_404(CustomUser, username=username)
-        queryset = Bookmark.objects.filter(owner=user).order_by("-created_at")
 
-        query = self.request.GET.get("q")
-        queryset = filter_bookmarks(queryset, query)  # Use the utility function
-        return queryset
+        return {
+            **super().get_query_kwargs(),
+            "owner": user,
+        }
 
 
-class ProfileTagDetailView(ListView):
+class ProfileTagDetailView(BookmarkQueryListView):
     model = Bookmark
     template_name = "profiles/tag_detail.html"
     context_object_name = "bookmarks"
 
-    def get_paginate_by(self, queryset):
-        return get_paginate_limit(self.request)
-
-    def get_queryset(self):
-        """Return all bookmarks linked to a specific tag."""
+    def get_query_kwargs(self):
         username = self.kwargs.get("username")  # Get the username from the URL
         user = get_object_or_404(CustomUser, username=username)  # Look up the user
         self.tag_name = unquote(
@@ -76,21 +68,8 @@ class ProfileTagDetailView(ListView):
         )  # Double-decode to restore the original tag name
         self.tag = get_object_or_404(Tag, name=self.tag_name, owner=user)
 
-        queryset = self.tag.bookmarks.all().order_by("-created_at")
-
-        # Filter bookmarks based on the search query
-        query = self.request.GET.get("q")
-        if query:
-            queryset = filter_bookmarks(
-                queryset, query
-            )  # Use the utility function to filter bookmarks
-
-        return queryset
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["tag_name"] = self.tag_name
-        context["search_query"] = self.request.GET.get(
-            "q", ""
-        )  # Pass the search query to the context
-        return context
+        return {
+            **super().get_query_kwargs(),
+            "owner": user,
+            "tags": [self.tag_name],
+        }

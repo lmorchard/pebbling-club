@@ -1,5 +1,8 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load bookmark_tags %}
+{% block title %}
+    All Tags
+{% endblock title %}
 {% block content %}
     <ul>
         {% for tag in tags %}
@@ -10,5 +13,5 @@
             <li>No tags found.</li>
         {% endfor %}
     </ul>
-    {% include '_pagination.html' %}
-{% endblock %}
+    {% include "_pagination.html" %}
+{% endblock content %}

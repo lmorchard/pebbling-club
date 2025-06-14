@@ -1,11 +1,14 @@
+import contextlib
 from django.db import models
 from django.utils import timezone
 import datetime
 import logging
 import time
 from feedparser import FeedParserDict
-
+from django.conf import settings
+from django.db import connections
 from pebbling_apps.common.models import TimestampedModel
+import sqlite3
 
 logger = logging.getLogger(__name__)
 
@@ -34,14 +37,25 @@ class FeedItemManager(models.Manager):
         published = None
         if "published_parsed" in entry:
             try:
-                published = datetime.datetime.fromtimestamp(
-                    time.mktime(entry.published_parsed)
-                )
-                published = timezone.make_aware(published)
+                published_parsed = entry.get("published_parsed")
+                if published_parsed is not None:
+                    published = datetime.datetime.fromtimestamp(
+                        time.mktime(published_parsed)
+                    )
+                    published = timezone.make_aware(published)
             except Exception as e:
                 logger.warning(
                     f"Failed to parse date for entry: {entry.get('id', 'unknown')}: {e}"
                 )
+
+        # Attempt to fetch an existing FeedItem
+        feed_item = self.filter(
+            feed=feed, guid=entry.get("id", entry.get("link"))
+        ).first()
+
+        # If the feed item exists and has a date, use the existing date
+        if feed_item and feed_item.date:
+            published = feed_item.date
 
         # Update or create the FeedItem
         feed_item, created = self.update_or_create(
@@ -57,6 +71,14 @@ class FeedItemManager(models.Manager):
                 "json": entry,
             },
         )
+
+        # Update feed's newest_item_date if this item is newer
+        if published and (
+            not feed.newest_item_date or published > feed.newest_item_date
+        ):
+            feed.newest_item_date = published
+            feed.save(update_fields=["newest_item_date"])
+
         return feed_item, created
 
 
@@ -73,6 +95,16 @@ class Feed(TimestampedModel):
 
     def __str__(self) -> str:
         return self.title or self.url
+
+    @classmethod
+    def get_active_feed_urls_by_date(cls):
+        """Returns a list of feed URLs ordered by newest_item_date."""
+        return list(
+            cls.objects.using("feeds_db")
+            .filter(disabled=False)
+            .order_by("-newest_item_date")
+            .values_list("url", flat=True)
+        )
 
     def update_from_parsed(self, parsed_feed: FeedParserDict) -> None:
         """Update the feed's JSON data and title from the parsed feed."""
@@ -119,7 +151,7 @@ class FeedItem(TimestampedModel):
     first_seen_at = models.DateTimeField(auto_now_add=True)
     json = models.JSONField(blank=True, null=True)
 
-    objects = FeedItemManager()  # Assign the custom manager
+    objects = FeedItemManager()
 
     def __str__(self) -> str:
         return self.title

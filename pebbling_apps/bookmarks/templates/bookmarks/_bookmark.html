@@ -62,26 +62,45 @@
             {% endif %}
         </div>
         <pc-bookmark-attachment-set class="vertical">
-            <pc-bookmark-attachment name="notes">
-                <details open>
-                    <summary>Notes</summary>
-                    <section>
-                        <section class="p-summary">
-                            {{ bookmark.description }}
-                        </section>
-                    </section>
-                </details>
-            </pc-bookmark-attachment>
-            {% if bookmark.unfurl_metadata.feed %}
-                <pc-bookmark-attachment name="feed">
-                    <details>
-                        <summary>Feed</summary>
-                        <section>
-                            <pc-feed url="{{ bookmark.unfurl_metadata.feed }}" />
-                        </section>
-                    </details>
-                </pc-bookmark-attachment>
-            {% endif %}
+            {# TODO: Refactor these with blocks into reusable template includes #}
+            {% with attachment_name=BookmarkAttachmentNames.NOTES.value %}
+                {% if attachment_name in show_attachments %}
+                    <pc-bookmark-attachment name="{{ attachment_name }}">
+                        <details {% if open_attachment == attachment_name %}open{% endif %}>
+                            <summary>Notes</summary>
+                            <section>
+                                <section class="p-summary">
+                                    {{ bookmark.description }}
+                                </section>
+                            </section>
+                        </details>
+                    </pc-bookmark-attachment>
+                {% endif %}
+            {% endwith %}
+            {% with attachment_name=BookmarkAttachmentNames.FEED.value %}
+                {% if attachment_name in show_attachments and bookmark.unfurl_metadata.feed %}
+                    <pc-bookmark-attachment name="{{ attachment_name }}">
+                        <details {% if open_attachment == attachment_name %}open{% endif %}>
+                            <summary>Feed</summary>
+                            <section>
+                                <pc-feed url="{{ bookmark.unfurl_metadata.feed }}" />
+                            </section>
+                        </details>
+                    </pc-bookmark-attachment>
+                {% endif %}
+            {% endwith %}
+            {% with attachment_name=BookmarkAttachmentNames.UNFURL.value %}
+                {% if attachment_name in show_attachments and bookmark.unfurl_metadata %}
+                    <pc-bookmark-attachment name="{{ attachment_name }}">
+                        <details {% if open_attachment == attachment_name %}open{% endif %}>
+                            <summary>Unfurl</summary>
+                            <section>
+                                <textarea>{{ bookmark.unfurl_metadata.to_dict|pprint }}</textarea>
+                            </section>
+                        </details>
+                    </pc-bookmark-attachment>
+                {% endif %}
+            {% endwith %}
         </pc-bookmark-attachment-set>
     </section>
 </pc-bookmark>

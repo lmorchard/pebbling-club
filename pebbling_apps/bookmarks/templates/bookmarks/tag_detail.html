@@ -1,6 +1,6 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
-    <h2>Bookmarks Tagged: "{{ tag_name }}"</h2>
-    {% include 'bookmarks/_bookmark_list.html' %}
-    {% include '_pagination.html' %}
-{% endblock %}
+    <h2>Bookmarks Tagged: {{ bookmark_query_tags | join:", " }}</h2>
+    {% include "bookmarks/_bookmark_list.html" %}
+    {% include "_pagination.html" %}
+{% endbloc content %}

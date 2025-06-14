@@ -1,3 +1,7 @@
 <form method="get" action="">
-    <input type="text" name="q" placeholder="Search bookmarks..." aria-label="Search bookmarks" value="{{ request.GET.q }}">
+    <input type="text"
+           name="q"
+           placeholder="Search bookmarks..."
+           aria-label="Search bookmarks"
+           value="{% firstof bookmark_query_search request.GET.q %}">
 </form>

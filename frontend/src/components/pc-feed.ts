@@ -146,7 +146,7 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
     let response: Response;
 
     if (this.usePost) {
-      response = await fetch(`/feeds/get`, {
+      response = await fetch(`/feeds/fetch`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -179,6 +179,8 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
         element.feed = result.fetched;
       } else if (result?.err) {
         element.error = result.err;
+      } else {
+        element.error = "unknown error";
       }
     }
   }

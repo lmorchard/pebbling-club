@@ -4,7 +4,8 @@
 <html lang="en">
     <head>
         <title>
-            {% block title %}{% endblock %}
+            {% block title %}
+            {% endblock title %}
             {% if block.title %}-{% endif %}
             Pebbling Club 🐧🪨
         </title>
@@ -27,7 +28,8 @@
             }
             </script>
         {% endif %}
-        {% block html_head %}{% endblock %}
+        {% block html_head %}
+        {% endblock html_head %}
     </head>
     <body>
         <details-closer>
@@ -45,7 +47,8 @@
                                 </h1>
                             </section>
                             <nav>
-                                {% block before_site_nav %}{% endblock %}
+                                {% block before_site_nav %}
+                                {% endblock before_site_nav %}
                                 <theme-selector title="Enable dark theme">
                                     <label>
                                         <input type="checkbox" />
@@ -81,7 +84,8 @@
                             </nav>
                         </header>
                     {% endif %}
-                    {% block content %}{% endblock %}
+                    {% block content %}
+                    {% endblock content %}
                     {% if not minimal_layout %}
                         <footer>
                             <!-- TBD -->

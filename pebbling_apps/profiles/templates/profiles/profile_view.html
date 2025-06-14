@@ -1,8 +1,8 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block before_site_nav %}
-    {% include '_search.html' %}
-{% endblock %}
+    {% include "_search.html" %}
+{% endblock before_site_nav %}
 {% block content %}
-    {% include 'bookmarks/_bookmark_list.html' %}
-    {% include '_pagination.html' %}
-{% endblock %}
+    {% include "bookmarks/_bookmark_list.html" %}
+    {% include "_pagination.html" %}
+{% endblock content %}

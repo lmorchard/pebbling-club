@@ -1,0 +1,32 @@
+# fly.toml app configuration file generated for pebbling-club-django on 2025-03-06T15:55:47-08:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'pebbling-club-django'
+primary_region = 'sea'
+console_command = '/app/manage.py shell'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[[mounts]]
+  source = 'pebbling_club_django_data'
+  destination = '/var/data'
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[[statics]]
+  guest_path = '/app/static'
+  url_prefix = '/static/'

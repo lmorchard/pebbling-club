@@ -3,37 +3,64 @@ from django.urls import reverse_lazy
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.core.exceptions import PermissionDenied
-from .models import Bookmark, Tag
+import logging
+
+from .models import Bookmark, BookmarkSort, Tag
 from .forms import BookmarkForm
 from urllib.parse import quote, unquote
 from django.db import models
 from django.db.models import Q
-from pebbling_apps.common.utils import filter_bookmarks
+from pebbling_apps.common.utils import django_enum, parse_since
 from pebbling_apps.unfurl.unfurl import UnfurlMetadata
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from enum import StrEnum, auto
+
+from durations_nlp import Duration
+from durations_nlp.helpers import valid_duration
+import datetime
 
 
-def get_paginate_limit(request, default_limit=10):
-    """Utility function to get pagination limit from query parameters."""
-    limit = request.GET.get("limit", default_limit)
-    return int(limit) if str(limit).isdigit() else default_limit
+@django_enum
+class BookmarkAttachmentNames(StrEnum):
+    NOTES = auto()
+    FEED = auto()
+    UNFURL = auto()
 
 
-# List View: Show all bookmarks for the logged-in user
-class BookmarkListView(ListView):
-    model = Bookmark
-    template_name = "bookmarks/bookmark_list.html"
-    context_object_name = "bookmarks"
+# Create logger for this app
+logger = logging.getLogger("pebbling_apps.bookmarks")
 
-    def get_paginate_by(self, queryset):
-        return get_paginate_limit(self.request)
+
+class BookmarkQueryListView(ListView):
+    def get_paginate_by(self, queryset=None):
+        limit = self.request.GET.get("limit", 10)
+        return int(limit) if str(limit).isdigit() else 10
+
+    def get_query_kwargs(self):
+        kwargs = {
+            "search": self.request.GET.get("q"),
+            "sort": self.request.GET.get("sort", BookmarkSort.DATE_DESC),
+        }
+
+        since = self.request.GET.get("since")
+        if since:
+            kwargs["since"] = parse_since(since)
+
+        return kwargs
 
     def get_queryset(self):
-        queryset = Bookmark.objects.order_by("-created_at")
-        query = self.request.GET.get("q")
-        queryset = filter_bookmarks(queryset, query)  # Use the utility function
-        return queryset
+        return Bookmark.objects.query(**self.get_query_kwargs())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Copy all the bookmark query kwargs to the template context with a prefix
+        query_kwargs = self.get_query_kwargs()
+        for key, value in query_kwargs.items():
+            context[f"bookmark_query_{key}"] = value
+
+        return context
 
 
 # Create View: Add a new bookmark
@@ -165,6 +192,13 @@ class BookmarkDeleteView(DeleteView):
         return bookmark
 
 
+# List View: Show all bookmarks for the logged-in user
+class BookmarkListView(BookmarkQueryListView):
+    model = Bookmark
+    template_name = "bookmarks/bookmark_list.html"
+    context_object_name = "bookmarks"
+
+
 # View to show all tags belonging to the user
 class TagListView(ListView):
     model = Tag
@@ -172,7 +206,9 @@ class TagListView(ListView):
     context_object_name = "tags"
 
     def get_paginate_by(self, queryset):
-        return get_paginate_limit(self.request)
+        default_limit = 100
+        limit = self.request.GET.get("limit", default_limit)
+        return int(limit) if str(limit).isdigit() else default_limit
 
     def get_queryset(self):
         """Return tags only for the logged-in user."""
@@ -180,28 +216,17 @@ class TagListView(ListView):
 
 
 # View to show all bookmarks associated with a specific tag
-class TagDetailView(ListView):
+class TagDetailView(BookmarkQueryListView):
     model = Bookmark
     template_name = "bookmarks/tag_detail.html"
     context_object_name = "bookmarks"
 
-    def get_paginate_by(self, queryset):
-        return get_paginate_limit(self.request)
-
-    def get_queryset(self):
-        """Return all bookmarks linked to a specific tag, regardless of owner."""
-        self.tag_name = unquote(
-            unquote(self.kwargs["tag_name"])
-        )  # Get the single tag name
-        tags = Tag.objects.filter(name=self.tag_name)  # Get the tag matching the name
-        return (
-            Bookmark.objects.filter(tags__in=tags).distinct().order_by("-created_at")
-        )  # Get bookmarks for that tag
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["tag_name"] = self.tag_name
-        return context
+    def get_query_kwargs(self):
+        self.tag_name = unquote(unquote(self.kwargs["tag_name"]))
+        return {
+            **super().get_query_kwargs(),
+            "tags": [self.tag_name],
+        }
 
 
 @login_required

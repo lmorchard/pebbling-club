@@ -1,2 +1,2 @@
-ignore = "H023,H030,H031"
+ignore = "H023,H030,H031,H006,H013"
 custom_html = '\w+-\w+-\w+-\w+,\w+-\w+-\w+,\w+-\w+'
