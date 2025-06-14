@@ -1,91 +1,82 @@
-ARG PYTHON_VERSION=3.11-slim
+ARG PYTHON_VERSION=3.13-slim
 
 ##########################################################################
-# Build stage
-# We need node.js to build the frontend assets, but not while running prod
+# Frontend build stage
+# We only need Node.js to build the frontend assets
 ##########################################################################
+FROM node:22-slim AS frontend-builder
 
-FROM python:${PYTHON_VERSION} AS builder
-
-# Install Node.js for frontend build
-RUN apt-get update && apt-get install -y curl && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Set working directory
 WORKDIR /app
 
-# Copy Python requirements
-COPY requirements.txt .
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
-
-# Copy frontend files and build
+# Copy package files first for better layer caching
 COPY package.json package-lock.json* ./
-COPY frontend/ ./frontend/
-RUN npm ci && npm run build
+
+# Install frontend dependencies
+RUN npm ci
+
+# Copy the rest of the project and build 
+# We need the full project and not just the frontend directory
+COPY . .
+RUN npm run build
 
 ##########################################################################
 # Production stage
 # Everything else we need to run a production stack
 ##########################################################################
-
-# Final stage
 FROM python:${PYTHON_VERSION}
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nginx \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install Nginx only
-RUN apt-get update && apt-get install -y make nginx && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Create a non-root user to run the application
-RUN useradd -ms /bin/bash django
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Set working directory
 WORKDIR /app
 
-# Copy Python wheels and install
-COPY --from=builder /app/wheels /wheels/
-COPY --from=builder /app/requirements.txt .
-RUN pip install --no-cache-dir --no-index --find-links=/wheels/ -r requirements.txt && \
-    pip install honcho && \
-    rm -rf /wheels
+# Set environment variables
+ENV PATH="/venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONWARNINGS="ignore::SyntaxWarning" \
+    DJANGO_ENV=dev \
+    SECRET_KEY=your-secret-key-here-1234567890 \
+    DEBUG=True \
+    ALLOWED_HOSTS=* \
+    SQLITE_BASE_DIR=/app/data \
+    DATA_BASE_DIR=/app/data \
+    CELERY_BEAT_SCHEDULE_FILENAME=/app/data/celerybeat-schedule \
+    CELERY_BROKER_URL=sqla+sqlite:////app/data/celery.sqlite3
 
-# Copy built frontend assets
-COPY --from=builder /app/frontend/build/ /app/static/
+COPY pyproject.toml ./
 
-# Copy Django application
+# Create and activate virtual environment
+RUN uv venv --python=python3.13 && \
+    . .venv/bin/activate && \
+    uv sync && \
+    uv pip install gunicorn honcho
+
+COPY docker/basic/Procfile /app/Procfile
+COPY docker/basic/nginx.conf /etc/nginx/nginx.conf
 COPY . .
+COPY --from=frontend-builder /app/frontend/build/ /app/frontend/build/
 
-# Collect static files
-RUN DJANGO_ENV=dev python manage.py collectstatic --noinput
+# Collect static files as django user
+RUN useradd -ms /bin/bash django
+RUN mkdir -p /app/run /app/static /app/media /app/data && \
+    chown -R django:django /app/run /app/static /app/media /app/data
+USER django
+RUN uv run manage.py collectstatic --noinput
 
-COPY docker/flyio-litefs/Procfile /app/Procfile
+USER root
 
-# Configure Nginx
-COPY docker/flyio-litefs/nginx.conf /etc/nginx/sites-available/default
-RUN mkdir -p /var/log/nginx
+# Set up volumes
+VOLUME ["/app/data", "/var/data"]
 
-# Create required directories
-RUN mkdir -p /var/log/gunicorn /var/log/celery /var/run/celery
+# Expose the port the app runs on
+EXPOSE 8000
 
-# Ensure proper permissions
-RUN chown -R django:django /app && \
-    chown -R django:django /var/log/nginx && \
-    chown -R django:django /var/lib/nginx && \
-    chown -R django:django /var/log/gunicorn && \
-    chown -R django:django /var/log/celery && \
-    chown -R django:django /var/run/celery
-
-RUN mkdir -p /var/data
-VOLUME [ "/var/data" ]
-
-# Expose port for Nginx
-EXPOSE 80
-
-# Run honcho to manage all processes
-CMD ["honcho", "start"]
+# Set the default command
+CMD ["honcho", "start", "-f", "Procfile"]
