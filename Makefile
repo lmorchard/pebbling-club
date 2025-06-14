@@ -71,7 +71,7 @@ freeze:
 
 # Build Docker image
 docker_build:
-	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f docker/basic/Dockerfile .
+	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f docker/single/Dockerfile .
 
 # Create local data directory if it doesn't exist
 data_dir:

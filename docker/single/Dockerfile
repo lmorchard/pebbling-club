@@ -63,8 +63,8 @@ RUN uv venv --python=python3.13 && \
     uv pip install gunicorn honcho
 
 # Copy configuration files - these change less frequently than application code
-COPY docker/basic/Procfile /app/Procfile
-COPY docker/basic/nginx.conf /etc/nginx/nginx.conf
+COPY docker/single/Procfile /app/Procfile
+COPY docker/single/nginx.conf /etc/nginx/nginx.conf
 
 # Create necessary directories with appropriate permissions
 RUN mkdir -p /app/run /app/static /app/media /app/data && \
