@@ -17,3 +17,6 @@ SECRET_KEY = env(
 DATA_BASE_DIR = BASE_DIR / "data"
 SQLITE_BASE_DIR = BASE_DIR / "data"
 INTERNAL_IPS = ["127.0.0.1"]
+
+# Add localhost to trusted origins for CSRF protection
+CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]

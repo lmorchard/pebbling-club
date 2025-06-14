@@ -113,6 +113,10 @@ docker_logs:
 docker_stop:
 	docker stop pebbling-club
 
+# Open a shell in the running container
+docker_shell:
+	docker exec -it pebbling-club /bin/bash
+
 # Install Node.js dependencies
 npm_install: package.json node_modules/.keep
 	cd frontend && npm install
