@@ -1,4 +1,4 @@
-web: gunicorn pebbling.wsgi:application --bind 127.0.0.1:8000 --workers 3
-nginx: nginx -g 'daemon off;'
-worker: celery -A pebbling worker --loglevel=info --concurrency=4
-beat: celery -A pebbling beat --loglevel=info
+web: su -c "gunicorn pebbling.wsgi:application --bind 127.0.0.1:8001 --workers 3" django
+nginx: nginx -c /etc/nginx/nginx.conf -g 'daemon off; error_log /dev/stderr info;'
+worker: su -c "celery -A pebbling worker --loglevel=info --concurrency=4" django
+beat: su -c "celery -A pebbling beat --loglevel=info" django
