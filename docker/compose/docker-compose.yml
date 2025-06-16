@@ -52,6 +52,7 @@ services:
       - DATABASE_URL=postgres://pebbling:pebbling_password@postgres:5432/pebbling
       - CELERY_BROKER_URL=redis://redis:6379/0
       - REDIS_URL=redis://redis:6379/1
+      - DJANGO_SQLITE_MULTIPLE_DB=false
 
   # Celery worker
   celery_worker:
@@ -74,6 +75,7 @@ services:
       - DATABASE_URL=postgres://pebbling:pebbling_password@postgres:5432/pebbling
       - CELERY_BROKER_URL=redis://redis:6379/0
       - REDIS_URL=redis://redis:6379/1
+      - DJANGO_SQLITE_MULTIPLE_DB=false
 
   # Celery beat for scheduled tasks
   celery_beat:
@@ -96,6 +98,7 @@ services:
       - DATABASE_URL=postgres://pebbling:pebbling_password@postgres:5432/pebbling
       - CELERY_BROKER_URL=redis://redis:6379/0
       - REDIS_URL=redis://redis:6379/1
+      - DJANGO_SQLITE_MULTIPLE_DB=false
 
   # Nginx web server
   nginx:

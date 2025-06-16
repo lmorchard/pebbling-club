@@ -46,38 +46,38 @@ install: uv
 	uv sync
 
 # Development server with hot reload
-dev: install migrate
+dev: migrate
 	uv run honcho start -f Procfile-dev
 
 # Run development server
-serve: install
+serve:
 	uv run python manage.py runserver
 
 # Run celery worker
-worker: install
+worker:
 	uv run celery -A pebbling worker --loglevel=info
 
 # Open Python shell
-shell: install
+shell:
 	uv run python manage.py shell
 
 # Run tests
-test: install
+test:
 	uv run python manage.py test
 
 # Format code
-format: install
+format:
 	uv run python -m black .
 	uv run djlint pebbling pebbling_apps --reformat
 
 # Lint code
-lint: install
+lint:
 	uv run python -m black . --check
 	uv run djlint pebbling pebbling_apps
 	uv run mypy pebbling pebbling_apps --ignore-missing-imports
 
 # Run database migrations
-migrate: install
+migrate:
 	mkdir -p data
 	uv run python manage.py createcachetable --database cache_db
 	uv run python manage.py migrate --database=celery_db

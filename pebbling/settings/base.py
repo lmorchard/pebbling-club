@@ -66,11 +66,7 @@ WSGI_APPLICATION = "pebbling.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASE_ROUTERS = [
-    "pebbling.routers.CacheRouter",
-    "pebbling.routers.CeleryRouter",
-    "pebbling.routers.FeedsRouter",
-]
+# DATABASE_ROUTERS will be configured in __init__.py based on SQLITE_MULTIPLE_DB
 
 CACHES = {
     "default": {

@@ -99,8 +99,15 @@ class Feed(TimestampedModel):
     @classmethod
     def get_active_feed_urls_by_date(cls):
         """Returns a list of feed URLs ordered by newest_item_date."""
+        if getattr(settings, "SQLITE_MULTIPLE_DB", True):
+            # Multiple database mode - explicitly use feeds_db
+            queryset = cls.objects.using("feeds_db")
+        else:
+            # Single database mode - use default database
+            queryset = cls.objects
+        
         return list(
-            cls.objects.using("feeds_db")
+            queryset
             .filter(disabled=False)
             .order_by("-newest_item_date")
             .values_list("url", flat=True)

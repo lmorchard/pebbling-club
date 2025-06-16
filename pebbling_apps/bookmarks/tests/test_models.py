@@ -1,10 +1,12 @@
 from django.test import TransactionTestCase, TestCase
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from pebbling_apps.bookmarks.models import Bookmark, BookmarkManager
 from pebbling_apps.unfurl.unfurl import UnfurlMetadata
 from pebbling_apps.feeds.models import Feed
 from django.utils import timezone
 import datetime
+from unittest import skipIf
 
 
 User = get_user_model()
@@ -94,6 +96,10 @@ class BookmarkManagerTestCase(TestCase):
 
 # Note: This test case requires TransactionTestCase to avoid issues with
 # TestCase using a transaction that results database locking errors
+@skipIf(
+    not getattr(settings, "SQLITE_MULTIPLE_DB", True),
+    "Cross-database tests only run when SQLITE_MULTIPLE_DB is enabled"
+)
 class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
     databases = {"default", "feeds_db"}
 
@@ -234,3 +240,109 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
         self.assertIn(self.bookmark1.id, filtered_ids)
         self.assertIn(self.bookmark2.id, filtered_ids)
         self.assertIn(self.bookmark3.id, filtered_ids)
+
+
+@skipIf(
+    getattr(settings, "SQLITE_MULTIPLE_DB", True),
+    "Single database tests only run when SQLITE_MULTIPLE_DB is disabled"
+)
+class BookmarkManagerSingleDatabaseTestCase(TestCase):
+    """Test bookmark manager when using a single database."""
+    
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser", password="12345")
+        
+        # Create feeds
+        Feed.objects.create(
+            url="http://example1.com/feed",
+            title="Feed 1",
+            disabled=False,
+            newest_item_date=timezone.make_aware(
+                datetime.datetime(2023, 1, 1, 10, 0, 0)
+            ),
+        )
+        Feed.objects.create(
+            url="http://example2.com/feed",
+            title="Feed 2",
+            disabled=False,
+            newest_item_date=timezone.make_aware(
+                datetime.datetime(2023, 1, 2, 10, 0, 0)
+            ),
+        )
+        Feed.objects.create(
+            url="http://example3.com/feed",
+            title="Feed 3",
+            disabled=False,
+            newest_item_date=timezone.make_aware(
+                datetime.datetime(2023, 1, 3, 10, 0, 0)
+            ),
+        )
+        
+        # Create bookmarks
+        self.bookmark1 = Bookmark.objects.create(
+            url="http://example1.com",
+            owner=self.user,
+            feed_url="http://example1.com/feed",
+            title="Test Bookmark 1",
+        )
+        self.bookmark2 = Bookmark.objects.create(
+            url="http://example2.com",
+            owner=self.user,
+            feed_url="http://example2.com/feed",
+            title="Test Bookmark 2",
+        )
+        self.bookmark3 = Bookmark.objects.create(
+            url="http://example3.com",
+            owner=self.user,
+            feed_url="http://example3.com/feed",
+            title="Test Bookmark 3",
+        )
+    
+    def test_query_with_feed_sort(self):
+        """Test querying bookmarks sorted by feed date in single database mode."""
+        bookmarks = Bookmark.objects.query(
+            owner=self.user,
+            sort=BookmarkSort.FEED
+        )
+        bookmarks_list = list(bookmarks)
+        
+        self.assertEqual(len(bookmarks_list), 3)
+        # Should be ordered by newest feed item date descending
+        self.assertEqual(bookmarks_list[0].id, self.bookmark3.id)
+        self.assertEqual(bookmarks_list[1].id, self.bookmark2.id)
+        self.assertEqual(bookmarks_list[2].id, self.bookmark1.id)
+    
+    def test_query_with_feed_sort_ascending(self):
+        """Test querying bookmarks sorted by feed date ascending."""
+        bookmarks = Bookmark.objects.query(
+            owner=self.user,
+            sort=BookmarkSort.FEED_DESC
+        )
+        bookmarks_list = list(bookmarks)
+        
+        self.assertEqual(len(bookmarks_list), 3)
+        # Should be ordered by newest feed item date ascending
+        self.assertEqual(bookmarks_list[0].id, self.bookmark1.id)
+        self.assertEqual(bookmarks_list[1].id, self.bookmark2.id)
+        self.assertEqual(bookmarks_list[2].id, self.bookmark3.id)
+    
+    def test_query_excludes_null_feed_dates(self):
+        """Test that bookmarks without matching feeds are excluded."""
+        # Create a bookmark without a matching feed
+        bookmark_no_feed = Bookmark.objects.create(
+            url="http://example-no-feed.com",
+            owner=self.user,
+            feed_url="http://example-no-feed.com/feed",
+            title="Test Bookmark No Feed",
+        )
+        
+        bookmarks = Bookmark.objects.query(
+            owner=self.user,
+            sort=BookmarkSort.FEED
+        )
+        bookmarks_list = list(bookmarks)
+        
+        # Should only include bookmarks with matching feeds
+        self.assertEqual(len(bookmarks_list), 3)
+        bookmark_ids = [b.id for b in bookmarks_list]
+        self.assertNotIn(bookmark_no_feed.id, bookmark_ids)
