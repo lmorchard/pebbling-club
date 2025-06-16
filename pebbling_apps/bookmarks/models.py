@@ -223,18 +223,20 @@ class BookmarkManager(models.Manager):
                 # Single database mode - use subquery
                 from pebbling_apps.feeds.models import Feed
                 from django.db.models import Subquery, OuterRef
-                
+
                 feed_date_subquery = Feed.objects.filter(
                     url=OuterRef("feed_url")
                 ).values("newest_item_date")[:1]
-                
-                queryset = self.get_queryset().annotate(
-                    feed_newest_item_date=Subquery(feed_date_subquery)
-                ).exclude(feed_newest_item_date__isnull=True)
-                
+
+                queryset = (
+                    self.get_queryset()
+                    .annotate(feed_newest_item_date=Subquery(feed_date_subquery))
+                    .exclude(feed_newest_item_date__isnull=True)
+                )
+
                 order_prefix = "-" if sort != BookmarkSort.FEED_DESC else ""
                 queryset = queryset.order_by(f"{order_prefix}feed_newest_item_date")
-                
+
                 if since:
                     queryset = queryset.filter(feed_newest_item_date__gte=since)
         elif sort in BOOKMARK_SORT_COLUMNS:
@@ -276,7 +278,7 @@ class Bookmark(TimestampedModel):
 
     objects = BookmarkManager()
 
-    url = models.URLField(verbose_name="URL")
+    url = models.URLField(verbose_name="URL", max_length=10240)
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     unique_hash = models.CharField(max_length=255)
     title = models.CharField(max_length=255)

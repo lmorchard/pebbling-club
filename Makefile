@@ -16,7 +16,8 @@ help:
 	@echo "  make worker            - Run celery worker"
 	@echo "  make shell             - Open Python shell"
 	@echo "  make test              - Run tests"
-	@echo "  make migrate           - Run database migrations"
+	@echo "  make migrate           - Run database migrations (single DB)"
+	@echo "  make migrate_multi     - Run database migrations (multiple SQLite DBs)"
 	@echo ""
 	@echo "Docker Commands:"
 	@echo "  make docker_build      - Build Docker image"
@@ -76,8 +77,13 @@ lint:
 	uv run djlint pebbling pebbling_apps
 	uv run mypy pebbling pebbling_apps --ignore-missing-imports
 
-# Run database migrations
+# Run database migrations (single database mode)
 migrate:
+	mkdir -p data
+	uv run python manage.py migrate
+
+# Run database migrations (multiple SQLite databases mode)
+migrate_multi:
 	mkdir -p data
 	uv run python manage.py createcachetable --database cache_db
 	uv run python manage.py migrate --database=celery_db

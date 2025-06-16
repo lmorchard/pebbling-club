@@ -84,7 +84,7 @@ class FeedItemManager(models.Manager):
 
 class Feed(TimestampedModel):
     url = models.URLField(max_length=2048, unique=True)
-    title = models.CharField(max_length=200, blank=True, null=True)
+    title = models.CharField(max_length=500, blank=True, null=True)
     newest_item_date = models.DateTimeField(null=True, blank=True)
     disabled = models.BooleanField(default=False)
     etag = models.CharField(max_length=256, blank=True, null=True)
