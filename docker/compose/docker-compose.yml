@@ -1,3 +1,5 @@
+name: pebbling-club
+
 services:
   # PostgreSQL Database
   postgres:
