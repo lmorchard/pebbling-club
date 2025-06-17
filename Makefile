@@ -2,7 +2,34 @@
 DOCKER_IMAGE_NAME ?= pebbling-club
 DOCKER_IMAGE_TAG ?= latest
 
-.PHONY: dev install docker-build docker-run
+.PHONY: help 
+
+# Help target
+help:
+	@echo "Pebbling Club Makefile Help"
+	@echo "==========================="
+	@echo ""
+	@echo "Development Commands:"
+	@echo "  make dev               - Development server with hot reload"
+	@echo "  make install           - Install dependencies"
+	@echo "  make serve             - Run development server"
+	@echo "  make worker            - Run celery worker"
+	@echo "  make shell             - Open Python shell"
+	@echo "  make test              - Run tests"
+	@echo "  make migrate           - Run database migrations (single DB)"
+	@echo "  make migrate_multi     - Run database migrations (multiple SQLite DBs)"
+	@echo ""
+	@echo "Docker Commands:"
+	@echo "  make docker_build      - Build Docker image"
+	@echo "  make docker_run        - Run Docker container"
+	@echo ""
+	@echo "Docker Compose Commands:"
+	@echo "  make docker_compose_build    - Build Docker Compose services"
+	@echo "  make docker_compose_up       - Start Docker Compose services"
+	@echo "  make docker_compose_down     - Stop Docker Compose services"
+	@echo "  make docker_compose_logs     - View Docker Compose logs"
+	@echo "  make docker_compose_migrate  - Run migrations in Docker Compose"
+	@echo "  make docker_compose_shell    - Open a shell in the web container"
 
 # Check if uv is installed
 UV := $(shell command -v uv 2> /dev/null)
@@ -20,38 +47,43 @@ install: uv
 	uv sync
 
 # Development server with hot reload
-dev: install migrate
+dev: migrate
 	uv run honcho start -f Procfile-dev
 
 # Run development server
-serve: install
+serve:
 	uv run python manage.py runserver
 
 # Run celery worker
-worker: install
+worker:
 	uv run celery -A pebbling worker --loglevel=info
 
 # Open Python shell
-shell: install
+shell:
 	uv run python manage.py shell
 
 # Run tests
-test: install
+test:
 	uv run python manage.py test
 
 # Format code
-format: install
+format:
 	uv run python -m black .
 	uv run djlint pebbling pebbling_apps --reformat
 
 # Lint code
-lint: install
+lint:
 	uv run python -m black . --check
 	uv run djlint pebbling pebbling_apps
 	uv run mypy pebbling pebbling_apps --ignore-missing-imports
 
-# Run database migrations
-migrate: install
+# Run database migrations (single database mode)
+migrate:
+	mkdir -p data
+	uv run python manage.py migrate
+
+# Run database migrations (multiple SQLite databases mode)
+migrate_multi:
 	mkdir -p data
 	uv run python manage.py createcachetable --database cache_db
 	uv run python manage.py migrate --database=celery_db
@@ -71,7 +103,7 @@ freeze:
 
 # Build Docker image
 docker_build:
-	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f docker/basic/Dockerfile .
+	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f docker/single/Dockerfile .
 
 # Create local data directory if it doesn't exist
 data_dir:
@@ -123,3 +155,33 @@ npm_install: package.json node_modules/.keep
 
 node_modules/.keep:
 	mkdir -p node_modules && touch node_modules/.keep
+
+# Docker Compose targets
+
+# Build Docker Compose services
+docker_compose_build:
+	docker-compose -f docker/compose/docker-compose.yml build
+
+# Start Docker Compose services
+docker_compose_up:
+	docker-compose -f docker/compose/docker-compose.yml up -d
+
+# Stop Docker Compose services
+docker_compose_down:
+	docker-compose -f docker/compose/docker-compose.yml down
+
+# View Docker Compose logs
+docker_compose_logs:
+	docker-compose -f docker/compose/docker-compose.yml logs -f
+
+# Run migrations in Docker Compose
+docker_compose_migrate:
+	docker-compose -f docker/compose/docker-compose.yml exec web python manage.py migrate
+
+# Open a shell in the web container
+docker_compose_shell:
+	docker-compose -f docker/compose/docker-compose.yml exec web bash
+
+# Run a Django management command in Docker Compose
+docker_compose_django_command:
+	docker-compose -f docker/compose/docker-compose.yml exec web python manage.py $(cmd)

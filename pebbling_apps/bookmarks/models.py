@@ -153,14 +153,19 @@ class BookmarkManager(models.Manager):
     def get_queryset_with_feeds_db(
         self, feeds_db_alias="feeds_db", feeds_db_name="feeds_db"
     ):
-        feeds_db_path = settings.DATABASES[feeds_db_name]["NAME"]
-        return BookmarkWithFeedsQuerySet(
-            model=self.model,
-            using=self._db,
-            hints=self._hints,
-            feeds_db_path=feeds_db_path,
-            feeds_db_alias=feeds_db_alias,
-        )
+        if getattr(settings, "SQLITE_MULTIPLE_DB", True):
+            # Multiple database mode - use the cross-database queryset
+            feeds_db_path = settings.DATABASES[feeds_db_name]["NAME"]
+            return BookmarkWithFeedsQuerySet(
+                model=self.model,
+                using=self._db,
+                hints=self._hints,
+                feeds_db_path=feeds_db_path,
+                feeds_db_alias=feeds_db_alias,
+            )
+        else:
+            # Single database mode - return regular queryset
+            return self.get_queryset()
 
     def update_or_create(self, url, defaults=None, **kwargs):
         """Override update_or_create to handle URL-based lookups."""
@@ -202,18 +207,38 @@ class BookmarkManager(models.Manager):
         sort=BookmarkSort.DATE,
     ):
         if sort in (BookmarkSort.FEED, BookmarkSort.FEED_ASC, BookmarkSort.FEED_DESC):
-            # Feed-related sorting is weird - attach the feeds database, sort
-            # and filter based on the newest_item_date column
-            queryset = (
-                self.get_queryset_with_feeds_db()
-                .with_feed_newest_item_date()
-                .exclude_null_feed_dates()
-                .order_by_feed_newest_item_date(
-                    descending=sort != BookmarkSort.FEED_DESC
+            if getattr(settings, "SQLITE_MULTIPLE_DB", True):
+                # Multiple database mode - use cross-database queryset
+                queryset = (
+                    self.get_queryset_with_feeds_db()
+                    .with_feed_newest_item_date()
+                    .exclude_null_feed_dates()
+                    .order_by_feed_newest_item_date(
+                        descending=sort != BookmarkSort.FEED_DESC
+                    )
                 )
-            )
-            if since:
-                queryset = queryset.filter(feed_newest_item_date__gte=since)
+                if since:
+                    queryset = queryset.filter(feed_newest_item_date__gte=since)
+            else:
+                # Single database mode - use subquery
+                from pebbling_apps.feeds.models import Feed
+                from django.db.models import Subquery, OuterRef
+
+                feed_date_subquery = Feed.objects.filter(
+                    url=OuterRef("feed_url")
+                ).values("newest_item_date")[:1]
+
+                queryset = (
+                    self.get_queryset()
+                    .annotate(feed_newest_item_date=Subquery(feed_date_subquery))
+                    .exclude(feed_newest_item_date__isnull=True)
+                )
+
+                order_prefix = "-" if sort != BookmarkSort.FEED_DESC else ""
+                queryset = queryset.order_by(f"{order_prefix}feed_newest_item_date")
+
+                if since:
+                    queryset = queryset.filter(feed_newest_item_date__gte=since)
         elif sort in BOOKMARK_SORT_COLUMNS:
             queryset = self.get_queryset().order_by(BOOKMARK_SORT_COLUMNS[sort])
             if since:
@@ -253,7 +278,7 @@ class Bookmark(TimestampedModel):
 
     objects = BookmarkManager()
 
-    url = models.URLField(verbose_name="URL")
+    url = models.URLField(verbose_name="URL", max_length=10240)
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     unique_hash = models.CharField(max_length=255)
     title = models.CharField(max_length=255)

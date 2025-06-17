@@ -84,7 +84,7 @@ class FeedItemManager(models.Manager):
 
 class Feed(TimestampedModel):
     url = models.URLField(max_length=2048, unique=True)
-    title = models.CharField(max_length=200, blank=True, null=True)
+    title = models.CharField(max_length=500, blank=True, null=True)
     newest_item_date = models.DateTimeField(null=True, blank=True)
     disabled = models.BooleanField(default=False)
     etag = models.CharField(max_length=256, blank=True, null=True)
@@ -99,8 +99,15 @@ class Feed(TimestampedModel):
     @classmethod
     def get_active_feed_urls_by_date(cls):
         """Returns a list of feed URLs ordered by newest_item_date."""
+        if getattr(settings, "SQLITE_MULTIPLE_DB", True):
+            # Multiple database mode - explicitly use feeds_db
+            queryset = cls.objects.using("feeds_db")
+        else:
+            # Single database mode - use default database
+            queryset = cls.objects
+        
         return list(
-            cls.objects.using("feeds_db")
+            queryset
             .filter(disabled=False)
             .order_by("-newest_item_date")
             .values_list("url", flat=True)

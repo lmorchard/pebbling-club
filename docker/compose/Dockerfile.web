@@ -27,7 +27,9 @@ FROM python:${PYTHON_VERSION}
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx \
+    libpq-dev \
+    gcc \
+    python3-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -37,7 +39,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app
 
 # Set environment variables
-ENV PATH="/venv/bin:$PATH" \
+ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONWARNINGS="ignore::SyntaxWarning" \
@@ -45,10 +47,7 @@ ENV PATH="/venv/bin:$PATH" \
     SECRET_KEY=your-secret-key-here-1234567890 \
     DEBUG=True \
     ALLOWED_HOSTS=* \
-    SQLITE_BASE_DIR=/app/data \
-    DATA_BASE_DIR=/app/data \
-    CELERY_BEAT_SCHEDULE_FILENAME=/app/data/celerybeat-schedule \
-    CELERY_BROKER_URL=sqla+sqlite:////app/data/celery.sqlite3
+    DATA_BASE_DIR=/app/data
 
 # Create user early to avoid cache invalidation
 RUN useradd -ms /bin/bash django
@@ -59,12 +58,7 @@ COPY pyproject.toml ./
 # Create and activate virtual environment - this layer will only be rebuilt if pyproject.toml changes
 RUN uv venv --python=python3.13 && \
     . .venv/bin/activate && \
-    uv sync && \
-    uv pip install gunicorn honcho
-
-# Copy configuration files - these change less frequently than application code
-COPY docker/basic/Procfile /app/Procfile
-COPY docker/basic/nginx.conf /etc/nginx/nginx.conf
+    uv sync
 
 # Create necessary directories with appropriate permissions
 RUN mkdir -p /app/run /app/static /app/media /app/data && \
@@ -81,10 +75,10 @@ RUN uv run manage.py collectstatic --noinput
 USER root
 
 # Set up volumes
-VOLUME ["/app/data", "/var/data"]
+VOLUME ["/app/data", "/app/static", "/app/media"]
 
 # Expose the port the app runs on
-EXPOSE 8000
+EXPOSE 8001
 
 # Set the default command
-CMD ["honcho", "start", "-f", "Procfile"]
+CMD ["/app/.venv/bin/gunicorn", "pebbling.wsgi:application", "--bind", "0.0.0.0:8001", "--workers", "3"]

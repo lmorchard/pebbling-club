@@ -1,0 +1,126 @@
+name: pebbling-club
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=pebbling
+      - POSTGRES_USER=pebbling
+      - POSTGRES_PASSWORD=pebbling_password
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=scram-sha-256
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pebbling"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Celery broker
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Django web application
+  web:
+    build:
+      context: ../../
+      dockerfile: docker/compose/Dockerfile.web
+    volumes:
+      - static_files:/app/static
+      - media_files:/app/media
+      - app_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DOCKER_DEPLOYMENT=compose
+      - DJANGO_SETTINGS_MODULE=pebbling.settings
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here-1234567890}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
+      - DATABASE_URL=${DATABASE_URL:-postgres://pebbling:pebbling_password@postgres:5432/pebbling}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/1}
+      - DJANGO_SQLITE_MULTIPLE_DB=${DJANGO_SQLITE_MULTIPLE_DB:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+  # Celery worker
+  celery_worker:
+    build:
+      context: ../../
+      dockerfile: docker/compose/Dockerfile.web
+    command: celery -A pebbling worker --loglevel=info --concurrency=4
+    volumes:
+      - app_data:/app/data
+    depends_on:
+      - web
+      - redis
+      - postgres
+    environment:
+      - DOCKER_DEPLOYMENT=compose
+      - DJANGO_SETTINGS_MODULE=pebbling.settings
+      - DEBUG=${DEBUG:-True}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here-1234567890}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
+      - DATABASE_URL=${DATABASE_URL:-postgres://pebbling:pebbling_password@postgres:5432/pebbling}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/1}
+      - DJANGO_SQLITE_MULTIPLE_DB=${DJANGO_SQLITE_MULTIPLE_DB:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+  # Celery beat for scheduled tasks
+  celery_beat:
+    build:
+      context: ../../
+      dockerfile: docker/compose/Dockerfile.web
+    command: celery -A pebbling beat --loglevel=info
+    volumes:
+      - app_data:/app/data
+    depends_on:
+      - web
+      - redis
+      - postgres
+    environment:
+      - DOCKER_DEPLOYMENT=compose
+      - DJANGO_SETTINGS_MODULE=pebbling.settings
+      - DEBUG=${DEBUG:-True}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here-1234567890}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
+      - DATABASE_URL=${DATABASE_URL:-postgres://pebbling:pebbling_password@postgres:5432/pebbling}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/1}
+      - DJANGO_SQLITE_MULTIPLE_DB=${DJANGO_SQLITE_MULTIPLE_DB:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+  # Nginx web server
+  nginx:
+    build:
+      context: ../../
+      dockerfile: docker/compose/Dockerfile.nginx
+    ports:
+      - "8000:8000"
+    volumes:
+      - static_files:/app/static
+      - media_files:/app/media
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_files:
+  media_files:
+  app_data:
