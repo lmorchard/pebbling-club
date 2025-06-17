@@ -22,6 +22,8 @@ def django_enum(cls: Type[E]) -> Type[E]:
 
 def parse_since(since: str) -> Union[None, datetime.datetime]:
     """Parse a 'since' string into a datetime object."""
+    if since is None:
+        return None
     if valid_duration(since):
         seconds_since = Duration(since).to_seconds()
         return timezone.now() - datetime.timedelta(seconds=seconds_since)
