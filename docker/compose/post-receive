@@ -76,7 +76,6 @@ while read oldrev newrev refname; do
     docker image prune -f
     
     log "=== Deployment complete for $refname ==="
-    
 done
 
 log "=== Post-receive hook finished ==="
