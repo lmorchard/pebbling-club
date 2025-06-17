@@ -45,14 +45,14 @@ services:
     environment:
       - DOCKER_DEPLOYMENT=compose
       - DJANGO_SETTINGS_MODULE=pebbling.settings
-      - DEBUG=True
-      - SECRET_KEY=your-secret-key-here-1234567890
-      - ALLOWED_HOSTS=localhost,127.0.0.1,web
-      - DATABASE_URL=postgres://pebbling:pebbling_password@postgres:5432/pebbling
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - REDIS_URL=redis://redis:6379/1
-      - DJANGO_SQLITE_MULTIPLE_DB=false
-      - LOG_LEVEL=INFO
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here-1234567890}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+      - DATABASE_URL=${DATABASE_URL:-postgres://pebbling:pebbling_password@postgres:5432/pebbling}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/1}
+      - DJANGO_SQLITE_MULTIPLE_DB=${DJANGO_SQLITE_MULTIPLE_DB:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
 
   # Celery worker
   celery_worker:
@@ -69,13 +69,13 @@ services:
     environment:
       - DOCKER_DEPLOYMENT=compose
       - DJANGO_SETTINGS_MODULE=pebbling.settings
-      - DJANGO_ENV=dev
-      - DEBUG=True
-      - SECRET_KEY=your-secret-key-here-1234567890
-      - DATABASE_URL=postgres://pebbling:pebbling_password@postgres:5432/pebbling
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - REDIS_URL=redis://redis:6379/1
-      - DJANGO_SQLITE_MULTIPLE_DB=false
+      - DEBUG=${DEBUG:-True}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here-1234567890}
+      - DATABASE_URL=${DATABASE_URL:-postgres://pebbling:pebbling_password@postgres:5432/pebbling}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/1}
+      - DJANGO_SQLITE_MULTIPLE_DB=${DJANGO_SQLITE_MULTIPLE_DB:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
 
   # Celery beat for scheduled tasks
   celery_beat:
@@ -92,13 +92,13 @@ services:
     environment:
       - DOCKER_DEPLOYMENT=compose
       - DJANGO_SETTINGS_MODULE=pebbling.settings
-      - DJANGO_ENV=dev
-      - DEBUG=True
-      - SECRET_KEY=your-secret-key-here-1234567890
-      - DATABASE_URL=postgres://pebbling:pebbling_password@postgres:5432/pebbling
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - REDIS_URL=redis://redis:6379/1
-      - DJANGO_SQLITE_MULTIPLE_DB=false
+      - DEBUG=${DEBUG:-True}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here-1234567890}
+      - DATABASE_URL=${DATABASE_URL:-postgres://pebbling:pebbling_password@postgres:5432/pebbling}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/1}
+      - DJANGO_SQLITE_MULTIPLE_DB=${DJANGO_SQLITE_MULTIPLE_DB:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
 
   # Nginx web server
   nginx:
