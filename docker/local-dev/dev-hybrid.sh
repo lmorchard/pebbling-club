@@ -105,7 +105,7 @@ echo -e "${GREEN}🚀 Starting application services...${NC}"
 echo -e "${YELLOW}🌐 Main application: http://localhost:8000 (via nginx proxy)${NC}"
 echo -e "${YELLOW}📊 Flower monitoring: http://localhost:8000/flower/ (via nginx proxy)${NC}"
 echo -e "${YELLOW}🔧 Direct Django (dev): http://localhost:${PORT:-8010}${NC}"
-echo -e "${YELLOW}🔧 Direct Flower (dev): http://localhost:5555/flower/${NC}"
+echo -e "${YELLOW}🔧 Direct Flower (dev): http://localhost:8012/flower/${NC}"
 echo -e "${YELLOW}To stop everything: Press Ctrl+C (Docker containers will stop automatically)${NC}"
 
 # Start Docker logs streaming in background
