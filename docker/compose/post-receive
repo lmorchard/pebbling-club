@@ -61,15 +61,15 @@ while read oldrev newrev refname; do
     
     # Rebuild Docker containers
     log "Rebuilding Docker containers..."
-    make docker_compose_build
+    docker-compose -f docker/compose/docker-compose.yml build django-builder nginx
     
     # Run migrations using a temporary container with the new image
     log "Running migrations..."
-    make docker_compose_migrate
+    docker-compose -f docker/compose/docker-compose.yml exec web python manage.py migrate
     
     # Restart containers with new code
     log "Restarting containers..."
-    make docker_compose_up
+    docker-compose -f docker/compose/docker-compose.yml up -d
     
     # Clean up old images
     #log "Cleaning up old Docker images..."
