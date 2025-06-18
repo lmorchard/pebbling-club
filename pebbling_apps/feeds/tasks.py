@@ -25,8 +25,8 @@ def poll_all_feeds() -> None:
     try:
         # Use iterator to avoid loading all feeds into memory at once
         for feed in Feed.objects.all().iterator():
-            # Call the poll_feed task for each feed
-            poll_feed.delay(feed.id)
+            # Call the poll_feed task for each feed with high priority
+            poll_feed.apply_async(args=[feed.id], priority=3)
             logger.info(f"Deferred poll_feed task for feed_id {feed.id}.")
     except Exception as e:
         logger.error(f"Error deferring poll_feed tasks: {e}")

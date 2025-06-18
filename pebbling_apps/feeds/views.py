@@ -41,14 +41,14 @@ def feeds_fetch_post(request):
         try:
             feed, created = service.get_or_create_feed(url)
             feed_ids.append(feed.id)
-            tasks.append(poll_feed.s(feed.id))
+            tasks.append(poll_feed.s(feed.id).set(priority=3))
         except Exception as e:
             continue
 
     # Create a group of tasks and execute them
     if tasks:
         job = group(tasks)
-        result = job.apply_async(priority=0)
+        result = job.apply_async(priority=3)
         # Wait for all tasks to complete with timeout
         try:
             result.get(timeout=30)  # Wait up to 30 seconds
