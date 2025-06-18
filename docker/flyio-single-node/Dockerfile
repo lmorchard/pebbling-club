@@ -60,7 +60,7 @@ COPY --from=builder /app/frontend/build/ /app/frontend/build/
 COPY . .
 
 # Collect static files
-RUN DJANGO_ENV=dev python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput
 
 COPY docker/flyio-single-node/Procfile /app/Procfile
 

@@ -14,6 +14,7 @@ help:
 	@echo "  make install           - Install dependencies"
 	@echo "  make serve             - Run development server"
 	@echo "  make worker            - Run celery worker"
+	@echo "  make celery-purge      - Clear all Celery queues"
 	@echo "  make shell             - Open Python shell"
 	@echo "  make test              - Run tests"
 	@echo "  make migrate           - Run database migrations (single DB)"
@@ -47,8 +48,11 @@ install: uv
 	uv sync
 
 # Development server with hot reload
-dev: migrate
+dev-honcho: migrate
 	uv run honcho start -f Procfile-dev
+
+dev:
+	./docker/local-dev/dev-hybrid.sh
 
 # Run development server
 serve:
@@ -57,6 +61,10 @@ serve:
 # Run celery worker
 worker:
 	uv run celery -A pebbling worker --loglevel=info
+
+# Clear celery queue
+celery-purge:
+	uv run celery -A pebbling purge -f
 
 # Open Python shell
 shell:
@@ -119,7 +127,6 @@ docker_migrate:
 		--name pebbling-club-migrate \
 		--user root \
 		-v $(shell pwd)/data:/app/data:Z \
-		-e DJANGO_ENV=dev \
 		-e SQLITE_BASE_DIR=/app/data \
 		-e DATA_BASE_DIR=/app/data \
 		$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) su -c "uv run python manage.py migrate --noinput" django
@@ -132,7 +139,6 @@ docker_run: data_dir docker_migrate
 		-p 8000:8000 \
 		-v $(shell pwd)/data:/app/data:Z \
 		-e HOME=/tmp \
-		-e DJANGO_ENV=dev \
 		-e SQLITE_BASE_DIR=/app/data \
 		-e DATA_BASE_DIR=/app/data \
 		$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) uv run honcho start -f Procfile

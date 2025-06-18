@@ -78,7 +78,7 @@ services:
   # Celery worker
   celery_worker:
     <<: *django-base
-    command: celery -A pebbling worker --loglevel=info --autoscale=${CELERY_AUTOSCALE_MIN:-4},${CELERY_AUTOSCALE_MAX:-32} --max-memory-per-child=${CELERY_MAX_MEMORY_PER_CHILD:-200000}
+    command: celery -A pebbling worker --loglevel=info --autoscale=${CELERY_AUTOSCALE_MIN:-4},${CELERY_AUTOSCALE_MAX:-16} --max-memory-per-child=${CELERY_MAX_MEMORY_PER_CHILD:-200000}
     volumes:
       - app_data:/app/data
     depends_on:
