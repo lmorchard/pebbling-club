@@ -42,7 +42,6 @@ ENV PATH="/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONWARNINGS="ignore::SyntaxWarning" \
     DJANGO_SETTINGS_MODULE=pebbling.settings \
-    DJANGO_ENV=dev \
     SECRET_KEY=your-secret-key-here-1234567890 \
     DEBUG=True \
     ALLOWED_HOSTS=* \
