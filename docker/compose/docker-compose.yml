@@ -60,7 +60,7 @@ services:
     build:
       context: ../../
       dockerfile: docker/compose/Dockerfile.web
-    command: celery -A pebbling worker --loglevel=info --concurrency=4
+    command: celery -A pebbling worker --loglevel=info --autoscale=${CELERY_AUTOSCALE_MIN:-4},${CELERY_AUTOSCALE_MAX:-32}
     volumes:
       - app_data:/app/data
     depends_on:
@@ -79,6 +79,8 @@ services:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/1}
       - DJANGO_SQLITE_MULTIPLE_DB=${DJANGO_SQLITE_MULTIPLE_DB:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CELERY_AUTOSCALE_MAX=${CELERY_AUTOSCALE_MAX:-32}
+      - CELERY_AUTOSCALE_MIN=${CELERY_AUTOSCALE_MIN:-4}
 
   # Celery beat for scheduled tasks
   celery_beat:
