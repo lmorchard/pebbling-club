@@ -41,7 +41,6 @@ ENV PATH="/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONWARNINGS="ignore::SyntaxWarning" \
-    DOCKER_DEPLOYMENT=single \
     DJANGO_SETTINGS_MODULE=pebbling.settings \
     DJANGO_ENV=dev \
     SECRET_KEY=your-secret-key-here-1234567890 \

@@ -1,7 +1,6 @@
 name: pebbling-club
 
 x-django-environment: &django-env
-  DOCKER_DEPLOYMENT: compose
   DJANGO_SETTINGS_MODULE: pebbling.settings
   DEBUG: ${DEBUG:-False}
   SECRET_KEY: ${SECRET_KEY:-your-secret-key-here-1234567890}
@@ -126,6 +125,7 @@ services:
     environment:
       FLOWER_PASSWORD: ${FLOWER_PASSWORD:-changeme}
       METRICS_PASSWORD: ${METRICS_PASSWORD:-metricspass}
+      FORWARDED_PROTO: ${FORWARDED_PROTO:-http}
     restart: unless-stopped
 
 volumes:
