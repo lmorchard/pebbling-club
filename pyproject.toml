@@ -88,4 +88,5 @@ dependencies = [
     "wcwidth==0.2.13",
     "webencodings==0.5.1",
     "whitenoise==6.9.0",
+    "flower>=2.0.1",
 ]

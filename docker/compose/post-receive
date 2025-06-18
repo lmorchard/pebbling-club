@@ -61,21 +61,22 @@ while read oldrev newrev refname; do
     
     # Rebuild Docker containers
     log "Rebuilding Docker containers..."
-    docker-compose -f docker/compose/docker-compose.yml build
+    make docker_compose_build
     
     # Run migrations using a temporary container with the new image
     log "Running migrations..."
-    docker-compose -f docker/compose/docker-compose.yml run --rm -T web python manage.py migrate --noinput
+    make docker_compose_migrate
     
     # Restart containers with new code
     log "Restarting containers..."
-    docker-compose -f docker/compose/docker-compose.yml up -d
+    make docker_compose_up
     
     # Clean up old images
-    log "Cleaning up old Docker images..."
-    docker image prune -f
+    #log "Cleaning up old Docker images..."
+    #docker image prune -f
     
     log "=== Deployment complete for $refname ==="
+    
 done
 
 log "=== Post-receive hook finished ==="

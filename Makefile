@@ -160,7 +160,7 @@ node_modules/.keep:
 
 # Build Docker Compose services
 docker_compose_build:
-	docker-compose -f docker/compose/docker-compose.yml build
+	docker-compose -f docker/compose/docker-compose.yml build django-builder nginx
 
 # Start Docker Compose services
 docker_compose_up:
@@ -172,7 +172,7 @@ docker_compose_down:
 
 # View Docker Compose logs
 docker_compose_logs:
-	docker-compose -f docker/compose/docker-compose.yml logs -f
+	docker-compose -f docker/compose/docker-compose.yml logs -n 25 -f
 
 # Run migrations in Docker Compose
 docker_compose_migrate:
@@ -185,3 +185,7 @@ docker_compose_shell:
 # Run a Django management command in Docker Compose
 docker_compose_django_command:
 	docker-compose -f docker/compose/docker-compose.yml exec web python manage.py $(cmd)
+
+# Migrate PostgreSQL data from Docker volume to host directory
+docker_compose_migrate_postgres_volume:
+	./docker/compose/migrate-postgres-volume.sh

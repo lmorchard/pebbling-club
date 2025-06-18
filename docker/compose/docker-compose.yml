@@ -1,11 +1,45 @@
 name: pebbling-club
 
+x-django-environment: &django-env
+  DOCKER_DEPLOYMENT: compose
+  DJANGO_SETTINGS_MODULE: pebbling.settings
+  DEBUG: ${DEBUG:-False}
+  SECRET_KEY: ${SECRET_KEY:-your-secret-key-here-1234567890}
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+  CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
+  DATABASE_URL: ${DATABASE_URL:-postgres://pebbling:pebbling_password@postgres:5432/pebbling}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/1}
+  DJANGO_SQLITE_MULTIPLE_DB: ${DJANGO_SQLITE_MULTIPLE_DB:-false}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+x-django-base: &django-base
+  image: pebbling-club-django:latest
+  environment:
+    <<: *django-env
+  restart: unless-stopped
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+
 services:
+  # This service is only for building the image
+  django-builder:
+    image: pebbling-club-django:latest
+    build:
+      context: ../../
+      dockerfile: docker/compose/Dockerfile.web
+    command: echo "Build complete"
+    profiles:
+      - build-only
+
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ../../data/postgresql:/var/lib/postgresql/data:z
     environment:
       - POSTGRES_DB=pebbling
       - POSTGRES_USER=pebbling
@@ -16,23 +50,22 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   # Redis for Celery broker
   redis:
     image: redis:7-alpine
-    volumes:
-      - redis_data:/data
+    command: redis-server --save "" --appendonly no --maxmemory ${REDIS_MAXMEMORY:-256mb} --maxmemory-policy ${REDIS_MAXMEMORY_POLICY:-allkeys-lru}
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   # Django web application
   web:
-    build:
-      context: ../../
-      dockerfile: docker/compose/Dockerfile.web
+    <<: *django-base
     volumes:
       - static_files:/app/static
       - media_files:/app/media
@@ -42,87 +75,60 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    environment:
-      - DOCKER_DEPLOYMENT=compose
-      - DJANGO_SETTINGS_MODULE=pebbling.settings
-      - DEBUG=${DEBUG:-False}
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here-1234567890}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
-      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
-      - DATABASE_URL=${DATABASE_URL:-postgres://pebbling:pebbling_password@postgres:5432/pebbling}
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379/1}
-      - DJANGO_SQLITE_MULTIPLE_DB=${DJANGO_SQLITE_MULTIPLE_DB:-false}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
 
   # Celery worker
   celery_worker:
-    build:
-      context: ../../
-      dockerfile: docker/compose/Dockerfile.web
-    command: celery -A pebbling worker --loglevel=info --autoscale=${CELERY_AUTOSCALE_MIN:-4},${CELERY_AUTOSCALE_MAX:-32}
+    <<: *django-base
+    command: celery -A pebbling worker --loglevel=info --autoscale=${CELERY_AUTOSCALE_MIN:-4},${CELERY_AUTOSCALE_MAX:-32} --max-memory-per-child=${CELERY_MAX_MEMORY_PER_CHILD:-200000}
     volumes:
       - app_data:/app/data
     depends_on:
-      - web
       - redis
       - postgres
     environment:
-      - DOCKER_DEPLOYMENT=compose
-      - DJANGO_SETTINGS_MODULE=pebbling.settings
-      - DEBUG=${DEBUG:-True}
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here-1234567890}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
-      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
-      - DATABASE_URL=${DATABASE_URL:-postgres://pebbling:pebbling_password@postgres:5432/pebbling}
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379/1}
-      - DJANGO_SQLITE_MULTIPLE_DB=${DJANGO_SQLITE_MULTIPLE_DB:-false}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - CELERY_AUTOSCALE_MAX=${CELERY_AUTOSCALE_MAX:-32}
-      - CELERY_AUTOSCALE_MIN=${CELERY_AUTOSCALE_MIN:-4}
+      <<: *django-env
+      CELERY_AUTOSCALE_MAX: ${CELERY_AUTOSCALE_MAX:-32}
+      CELERY_AUTOSCALE_MIN: ${CELERY_AUTOSCALE_MIN:-4}
+
+  # Celery Flower (monitoring) - minimal env vars
+  celery_flower:
+    image: pebbling-club-django:latest
+    command: celery -A pebbling flower --port=5555 --url-prefix=flower
+    depends_on:
+      - redis
+    environment:
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
 
   # Celery beat for scheduled tasks
   celery_beat:
-    build:
-      context: ../../
-      dockerfile: docker/compose/Dockerfile.web
+    <<: *django-base
     command: celery -A pebbling beat --loglevel=info
     volumes:
       - app_data:/app/data
     depends_on:
-      - web
       - redis
       - postgres
-    environment:
-      - DOCKER_DEPLOYMENT=compose
-      - DJANGO_SETTINGS_MODULE=pebbling.settings
-      - DEBUG=${DEBUG:-True}
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here-1234567890}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
-      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
-      - DATABASE_URL=${DATABASE_URL:-postgres://pebbling:pebbling_password@postgres:5432/pebbling}
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379/1}
-      - DJANGO_SQLITE_MULTIPLE_DB=${DJANGO_SQLITE_MULTIPLE_DB:-false}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
 
   # Nginx web server
   nginx:
+    image: pebbling-club-nginx:latest
     build:
       context: ../../
       dockerfile: docker/compose/Dockerfile.nginx
     ports:
       - "8000:8000"
     volumes:
-      - static_files:/app/static
-      - media_files:/app/media
+      - static_files:/app/static:ro
+      - media_files:/app/media:ro
     depends_on:
       - web
+    environment:
+      FLOWER_PASSWORD: ${FLOWER_PASSWORD:-changeme}
+      METRICS_PASSWORD: ${METRICS_PASSWORD:-metricspass}
+    restart: unless-stopped
 
 volumes:
-  postgres_data:
-  redis_data:
   static_files:
   media_files:
   app_data:
