@@ -1,0 +1,17 @@
+# Local hybrid development environment
+# Copy this to the project root as .env before starting development
+
+# Django settings
+DEBUG=True
+LOG_LEVEL=DEBUG
+PORT=8011
+
+CSRF_TRUSTED_ORIGINS=http://localhost:8010
+
+# Database - Use PostgreSQL in Docker
+DATABASE_URL=postgresql://pebbling:dev_password_123@localhost:5432/pebbling_club
+DJANGO_SQLITE_MULTIPLE_DB=false
+
+# Celery - Use Redis in Docker
+CELERY_BROKER_URL=redis://localhost:6379/0
+REDIS_URL=redis://localhost:6379/1
