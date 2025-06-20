@@ -1,3 +1,5 @@
+name: pebbling-club-local-dev
+
 services:
   postgres:
     image: postgres:16
@@ -10,7 +12,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgres-init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U pebbling -d pebbling_club"]
       interval: 5s
@@ -33,15 +34,19 @@ services:
     restart: unless-stopped
 
   nginx:
-    image: nginx:1.25-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
     ports:
       - "8010:8010"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ../../static:/app/static:ro
+      - ../../media:/app/media:ro
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis
 
 volumes:
   postgres_data:

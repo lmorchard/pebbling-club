@@ -68,7 +68,8 @@ command -v honcho >/dev/null 2>&1 || { echo -e "${RED}❌ honcho is not installe
 echo -e "${YELLOW}📦 Syncing Python dependencies with uv...${NC}"
 uv sync
 
-echo -e "${YELLOW}📦 Starting infrastructure services (PostgreSQL + Redis)...${NC}"
+echo -e "${YELLOW}📦 Starting infrastructure services (PostgreSQL + Redis + Nginx)...${NC}"
+docker-compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" build
 docker-compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" up -d
 
 echo -e "${YELLOW}⏳ Waiting for services to be ready...${NC}"
