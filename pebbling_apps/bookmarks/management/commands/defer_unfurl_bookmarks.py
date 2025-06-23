@@ -24,11 +24,17 @@ class Command(BaseCommand):
             default=None,
             help="Filter bookmarks by a specified tag",
         )
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help="Force unfurling even for bookmarks that already have unfurl_metadata",
+        )
 
     def handle(self, *args, **options):
         username = options["username"]
         limit = options.get("limit")  # Get the limit from options
         tag = options.get("tag")  # Get the tag from options
+        force = options.get("force", False)  # Get the force flag from options
         User = get_user_model()
 
         logger = logging.getLogger(__name__)  # Set up a logger
@@ -54,14 +60,28 @@ class Command(BaseCommand):
             return
 
         # Use iterator to avoid loading all bookmarks into memory at once
+        processed_count = 0
+        skipped_count = 0
+
         for bookmark in bookmarks.iterator():
-            if bookmark.unfurl_metadata:
+            if bookmark.unfurl_metadata and not force:
+                skipped_count += 1
+                logger.debug(
+                    f"Skipping bookmark ID: {bookmark.id} (already has unfurl_metadata)"
+                )
                 continue
+
             unfurl_bookmark_metadata.apply_async(args=[bookmark.id], priority=9)
-            logger.info(
-                f"Deferred unfurling for bookmark ID: {bookmark.id}"
-            )  # Use logger for info
+            processed_count += 1
+
+            if bookmark.unfurl_metadata and force:
+                logger.info(
+                    f"Force deferred unfurling for bookmark ID: {bookmark.id} (overwriting existing metadata)"
+                )
+            else:
+                logger.info(f"Deferred unfurling for bookmark ID: {bookmark.id}")
 
         logger.info(
-            f"Successfully deferred unfurling for all bookmarks of user '{username}'."
-        )  # Use logger for info
+            f"Successfully completed unfurling for user '{username}': "
+            f"{processed_count} bookmarks processed, {skipped_count} skipped."
+        )

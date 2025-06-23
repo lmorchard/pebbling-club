@@ -1,6 +1,8 @@
 # Docker image configuration
 DOCKER_IMAGE_NAME ?= pebbling-club
 DOCKER_IMAGE_TAG ?= latest
+DEPLOY_REMOTE ?= castiel
+DEPLOY_BRANCH ?= releases/castiel
 
 .PHONY: help 
 
@@ -112,9 +114,8 @@ migrate_prod:
 	uv run python manage.py migrate --noinput --database=feeds_db
 	uv run python manage.py migrate --noinput
 
-# Freeze dependencies
-freeze:
-	uv pip freeze > requirements.txt
+deploy:
+	git push -f ${DEPLOY_REMOTE} HEAD:${DEPLOY_BRANCH}
 
 # Build Docker image
 docker_build:
@@ -123,10 +124,6 @@ docker_build:
 # Create local data directory if it doesn't exist
 data_dir:
 	mkdir -p data
-
-# Get the current user and group IDs
-HOST_UID := $(shell id -u)
-HOST_GID := $(shell id -g)
 
 # Run Docker migrations as django user
 docker_migrate:
