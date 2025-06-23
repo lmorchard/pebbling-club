@@ -211,7 +211,10 @@ class UnfurlMetadata:
         result = []
         possible_feeds = []
         html = bs4(self.html, features="lxml")
+        
+        # Look for <link> tags with alternate rel
         feed_urls = html.findAll("link", rel="alternate")
+        
         if len(feed_urls) > 0:
             for f in feed_urls:
                 t = f.get("type", None)
@@ -219,19 +222,38 @@ class UnfurlMetadata:
                     if "rss" in t or "xml" in t:
                         href = f.get("href", None)
                         if href:
-                            possible_feeds.append(href)
-        base = parsed_url.scheme + "://" + parsed_url.hostname
+                            # Handle relative URLs properly
+                            full_url = urllib.parse.urljoin(self.url, href)
+                            possible_feeds.append(full_url)
+        
+        # Look for <a> tags with feed-related keywords
+        base_url = f"{parsed_url.scheme}://{parsed_url.hostname}"
+        if parsed_url.port:
+            base_url += f":{parsed_url.port}"
+        
         atags = html.findAll("a")
+        
         for a in atags:
             href = a.get("href", None)
             if href:
                 if "xml" in href or "rss" in href or "feed" in href:
-                    possible_feeds.append(base + href)
-        for url in list(set(possible_feeds)):
-            f = feedparser.parse(url)
-            if len(f.entries) > 0:
-                if url not in result:
-                    result.append(url)
+                    # Handle relative and absolute URLs properly
+                    full_url = urllib.parse.urljoin(self.url, href)
+                    possible_feeds.append(full_url)
+        
+        # Remove duplicates
+        unique_feeds = list(set(possible_feeds))
+        
+        # Test each possible feed URL
+        for url in unique_feeds:
+            try:
+                f = feedparser.parse(url)
+                if len(f.entries) > 0:
+                    if url not in result:
+                        result.append(url)
+            except Exception as e:
+                pass  # Silently ignore parse errors
+        
         return result
 
     def __str__(self):
