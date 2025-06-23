@@ -1,4 +1,4 @@
-web: uv run manage.py runserver ${HOST:-0.0.0.0}:${PORT:-8010}
+web: uv run manage.py runserver 0.0.0.0:8011
 worker: watchmedo auto-restart --directory=pebbling_apps --directory=pebbling --pattern="*.py" --recursive -- uv run celery -A pebbling worker --loglevel=info --autoscale=${CELERY_AUTOSCALE_MIN:-4},${CELERY_AUTOSCALE_MAX:-16}
 beat: uv run celery -A pebbling beat --loglevel=info
 flower: uv run celery -A pebbling flower --port=8012 --url-prefix=flower

@@ -2,16 +2,25 @@ import datetime
 import time
 from django.test import TestCase
 from django.utils import timezone
+from django.conf import settings
+from unittest import skipIf
 from pebbling_apps.feeds.models import Feed, FeedItem
 
 
+@skipIf(
+    not getattr(settings, "SQLITE_MULTIPLE_DB", True),
+    "Feed tests only run when SQLITE_MULTIPLE_DB is enabled",
+)
 class FeedItemManagerTest(TestCase):
-    databases = {"default", "feeds_db"}
+    databases = (
+        {"default", "feeds_db"}
+        if getattr(settings, "SQLITE_MULTIPLE_DB", True)
+        else {"default"}
+    )
 
     def setUp(self):
         self.feed = Feed.objects.create(
-            url='http://example.com/feed.xml',
-            title='Test Feed'
+            url="http://example.com/feed.xml", title="Test Feed"
         )
 
     def test_update_or_create_from_parsed_creates_new_item_with_published_parsed(self):
@@ -78,12 +87,12 @@ class FeedItemManagerTest(TestCase):
         newer_date = timezone.now() - datetime.timedelta(days=1)
         newer_date = newer_date.replace(microsecond=0)
         entry = {
-            'id': 'test1',
-            'title': 'Test Entry',
-            'link': 'http://example.com/entry1',
-            'published_parsed': newer_date.timetuple()
+            "id": "test1",
+            "title": "Test Entry",
+            "link": "http://example.com/entry1",
+            "published_parsed": newer_date.timetuple(),
         }
-        
+
         FeedItem.objects.update_or_create_from_parsed(self.feed, entry)
         self.feed.refresh_from_db()
         self.assertEqual(self.feed.newest_item_date.replace(microsecond=0), newer_date)
@@ -99,15 +108,17 @@ class FeedItemManagerTest(TestCase):
         older_date = timezone.now() - datetime.timedelta(days=2)
         older_date = older_date.replace(microsecond=0)
         entry = {
-            'id': 'test2',
-            'title': 'Test Entry',
-            'link': 'http://example.com/entry2',
-            'published_parsed': older_date.timetuple()
+            "id": "test2",
+            "title": "Test Entry",
+            "link": "http://example.com/entry2",
+            "published_parsed": older_date.timetuple(),
         }
-        
+
         FeedItem.objects.update_or_create_from_parsed(self.feed, entry)
         self.feed.refresh_from_db()
-        self.assertEqual(self.feed.newest_item_date.replace(microsecond=0), initial_date)
+        self.assertEqual(
+            self.feed.newest_item_date.replace(microsecond=0), initial_date
+        )
 
     def test_update_newest_item_date_when_none(self):
         # Ensure newest_item_date starts as None
@@ -117,12 +128,12 @@ class FeedItemManagerTest(TestCase):
         item_date = timezone.now() - datetime.timedelta(days=1)
         item_date = item_date.replace(microsecond=0)
         entry = {
-            'id': 'test3',
-            'title': 'Test Entry',
-            'link': 'http://example.com/entry3',
-            'published_parsed': item_date.timetuple()
+            "id": "test3",
+            "title": "Test Entry",
+            "link": "http://example.com/entry3",
+            "published_parsed": item_date.timetuple(),
         }
-        
+
         FeedItem.objects.update_or_create_from_parsed(self.feed, entry)
         self.feed.refresh_from_db()
         self.assertEqual(self.feed.newest_item_date.replace(microsecond=0), item_date)
@@ -135,11 +146,11 @@ class FeedItemManagerTest(TestCase):
 
         # Create entry without published date
         entry = {
-            'id': 'test4',
-            'title': 'Test Entry',
-            'link': 'http://example.com/entry4'
+            "id": "test4",
+            "title": "Test Entry",
+            "link": "http://example.com/entry4",
         }
-        
+
         FeedItem.objects.update_or_create_from_parsed(self.feed, entry)
         self.feed.refresh_from_db()
         self.assertEqual(self.feed.newest_item_date, initial_date)

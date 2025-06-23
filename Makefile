@@ -72,7 +72,11 @@ shell:
 
 # Run tests
 test:
-	uv run python manage.py test
+	DJANGO_SQLITE_MULTIPLE_DB=false uv run python manage.py test
+
+# Run all tests with multi-database mode enabled
+test-multidb:
+	DJANGO_SQLITE_MULTIPLE_DB=true uv run python manage.py test
 
 # Format code
 format:
@@ -84,6 +88,9 @@ lint:
 	uv run python -m black . --check
 	uv run djlint pebbling pebbling_apps
 	uv run mypy pebbling pebbling_apps --ignore-missing-imports
+
+# Check code quality and run tests
+check: lint test
 
 # Run database migrations (single database mode)
 migrate:

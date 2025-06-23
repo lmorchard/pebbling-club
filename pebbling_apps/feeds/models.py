@@ -105,10 +105,9 @@ class Feed(TimestampedModel):
         else:
             # Single database mode - use default database
             queryset = cls.objects
-        
+
         return list(
-            queryset
-            .filter(disabled=False)
+            queryset.filter(disabled=False)
             .order_by("-newest_item_date")
             .values_list("url", flat=True)
         )

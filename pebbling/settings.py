@@ -4,6 +4,7 @@ import environ
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 # Load environment variables
 def read_env_files(env_filenames):
     dot_env_dir = BASE_DIR
@@ -13,6 +14,7 @@ def read_env_files(env_filenames):
             environ.Env.read_env(env_file)
     return environ.Env()
 
+
 env = read_env_files([".env"])
 
 # Basic Django settings from environment variables
@@ -20,7 +22,9 @@ LOG_LEVEL = env("LOG_LEVEL", default="INFO")
 DEBUG = env.bool("DEBUG", default=False)
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-in-production")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://localhost:8000", "http://127.0.0.1:8000"])
+CSRF_TRUSTED_ORIGINS = env.list(
+    "CSRF_TRUSTED_ORIGINS", default=["http://localhost:8000", "http://127.0.0.1:8000"]
+)
 
 # Development-specific settings
 if DEBUG:
@@ -56,6 +60,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -149,22 +154,16 @@ if SQLITE_MULTIPLE_DB:
 else:
     # Use single database configuration (e.g., PostgreSQL)
     DATABASES = {
-        "default": env.db(
-            "DATABASE_URL",
-            default="sqlite:///data/main.sqlite3"
-        )
+        "default": env.db("DATABASE_URL", default="sqlite:///data/main.sqlite3")
     }
 
-# Configure database routers based on SQLITE_MULTIPLE_DB
-if SQLITE_MULTIPLE_DB:
-    DATABASE_ROUTERS = [
-        "pebbling.routers.CacheRouter",
-        "pebbling.routers.CeleryRouter",
-        "pebbling.routers.FeedsRouter",
-    ]
-else:
-    # No routers needed when using a single database
-    DATABASE_ROUTERS = []
+# Configure database routers
+# Always include routers - they will handle single vs multi-database mode gracefully
+DATABASE_ROUTERS = [
+    "pebbling.routers.CacheRouter",
+    "pebbling.routers.CeleryRouter",
+    "pebbling.routers.FeedsRouter",
+]
 
 # Celery settings
 CELERY_BEAT_SCHEDULE_FILENAME = str(DATA_BASE_DIR / "celerybeat-schedule")
@@ -232,6 +231,10 @@ STATIC_ROOT = BASE_DIR / "static"
 STATICFILES_DIRS = [
     BASE_DIR / "frontend/build",
 ]
+
+# Media files
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
