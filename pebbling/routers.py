@@ -9,6 +9,7 @@ class CacheRouter:
     def _cache_db_available(self):
         """Check if cache_db is configured"""
         from django.conf import settings
+
         return "cache_db" in getattr(settings, "DATABASES", {})
 
     def db_for_read(self, model, **hints):
@@ -53,6 +54,7 @@ class CeleryRouter:
     def _celery_db_available(self):
         """Check if celery_db is configured"""
         from django.conf import settings
+
         return "celery_db" in getattr(settings, "DATABASES", {})
 
     def db_for_read(self, model, **hints):
@@ -119,6 +121,7 @@ class FeedsRouter:
     def _feeds_db_available(self):
         """Check if feeds_db is configured"""
         from django.conf import settings
+
         return "feeds_db" in getattr(settings, "DATABASES", {})
 
     def db_for_read(self, model, **hints):

@@ -97,14 +97,18 @@ class BookmarkManagerTestCase(TestCase):
 # TestCase using a transaction that results database locking errors
 @skipIf(
     not getattr(settings, "SQLITE_MULTIPLE_DB", True),
-    "Cross-database tests only run when SQLITE_MULTIPLE_DB is enabled"
+    "Cross-database tests only run when SQLITE_MULTIPLE_DB is enabled",
 )
 class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
-    databases = {"default", "feeds_db"} if getattr(settings, "SQLITE_MULTIPLE_DB", True) else {"default"}
+    databases = (
+        {"default", "feeds_db"}
+        if getattr(settings, "SQLITE_MULTIPLE_DB", True)
+        else {"default"}
+    )
 
     def setUp(self):
         from pebbling_apps.feeds.models import Feed
-        
+
         self.user = User.objects.create_user(username="testuser", password="12345")
 
         self.bookmark1 = Bookmark.objects.create(
@@ -245,16 +249,16 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
 
 @skipIf(
     getattr(settings, "SQLITE_MULTIPLE_DB", True),
-    "Single database tests only run when SQLITE_MULTIPLE_DB is disabled"
+    "Single database tests only run when SQLITE_MULTIPLE_DB is disabled",
 )
 class BookmarkManagerSingleDatabaseTestCase(TestCase):
     """Test bookmark manager when using a single database."""
-    
+
     def setUp(self):
         from pebbling_apps.feeds.models import Feed
-        
+
         self.user = User.objects.create_user(username="testuser", password="12345")
-        
+
         # Create feeds
         Feed.objects.create(
             url="http://example1.com/feed",
@@ -280,7 +284,7 @@ class BookmarkManagerSingleDatabaseTestCase(TestCase):
                 datetime.datetime(2023, 1, 3, 10, 0, 0)
             ),
         )
-        
+
         # Create bookmarks
         self.bookmark1 = Bookmark.objects.create(
             url="http://example1.com",
@@ -300,35 +304,29 @@ class BookmarkManagerSingleDatabaseTestCase(TestCase):
             feed_url="http://example3.com/feed",
             title="Test Bookmark 3",
         )
-    
+
     def test_query_with_feed_sort(self):
         """Test querying bookmarks sorted by feed date in single database mode."""
-        bookmarks = Bookmark.objects.query(
-            owner=self.user,
-            sort=BookmarkSort.FEED
-        )
+        bookmarks = Bookmark.objects.query(owner=self.user, sort=BookmarkSort.FEED)
         bookmarks_list = list(bookmarks)
-        
+
         self.assertEqual(len(bookmarks_list), 3)
         # Should be ordered by newest feed item date descending
         self.assertEqual(bookmarks_list[0].id, self.bookmark3.id)
         self.assertEqual(bookmarks_list[1].id, self.bookmark2.id)
         self.assertEqual(bookmarks_list[2].id, self.bookmark1.id)
-    
+
     def test_query_with_feed_sort_ascending(self):
         """Test querying bookmarks sorted by feed date ascending."""
-        bookmarks = Bookmark.objects.query(
-            owner=self.user,
-            sort=BookmarkSort.FEED_DESC
-        )
+        bookmarks = Bookmark.objects.query(owner=self.user, sort=BookmarkSort.FEED_DESC)
         bookmarks_list = list(bookmarks)
-        
+
         self.assertEqual(len(bookmarks_list), 3)
         # Should be ordered by newest feed item date ascending
         self.assertEqual(bookmarks_list[0].id, self.bookmark1.id)
         self.assertEqual(bookmarks_list[1].id, self.bookmark2.id)
         self.assertEqual(bookmarks_list[2].id, self.bookmark3.id)
-    
+
     def test_query_excludes_null_feed_dates(self):
         """Test that bookmarks without matching feeds are excluded."""
         # Create a bookmark without a matching feed
@@ -338,13 +336,10 @@ class BookmarkManagerSingleDatabaseTestCase(TestCase):
             feed_url="http://example-no-feed.com/feed",
             title="Test Bookmark No Feed",
         )
-        
-        bookmarks = Bookmark.objects.query(
-            owner=self.user,
-            sort=BookmarkSort.FEED
-        )
+
+        bookmarks = Bookmark.objects.query(owner=self.user, sort=BookmarkSort.FEED)
         bookmarks_list = list(bookmarks)
-        
+
         # Should only include bookmarks with matching feeds
         self.assertEqual(len(bookmarks_list), 3)
         bookmark_ids = [b.id for b in bookmarks_list]

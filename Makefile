@@ -89,6 +89,9 @@ lint:
 	uv run djlint pebbling pebbling_apps
 	uv run mypy pebbling pebbling_apps --ignore-missing-imports
 
+# Check code quality and run tests
+check: lint test
+
 # Run database migrations (single database mode)
 migrate:
 	mkdir -p data
