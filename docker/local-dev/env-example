@@ -6,6 +6,9 @@ DEBUG=True
 LOG_LEVEL=DEBUG
 PORT=8011
 
+# User registration - Set to false to disable new user registration
+ALLOW_USER_REGISTRATION=true
+
 CSRF_TRUSTED_ORIGINS=http://localhost:8010
 
 # Database - Use PostgreSQL in Docker

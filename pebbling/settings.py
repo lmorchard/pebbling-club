@@ -26,6 +26,9 @@ CSRF_TRUSTED_ORIGINS = env.list(
     "CSRF_TRUSTED_ORIGINS", default=["http://localhost:8000", "http://127.0.0.1:8000"]
 )
 
+# User registration settings
+ALLOW_USER_REGISTRATION = env.bool("ALLOW_USER_REGISTRATION", default=True)
+
 # Development-specific settings
 if DEBUG:
     INTERNAL_IPS = ["127.0.0.1"]
