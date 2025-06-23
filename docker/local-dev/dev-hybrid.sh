@@ -118,7 +118,7 @@ DOCKER_LOGS_PID=$!
 sleep 2
 
 # Start the application services
-honcho start -f "$RELATIVE_SCRIPT_DIR/Procfile-hybrid" &
+honcho start -f "$RELATIVE_SCRIPT_DIR/Procfile" &
 HONCHO_PID=$!
 
 # Wait for honcho to finish
