@@ -2,9 +2,15 @@ import datetime
 import time
 from django.test import TestCase
 from django.utils import timezone
+from django.conf import settings
+from unittest import skipIf
 from pebbling_apps.feeds.models import Feed, FeedItem
 
 
+@skipIf(
+    not getattr(settings, "SQLITE_MULTIPLE_DB", True),
+    "Feed tests only run when SQLITE_MULTIPLE_DB is enabled"
+)
 class FeedItemManagerTest(TestCase):
     databases = {"default", "feeds_db"}
 

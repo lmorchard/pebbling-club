@@ -1,9 +1,8 @@
 from django.test import TransactionTestCase, TestCase
 from django.contrib.auth import get_user_model
 from django.conf import settings
-from pebbling_apps.bookmarks.models import Bookmark, BookmarkManager
+from pebbling_apps.bookmarks.models import Bookmark, BookmarkManager, BookmarkSort
 from pebbling_apps.unfurl.unfurl import UnfurlMetadata
-from pebbling_apps.feeds.models import Feed
 from django.utils import timezone
 import datetime
 from unittest import skipIf
@@ -13,7 +12,7 @@ User = get_user_model()
 
 
 class BookmarkManagerTestCase(TestCase):
-    databases = {"default", "feeds_db"}
+    # This test case only uses the default database
 
     def setUp(self):
         self.user = User.objects.create_user(username="testuser", password="12345")
@@ -104,6 +103,8 @@ class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
     databases = {"default", "feeds_db"}
 
     def setUp(self):
+        from pebbling_apps.feeds.models import Feed
+        
         self.user = User.objects.create_user(username="testuser", password="12345")
 
         self.bookmark1 = Bookmark.objects.create(
@@ -250,6 +251,8 @@ class BookmarkManagerSingleDatabaseTestCase(TestCase):
     """Test bookmark manager when using a single database."""
     
     def setUp(self):
+        from pebbling_apps.feeds.models import Feed
+        
         self.user = User.objects.create_user(username="testuser", password="12345")
         
         # Create feeds
