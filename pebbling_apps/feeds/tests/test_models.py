@@ -12,7 +12,7 @@ from pebbling_apps.feeds.models import Feed, FeedItem
     "Feed tests only run when SQLITE_MULTIPLE_DB is enabled"
 )
 class FeedItemManagerTest(TestCase):
-    databases = {"default", "feeds_db"}
+    databases = {"default", "feeds_db"} if getattr(settings, "SQLITE_MULTIPLE_DB", True) else {"default"}
 
     def setUp(self):
         self.feed = Feed.objects.create(

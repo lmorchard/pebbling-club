@@ -156,16 +156,13 @@ else:
         )
     }
 
-# Configure database routers based on SQLITE_MULTIPLE_DB
-if SQLITE_MULTIPLE_DB:
-    DATABASE_ROUTERS = [
-        "pebbling.routers.CacheRouter",
-        "pebbling.routers.CeleryRouter",
-        "pebbling.routers.FeedsRouter",
-    ]
-else:
-    # No routers needed when using a single database
-    DATABASE_ROUTERS = []
+# Configure database routers
+# Always include routers - they will handle single vs multi-database mode gracefully
+DATABASE_ROUTERS = [
+    "pebbling.routers.CacheRouter",
+    "pebbling.routers.CeleryRouter", 
+    "pebbling.routers.FeedsRouter",
+]
 
 # Celery settings
 CELERY_BEAT_SCHEDULE_FILENAME = str(DATA_BASE_DIR / "celerybeat-schedule")

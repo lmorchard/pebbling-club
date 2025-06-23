@@ -70,15 +70,12 @@ celery-purge:
 shell:
 	uv run python manage.py shell
 
-# Run tests (excluding cross-database tests due to experimental multi-DB feature)
+# Run tests
 test:
-	DJANGO_SQLITE_MULTIPLE_DB=false uv run python manage.py test \
-		pebbling_apps.unfurl \
-		pebbling_apps.bookmarks.tests.test_models.BookmarkManagerTestCase \
-		pebbling_apps.bookmarks.tests.test_models.BookmarkManagerSingleDatabaseTestCase
+	DJANGO_SQLITE_MULTIPLE_DB=false uv run python manage.py test
 
-# Run all tests including cross-database tests (requires DJANGO_SQLITE_MULTIPLE_DB=true)
-test-all:
+# Run all tests with multi-database mode enabled
+test-multidb:
 	DJANGO_SQLITE_MULTIPLE_DB=true uv run python manage.py test
 
 # Format code

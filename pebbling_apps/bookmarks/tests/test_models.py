@@ -100,7 +100,7 @@ class BookmarkManagerTestCase(TestCase):
     "Cross-database tests only run when SQLITE_MULTIPLE_DB is enabled"
 )
 class BookmarkManagerCrossDatabaseTestCase(TransactionTestCase):
-    databases = {"default", "feeds_db"}
+    databases = {"default", "feeds_db"} if getattr(settings, "SQLITE_MULTIPLE_DB", True) else {"default"}
 
     def setUp(self):
         from pebbling_apps.feeds.models import Feed
