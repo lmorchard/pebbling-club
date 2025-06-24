@@ -61,6 +61,10 @@ INSTALLED_APPS = [
     "pebbling_apps.unfurl",
 ]
 
+# Add debug toolbar app in debug mode
+if DEBUG:
+    INSTALLED_APPS.append("debug_toolbar")
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -71,6 +75,11 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# Add debug toolbar middleware in debug mode
+if DEBUG:
+    # Insert after SecurityMiddleware but before WhiteNoise
+    MIDDLEWARE.insert(1, "debug_toolbar.middleware.DebugToolbarMiddleware")
 
 ROOT_URLCONF = "pebbling.urls"
 
