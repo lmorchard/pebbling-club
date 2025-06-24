@@ -5,23 +5,21 @@ from django.db import migrations
 
 def fix_task_name(apps, schema_editor):
     """Fix the task name from full module path to registered name."""
-    PeriodicTask = apps.get_model('django_celery_beat', 'PeriodicTask')
-    
+    PeriodicTask = apps.get_model("django_celery_beat", "PeriodicTask")
+
     # Update the task name if it exists with the wrong name
     PeriodicTask.objects.filter(
-        name='Poll All Feeds',
-        task='pebbling_apps.feeds.tasks.poll_all_feeds'
-    ).update(task='poll_all_feeds')
+        name="Poll All Feeds", task="pebbling_apps.feeds.tasks.poll_all_feeds"
+    ).update(task="poll_all_feeds")
 
 
 def revert_task_name(apps, schema_editor):
     """Revert to full module path (for rollback)."""
-    PeriodicTask = apps.get_model('django_celery_beat', 'PeriodicTask')
-    
-    PeriodicTask.objects.filter(
-        name='Poll All Feeds',
-        task='poll_all_feeds'
-    ).update(task='pebbling_apps.feeds.tasks.poll_all_feeds')
+    PeriodicTask = apps.get_model("django_celery_beat", "PeriodicTask")
+
+    PeriodicTask.objects.filter(name="Poll All Feeds", task="poll_all_feeds").update(
+        task="pebbling_apps.feeds.tasks.poll_all_feeds"
+    )
 
 
 class Migration(migrations.Migration):

@@ -5,32 +5,32 @@ from django.db import migrations
 
 def create_poll_feeds_schedule(apps, schema_editor):
     """Create initial periodic task for polling feeds every 30 minutes."""
-    PeriodicTask = apps.get_model('django_celery_beat', 'PeriodicTask')
-    IntervalSchedule = apps.get_model('django_celery_beat', 'IntervalSchedule')
-    
+    PeriodicTask = apps.get_model("django_celery_beat", "PeriodicTask")
+    IntervalSchedule = apps.get_model("django_celery_beat", "IntervalSchedule")
+
     # Create or get 30 minute interval
     schedule, _ = IntervalSchedule.objects.get_or_create(
         every=30,
-        period='minutes',
+        period="minutes",
     )
-    
+
     # Create the periodic task
     PeriodicTask.objects.get_or_create(
-        name='Poll All Feeds',
+        name="Poll All Feeds",
         defaults={
-            'task': 'poll_all_feeds',
-            'interval': schedule,
-            'enabled': True,
-            'description': 'Polls all RSS/Atom feeds for new content',
-            'kwargs': '{"priority": 3}',  # JSON string for task kwargs
-        }
+            "task": "poll_all_feeds",
+            "interval": schedule,
+            "enabled": True,
+            "description": "Polls all RSS/Atom feeds for new content",
+            "kwargs": '{"priority": 3}',  # JSON string for task kwargs
+        },
     )
 
 
 def remove_poll_feeds_schedule(apps, schema_editor):
     """Remove the poll feeds periodic task."""
-    PeriodicTask = apps.get_model('django_celery_beat', 'PeriodicTask')
-    PeriodicTask.objects.filter(name='Poll All Feeds').delete()
+    PeriodicTask = apps.get_model("django_celery_beat", "PeriodicTask")
+    PeriodicTask.objects.filter(name="Poll All Feeds").delete()
 
 
 class Migration(migrations.Migration):

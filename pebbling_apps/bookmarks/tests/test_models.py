@@ -318,7 +318,7 @@ class BookmarkManagerSingleDatabaseTestCase(TestCase):
 
     def test_query_with_feed_sort_ascending(self):
         """Test querying bookmarks sorted by feed date ascending."""
-        bookmarks = Bookmark.objects.query(owner=self.user, sort=BookmarkSort.FEED_DESC)
+        bookmarks = Bookmark.objects.query(owner=self.user, sort=BookmarkSort.FEED_ASC)
         bookmarks_list = list(bookmarks)
 
         self.assertEqual(len(bookmarks_list), 3)
