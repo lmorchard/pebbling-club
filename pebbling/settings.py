@@ -205,6 +205,10 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_EXTENDED = True
 
+# Use django-celery-beat for database-backed periodic tasks
+# This allows admins to manage schedules via Django admin
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
