@@ -18,7 +18,7 @@ def create_poll_feeds_schedule(apps, schema_editor):
     PeriodicTask.objects.get_or_create(
         name='Poll All Feeds',
         defaults={
-            'task': 'pebbling_apps.feeds.tasks.poll_all_feeds',
+            'task': 'poll_all_feeds',
             'interval': schedule,
             'enabled': True,
             'description': 'Polls all RSS/Atom feeds for new content',
