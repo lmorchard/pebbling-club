@@ -18,8 +18,15 @@ logger = logging.getLogger(__name__)
 def feeds_fetch_get(request):
     since = parse_since(request.GET.get("since"))
     urls = request.GET.getlist("urls")
+    per_feed_limit = None
+    if request.GET.get("per_feed_limit"):
+        try:
+            per_feed_limit = int(request.GET.get("per_feed_limit"))
+        except (ValueError, TypeError):
+            pass
+
     feeds = Feed.objects.filter(url__in=urls)
-    feeds_by_url = get_feed_items_by_url(feeds, since)
+    feeds_by_url = get_feed_items_by_url(feeds, since, per_feed_limit=per_feed_limit)
     return JsonResponse(feeds_by_url)
 
 
@@ -31,6 +38,13 @@ def feeds_fetch_post(request):
     body = json.loads(request.body)
     since = parse_since(body.get("since"))
     urls = body.get("urls", [])
+    per_feed_limit = None
+    if "per_feed_limit" in body:
+        try:
+            per_feed_limit = int(body.get("per_feed_limit"))
+        except (ValueError, TypeError):
+            pass
+
     service = FeedService()
 
     feed_ids = []
@@ -57,18 +71,19 @@ def feeds_fetch_post(request):
             logger.error(f"Error waiting for feed poll tasks: {e}")
 
     feeds = Feed.objects.filter(id__in=feed_ids)
-    feeds_by_url = get_feed_items_by_url(feeds, since)
+    feeds_by_url = get_feed_items_by_url(feeds, since, per_feed_limit=per_feed_limit)
 
     return JsonResponse(feeds_by_url)
 
 
-def get_feed_items_by_url(feeds, since=None, feed_ids=None):
+def get_feed_items_by_url(feeds, since=None, per_feed_limit=100):
     """
     Returns feeds by URL with their items, filtered by date if since is provided.
 
     Args:
         urls (list): List of feed URLs to fetch
         since (datetime, optional): Only include items newer than this date
+        limit (int, optional): Maximum number of items to include per feed
         feed_ids (list, optional): List of feed IDs to filter by instead of URLs
 
     Returns:
@@ -84,8 +99,8 @@ def get_feed_items_by_url(feeds, since=None, feed_ids=None):
         if since:
             items_query = items_query.filter(date__gte=since)
 
-        # Get the most recent 10 items
-        items = items_query.order_by("-date")[:10]
+        # Get the most recent items (limited by the limit parameter)
+        items = items_query.order_by("-date")[:per_feed_limit]
 
         # Build the response dictionary
         feeds_by_url[feed.url] = {

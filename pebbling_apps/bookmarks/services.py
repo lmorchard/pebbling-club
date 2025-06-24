@@ -2,6 +2,7 @@
 
 from pebbling_apps.bookmarks.models import Bookmark
 from pebbling_apps.unfurl.unfurl import UnfurlMetadata
+from pebbling_apps.feeds.services import FeedService
 import logging
 
 
@@ -30,3 +31,22 @@ class BookmarksService:
         bookmark.unfurl_metadata = unfurl_metadata
         bookmark.save()
         logger.debug("Bookmark's unfurl_metadata saved successfully.")
+
+        # If the metadata contains a feed URL, create or fetch the Feed object
+        if unfurl_metadata.feed:
+            logger.debug(f"Feed URL found in metadata: {unfurl_metadata.feed}")
+            try:
+                feed_service = FeedService()
+                feed, created = feed_service.get_or_create_feed(unfurl_metadata.feed)
+                bookmark.feed_url = unfurl_metadata.feed
+                bookmark.save()
+
+                if created:
+                    logger.debug(f"New feed created: {feed.url}")
+                else:
+                    logger.debug(f"Existing feed found: {feed.url}")
+
+                # Optionally, you could fetch the feed content immediately
+                # feed_service.fetch_feed(feed)
+            except Exception as e:
+                logger.error(f"Error creating feed: {str(e)}")

@@ -4,6 +4,8 @@ import BatchQueue from "../utils/batch-queue";
 
 import "./pc-feed.css";
 
+const DEFAULT_PER_FEED_LIMIT = 100;
+
 export default class PCFeedElement extends LitElement {
   url?: string;
   isLoading?: boolean;
@@ -109,6 +111,7 @@ export default class PCFeedElement extends LitElement {
 export class PCFeedElementManager extends ElementManager<PCFeedElement> {
   usePost: boolean;
   forceRefresh: boolean;
+  perFeedLimit = DEFAULT_PER_FEED_LIMIT; // TODO: configure this somewhere
 
   // TODO: work out how to specify since on a per-feed basis
   since?: string | null;
@@ -124,15 +127,18 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
     usePost = false,
     forceRefresh = false,
     since,
+    perFeedLimit = DEFAULT_PER_FEED_LIMIT,
   }: {
     usePost?: boolean;
     forceRefresh?: boolean;
     since?: string | null;
+    perFeedLimit?: number;
   }) {
     super();
     this.usePost = usePost;
     this.forceRefresh = forceRefresh;
     this.since = since;
+    this.perFeedLimit = perFeedLimit;
   }
 
   async updateFeed(element: PCFeedElement) {
@@ -152,11 +158,13 @@ export class PCFeedElementManager extends ElementManager<PCFeedElement> {
         body: JSON.stringify({
           update: forceRefresh,
           since: this.since,
+          per_feed_limit: this.perFeedLimit,
           urls: batch.map((job) => job.url),
         }),
       });
     } else {
       const params = new URLSearchParams();
+      params.set("per_feed_limit", String(this.perFeedLimit));
       if (this.since) params.set("since", this.since);
       for (const { url } of batch) {
         params.append("urls", url);

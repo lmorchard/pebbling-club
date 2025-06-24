@@ -7,7 +7,13 @@ from django.utils.html import format_html
 # Register your models here.
 @admin.register(Feed)
 class FeedAdmin(admin.ModelAdmin):
-    list_display = ("title", "url", "updated_at", "view_feeditems_link")
+    list_display = (
+        "title",
+        "url",
+        "updated_at",
+        "newest_item_date",
+        "view_feeditems_link",
+    )
     search_fields = ("title", "url")
 
     @admin.display(description="FeedItems")
