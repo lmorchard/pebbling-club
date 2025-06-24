@@ -234,11 +234,13 @@ class BookmarkManager(models.Manager):
                     .exclude(feed_newest_item_date__isnull=True)
                 )
 
-                order_prefix = "-" if sort != BookmarkSort.FEED_DESC else ""
+                descending = sort != BookmarkSort.FEED_ASC
+                order_prefix = "-" if descending else ""
                 queryset = queryset.order_by(f"{order_prefix}feed_newest_item_date")
 
                 if since:
                     queryset = queryset.filter(feed_newest_item_date__gte=since)
+
         elif sort in BOOKMARK_SORT_COLUMNS:
             queryset = self.get_queryset().order_by(BOOKMARK_SORT_COLUMNS[sort])
             if since:
