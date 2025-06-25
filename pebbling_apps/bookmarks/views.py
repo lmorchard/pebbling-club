@@ -1,7 +1,9 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views import View
 from django.core.exceptions import PermissionDenied
 import logging
 
@@ -12,12 +14,15 @@ from django.db import models
 from django.db.models import Q
 from pebbling_apps.common.utils import django_enum, parse_since
 from pebbling_apps.unfurl.unfurl import UnfurlMetadata
-from django.http import JsonResponse
+from django.http import (
+    JsonResponse,
+    StreamingHttpResponse,
+    HttpResponseBadRequest,
+)
+from django.utils.html import escape
 from django.views.decorators.http import require_GET
 from enum import StrEnum, auto
 
-from durations_nlp import Duration
-from durations_nlp.helpers import valid_duration
 import datetime
 
 
@@ -227,6 +232,103 @@ class TagDetailView(BookmarkQueryListView):
             **super().get_query_kwargs(),
             "tags": [self.tag_name],
         }
+
+
+class BookmarkExportNetscapeView(LoginRequiredMixin, View):
+    """Export bookmarks in Netscape HTML format."""
+
+    def get(self, request):
+        from .exporters import NetscapeBookmarkExporter
+
+        # Validate tag parameters before processing
+        tags = request.GET.getlist("tag")
+        if tags:
+            for tag_name in tags:
+                if not Tag.objects.filter(name=tag_name).exists():
+                    return HttpResponseBadRequest(f"Tag '{tag_name}' does not exist")
+
+        # Validate and parse since parameter
+        since = request.GET.get("since")
+        since_date = None
+        if since:
+            try:
+                since_date = parse_since(since)
+            except Exception as e:
+                return HttpResponseBadRequest(f"Invalid 'since' parameter: {str(e)}")
+
+        # Validate limit parameter
+        limit = request.GET.get("limit")
+        limit_value = None
+        if limit:
+            try:
+                limit_value = int(limit)
+                if limit_value <= 0:
+                    return HttpResponseBadRequest("Limit must be a positive integer")
+            except ValueError:
+                return HttpResponseBadRequest(
+                    "Invalid 'limit' parameter: must be an integer"
+                )
+
+        exporter = NetscapeBookmarkExporter()
+
+        def generate():
+            try:
+                yield exporter.generate_header()
+
+                # Get user's bookmarks with prefetched tags
+                bookmarks = Bookmark.objects.query(owner=request.user).prefetch_related(
+                    "tags"
+                )
+
+                # Apply tag filtering if requested
+                if tags:
+                    # Filter bookmarks that have ALL specified tags
+                    for tag_name in tags:
+                        bookmarks = bookmarks.filter(tags__name=tag_name)
+                    bookmarks = bookmarks.distinct()
+
+                # Apply date filtering if requested
+                if since_date:
+                    bookmarks = bookmarks.filter(created_at__gte=since_date)
+
+                # Apply limit if requested
+                if limit_value:
+                    bookmarks = bookmarks[:limit_value]
+
+                # Generate bookmarks using iterator for memory efficiency
+                for bookmark_content in exporter.generate_bookmarks(
+                    bookmarks.iterator(chunk_size=100)
+                ):
+                    yield bookmark_content
+
+                yield exporter.generate_footer()
+            except Exception as e:
+                logger.error(f"Error during bookmark export: {str(e)}", exc_info=True)
+                yield f"\n<!-- ERROR: Export failed: {escape(str(e))} -->\n"
+                yield exporter.generate_footer()
+
+        response = StreamingHttpResponse(
+            generate(), content_type="text/html; charset=utf-8"
+        )
+
+        # Add Content-Disposition header with timestamp
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d")
+        filename = f"pebbling_club_bookmarks_{timestamp}.html"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        # Log export activity
+        logger.info(
+            f"User {request.user.username} exported bookmarks",
+            extra={
+                "user": request.user.username,
+                "tags": tags,
+                "since": since,
+                "limit": limit,
+                "timestamp": datetime.datetime.now().isoformat(),
+            },
+        )
+
+        return response
 
 
 @login_required
