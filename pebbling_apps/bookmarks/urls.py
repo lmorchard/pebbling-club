@@ -7,6 +7,8 @@ from .views import (
     TagListView,
     TagDetailView,
     BookmarkExportNetscapeView,
+    BookmarkExportActivityStreamView,
+    BookmarkImportActivityStreamView,
     fetch_unfurl_metadata,
 )
 
@@ -20,6 +22,16 @@ urlpatterns = [
         "bookmarks/export/netscape.html",
         BookmarkExportNetscapeView.as_view(),
         name="export_netscape",
+    ),
+    path(
+        "bookmarks/export/activitystream.json",
+        BookmarkExportActivityStreamView.as_view(),
+        name="export_activitystream",
+    ),
+    path(
+        "bookmarks/import/activitystream/",
+        BookmarkImportActivityStreamView.as_view(),
+        name="import_activitystream",
     ),
     path("bookmarks/<int:pk>/edit", BookmarkUpdateView.as_view(), name="edit"),
     path("bookmarks/<int:pk>/delete", BookmarkDeleteView.as_view(), name="delete"),
