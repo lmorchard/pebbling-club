@@ -148,7 +148,10 @@ class BookmarkManager(models.Manager):
 
     def generate_unique_hash_for_url(self, url):
         """Generate a unique hash for a given URL."""
-        return hashlib.sha1(url.encode("utf-8")).hexdigest()
+        from .services import URLNormalizer
+
+        normalizer = URLNormalizer()
+        return normalizer.generate_hash(url)
 
     def get_queryset_with_feeds_db(
         self, feeds_db_alias="feeds_db", feeds_db_name="feeds_db"

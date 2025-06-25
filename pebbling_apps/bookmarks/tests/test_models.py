@@ -20,7 +20,9 @@ class BookmarkManagerTestCase(TestCase):
     def test_generate_unique_hash_for_url(self):
         manager = BookmarkManager()
         url = "http://example.com"
-        expected_hash = "89dce6a446a69d6b9bdc01ac75251e4c322bcdff"
+        expected_hash = (
+            "f0e6a6a97042a4f1f1c87f5f7d44315b2d852c2df5c7991cc66241bf7072d1c4"
+        )
         self.assertEqual(manager.generate_unique_hash_for_url(url), expected_hash)
 
     def test_create_bookmark_sets_feed_url_from_unfurl_metadata(self):
