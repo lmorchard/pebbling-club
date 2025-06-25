@@ -22,7 +22,7 @@ class FeedAdmin(admin.ModelAdmin):
     def view_feeditems_link(self, obj):
         url = reverse("admin:feeds_feeditem_changelist") + f"?feed__id__exact={obj.id}"
         return format_html('<a href="{}">View FeedItems</a>', url)
-    
+
     @admin.action(description="Poll selected feeds")
     def poll_selected_feeds(self, request, queryset):
         count = 0
@@ -30,17 +30,15 @@ class FeedAdmin(admin.ModelAdmin):
             poll_feed.delay(feed.id)
             count += 1
         self.message_user(
-            request,
-            f"Queued {count} feed{'s' if count != 1 else ''} for polling"
+            request, f"Queued {count} feed{'s' if count != 1 else ''} for polling"
         )
-    
+
     @admin.action(description="Poll ALL feeds (ignore selection)")
     def poll_all_feeds_action(self, request, queryset):
         poll_all_feeds.delay()
         total_count = Feed.objects.count()
         self.message_user(
-            request,
-            f"Queued task to poll all {total_count} feeds in the system"
+            request, f"Queued task to poll all {total_count} feeds in the system"
         )
 
 

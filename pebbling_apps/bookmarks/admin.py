@@ -46,7 +46,7 @@ class BookmarkAdmin(admin.ModelAdmin):
     def get_list_filter(self, request):
         # Only show owner filter, hide tags filter
         return ("owner",)
-    
+
     @admin.action(description="Unfurl metadata for selected bookmarks")
     def unfurl_selected_bookmarks(self, request, queryset):
         count = 0
@@ -55,5 +55,5 @@ class BookmarkAdmin(admin.ModelAdmin):
             count += 1
         self.message_user(
             request,
-            f"Queued {count} bookmark{'s' if count != 1 else ''} for metadata unfurling"
+            f"Queued {count} bookmark{'s' if count != 1 else ''} for metadata unfurling",
         )
