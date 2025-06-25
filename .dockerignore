@@ -4,8 +4,12 @@ fly.toml
 venv/
 .venv/
 tmp/
+data
 data/
 data-old/
 docs/
 .env
 .env*
+.git
+.github
+.vscode
