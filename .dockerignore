@@ -6,5 +6,6 @@ venv/
 tmp/
 data/
 data-old/
+docs/
 .env
 .env*
