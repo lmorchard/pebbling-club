@@ -50,6 +50,19 @@ Branch: unique-hash-normalization
 - Original plan for batched processing complicated by duplicate detection needs
 - **Resolution**: Switched to bookmark-by-bookmark processing with IntegrityError handling
 
+### Code Duplication in Migration
+
+- Initial migration duplicated URLNormalizer logic instead of importing service
+- **Resolution**: Refactored migration to import and use URLNormalizer service (DRY principle)
+
+### Empty Parameter Bug
+
+- Found critical bug where URLs with different query parameters but empty values were getting same hash
+- Example: `http://bash.org/?429313` and `http://bash.org/?428429` produced identical hashes
+- **Root Cause**: URLNormalizer was filtering out empty query parameters
+- **Resolution**: Removed empty parameter filtering, preserved all query parameters including empty ones
+- **Verification**: Updated `test_parameter_preservation` test to ensure different URLs produce different hashes
+
 ## Final Summary
 
 **✅ Implementation Completed Successfully**

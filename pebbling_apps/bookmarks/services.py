@@ -96,8 +96,6 @@ class URLNormalizer:
 
             # Parse and sort query parameters
             query_params = parse_qsl(parsed.query, keep_blank_values=True)
-            # Filter out empty parameters (but keep "0", "false", etc.)
-            query_params = [(k, v) for k, v in query_params if v != ""]
             # Filter out tracking parameters (case-insensitive)
             filtered_params = []
             for key, value in query_params:

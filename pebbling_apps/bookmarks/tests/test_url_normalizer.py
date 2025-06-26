@@ -18,6 +18,8 @@ class TestURLNormalizer(TestCase):
             "http://annearchy.com/blog/?p=3661",
             "http://mashable.com/2013/08/11/teens-facebook/?utm_cid=mash-prod-email-topstories",
             "http://bash.org/?564283",
+            "http://bash.org/?428429",
+            "http://bash.org/?429313",
         ]
 
         self.TEST_LATER_URLS = [
@@ -28,6 +30,8 @@ class TestURLNormalizer(TestCase):
             "http://annearchy.com/blog?p=3661",
             "http://mashable.com/2013/08/11/teens-facebook",
             "http://bash.org/?564283=",
+            "http://bash.org/?428429",
+            "http://bash.org/?429313",
         ]
 
     def test_spec_urls_produce_same_hash(self):
@@ -113,11 +117,12 @@ class TestURLNormalizer(TestCase):
             self.normalizer.generate_hash(url1), self.normalizer.generate_hash(url2)
         )
 
-    def test_empty_parameter_removal(self):
-        """Test removal of empty query parameters."""
+    def test_parameter_preservation(self):
+        """Test that all query parameters are preserved, including empty ones."""
+        # Empty value parameters should be preserved (not the same as no parameters)
         url1 = "https://example.com?a=1&b=&c=3"
         url2 = "https://example.com?a=1&c=3"
-        self.assertEqual(
+        self.assertNotEqual(
             self.normalizer.generate_hash(url1), self.normalizer.generate_hash(url2)
         )
 
@@ -126,6 +131,13 @@ class TestURLNormalizer(TestCase):
         normalized = self.normalizer.normalize_url(url)
         self.assertIn("zero=0", normalized)
         self.assertIn("false=false", normalized)
+
+        # Test the specific bash.org case that was broken
+        url1 = "http://bash.org/?429313"
+        url2 = "http://bash.org/?428429"
+        self.assertNotEqual(
+            self.normalizer.generate_hash(url1), self.normalizer.generate_hash(url2)
+        )
 
     def test_fragment_preservation(self):
         """Test that URL fragments are preserved."""

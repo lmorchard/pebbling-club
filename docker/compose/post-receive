@@ -65,7 +65,7 @@ while read oldrev newrev refname; do
     
     # Run migrations using a temporary container with the new image
     log "Running migrations..."
-    docker-compose -f docker/compose/docker-compose.yml exec web python manage.py migrate
+    docker-compose -f docker/compose/docker-compose.yml run --rm web python manage.py migrate
     
     # Restart containers with new code
     log "Restarting containers..."
