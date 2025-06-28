@@ -11,6 +11,7 @@ x-django-environment: &django-env
   REDIS_URL: ${REDIS_URL:-redis://redis:6379/1}
   DJANGO_SQLITE_MULTIPLE_DB: ${DJANGO_SQLITE_MULTIPLE_DB:-false}
   LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  ALLOW_USER_REGISTRATION: ${ALLOW_USER_REGISTRATION:-true}
 
 x-django-base: &django-base
   image: pebbling-club-django:latest
