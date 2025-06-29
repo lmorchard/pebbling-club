@@ -90,4 +90,5 @@ dependencies = [
     "whitenoise==6.9.0",
     "flower>=2.0.1",
     "django-debug-toolbar>=5.1.0",
+    "django-prometheus==2.3.1",
 ]
