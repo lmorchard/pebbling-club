@@ -29,6 +29,13 @@ CSRF_TRUSTED_ORIGINS = env.list(
 # User registration settings
 ALLOW_USER_REGISTRATION = env.bool("ALLOW_USER_REGISTRATION", default=True)
 
+# Prometheus metrics settings
+PROMETHEUS_METRICS_ENABLED = env.bool("PROMETHEUS_METRICS_ENABLED", default=True)
+COLLECT_FEED_METRICS = env.bool("COLLECT_FEED_METRICS", default=True)
+COLLECT_BOOKMARK_METRICS = env.bool("COLLECT_BOOKMARK_METRICS", default=True)
+COLLECT_USER_METRICS = env.bool("COLLECT_USER_METRICS", default=True)
+MAX_METRICS_PER_MINUTE = env.int("MAX_METRICS_PER_MINUTE", default=1000)
+
 # Development-specific settings
 if DEBUG:
     INTERNAL_IPS = ["127.0.0.1"]
@@ -51,6 +58,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_celery_results",  # Stores Celery task results in DB
     "django_celery_beat",  # Enables periodic tasks
+    "django_prometheus",  # Prometheus metrics collection
     "pebbling",
     "pebbling_apps.common",
     "pebbling_apps.users",
@@ -66,6 +74,7 @@ if DEBUG:
     INSTALLED_APPS.append("debug_toolbar")
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -74,6 +83,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
 # Add debug toolbar middleware in debug mode
@@ -131,7 +141,7 @@ SQLITE_MULTIPLE_DB = env.bool("DJANGO_SQLITE_MULTIPLE_DB", default=True)
 
 if SQLITE_MULTIPLE_DB:
     _shared_sqlite_options = {
-        "ENGINE": "django.db.backends.sqlite3",
+        "ENGINE": "django_prometheus.db.backends.sqlite3",
         "OPTIONS": {
             "transaction_mode": "IMMEDIATE",
             "timeout": 5,
@@ -164,10 +174,16 @@ if SQLITE_MULTIPLE_DB:
         },
     }
 else:
-    # Use single database configuration (e.g., PostgreSQL)
-    DATABASES = {
-        "default": env.db("DATABASE_URL", default="sqlite:///data/main.sqlite3")
-    }
+    # Use single database configuration (e.g., PostgreSQL) with prometheus instrumentation
+    database_config = env.db("DATABASE_URL", default="sqlite:///data/main.sqlite3")
+
+    # Update engine to use prometheus wrapper
+    if database_config["ENGINE"] == "django.db.backends.postgresql":
+        database_config["ENGINE"] = "django_prometheus.db.backends.postgresql"
+    elif database_config["ENGINE"] == "django.db.backends.sqlite3":
+        database_config["ENGINE"] = "django_prometheus.db.backends.sqlite3"
+
+    DATABASES = {"default": database_config}
 
 # Configure database routers
 # Always include routers - they will handle single vs multi-database mode gracefully

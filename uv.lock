@@ -325,6 +325,18 @@ wheels = [
 ]
 
 [[package]]
+name = "django-prometheus"
+version = "2.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "prometheus-client" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e1/51/485b4122e00f2b8efec8a6d718ef4ce6b150231e49398e554ce1151f65c3/django-prometheus-2.3.1.tar.gz", hash = "sha256:f9c8b6c780c9419ea01043c63a437d79db2c33353451347894408184ad9c3e1e", size = 24718 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/75/fb3d4f056f9ed4f8848817d5afd7a1d949632ab117452ccd179e3839cfc4/django_prometheus-2.3.1-py2.py3-none-any.whl", hash = "sha256:cf9b26f7ba2e4568f08f8f91480a2882023f5908579681bcf06a4d2465f12168", size = 29081 },
+]
+
+[[package]]
 name = "django-redis"
 version = "5.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -721,6 +733,7 @@ dependencies = [
     { name = "django-celery-results" },
     { name = "django-debug-toolbar" },
     { name = "django-environ" },
+    { name = "django-prometheus" },
     { name = "django-redis" },
     { name = "django-select2" },
     { name = "django-timezone-field" },
@@ -810,6 +823,7 @@ requires-dist = [
     { name = "django-celery-results", specifier = "==2.5.1" },
     { name = "django-debug-toolbar", specifier = ">=5.1.0" },
     { name = "django-environ", specifier = "==0.12.0" },
+    { name = "django-prometheus", specifier = "==2.3.1" },
     { name = "django-redis", specifier = "==5.4.0" },
     { name = "django-select2", specifier = "==8.3.0" },
     { name = "django-timezone-field", specifier = "==7.1" },

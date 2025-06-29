@@ -7,6 +7,7 @@ from django.db import models
 from django.conf import settings
 from django.db import connection, connections
 from django.contrib.auth import get_user_model
+from django_prometheus.models import ExportModelOperationsMixin
 from pebbling_apps.common.models import QueryPage, TimestampedModel
 from pebbling_apps.common.utils import django_enum
 from pebbling_apps.unfurl.models import UnfurlMetadataField
@@ -26,7 +27,9 @@ class TagManager(models.Manager):
         return delimiter.join([str(tag.name) for tag in tags_queryset])
 
 
-class Tag(TimestampedModel):
+# ExportModelOperationsMixin is a factory function that returns a class dynamically
+# mypy cannot analyze this pattern, but it's the standard django-prometheus usage
+class Tag(ExportModelOperationsMixin("tag"), TimestampedModel):  # type: ignore[misc]
     objects = TagManager()
     name = models.CharField(max_length=64, unique=True)
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
@@ -276,7 +279,9 @@ class BookmarkManager(models.Manager):
         return queryset
 
 
-class Bookmark(TimestampedModel):
+# ExportModelOperationsMixin is a factory function that returns a class dynamically
+# mypy cannot analyze this pattern, but it's the standard django-prometheus usage
+class Bookmark(ExportModelOperationsMixin("bookmark"), TimestampedModel):  # type: ignore[misc]
     """Bookmark model with url and title."""
 
     omit_html = getattr(settings, "OMIT_HTML_FROM_UNFURL_METADATA", True)
@@ -305,8 +310,23 @@ class Bookmark(TimestampedModel):
 
     def save(self, *args, **kwargs):
         """Standard save with unique_hash generation."""
+        # Track if this is a create or update operation
+        is_create = self.pk is None
+
         self.unique_hash = self.generate_unique_hash()
-        return super().save(*args, **kwargs)
+        result = super().save(*args, **kwargs)
+
+        # Record metrics after successful save (with error handling)
+        try:
+            from .metrics import increment_bookmark_operation
+
+            operation = "create" if is_create else "update"
+            increment_bookmark_operation(operation, self.owner_id, "manual")
+        except Exception:
+            # Metrics collection should never break the save operation
+            pass
+
+        return result
 
     @property
     def host_name(self):

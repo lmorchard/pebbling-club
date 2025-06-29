@@ -7,6 +7,7 @@ import time
 from feedparser import FeedParserDict
 from django.conf import settings
 from django.db import connections
+from django_prometheus.models import ExportModelOperationsMixin
 from pebbling_apps.common.models import TimestampedModel
 import sqlite3
 
@@ -82,7 +83,9 @@ class FeedItemManager(models.Manager):
         return feed_item, created
 
 
-class Feed(TimestampedModel):
+# ExportModelOperationsMixin is a factory function that returns a class dynamically
+# mypy cannot analyze this pattern, but it's the standard django-prometheus usage
+class Feed(ExportModelOperationsMixin("feed"), TimestampedModel):  # type: ignore[misc]
     url = models.URLField(max_length=2048, unique=True)
     title = models.CharField(max_length=500, blank=True, null=True)
     newest_item_date = models.DateTimeField(null=True, blank=True)
@@ -145,7 +148,9 @@ class Feed(TimestampedModel):
         ]
 
 
-class FeedItem(TimestampedModel):
+# ExportModelOperationsMixin is a factory function that returns a class dynamically
+# mypy cannot analyze this pattern, but it's the standard django-prometheus usage
+class FeedItem(ExportModelOperationsMixin("feeditem"), TimestampedModel):  # type: ignore[misc]
     feed = models.ForeignKey(Feed, on_delete=models.CASCADE, related_name="items")
     guid = models.CharField(max_length=2048)
     date = models.DateTimeField()
