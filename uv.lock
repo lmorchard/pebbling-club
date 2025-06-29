@@ -90,6 +90,18 @@ wheels = [
 ]
 
 [[package]]
+name = "bleach"
+version = "6.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "webencodings" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/9a/0e33f5054c54d349ea62c277191c020c2d6ef1d65ab2cb1993f91ec846d1/bleach-6.2.0.tar.gz", hash = "sha256:123e894118b8a599fd80d3ec1a6d4cc7ce4e5882b1317a7e1ba69b56e95f991f", size = 203083 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fc/55/96142937f66150805c25c4d0f31ee4132fd33497753400734f9dfdcbdc66/bleach-6.2.0-py3-none-any.whl", hash = "sha256:117d9c6097a7c3d22fd578fcd8d35ff1e125df6736f554da4e432fdd63f31e5e", size = 163406 },
+]
+
+[[package]]
 name = "celery"
 version = "5.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -715,6 +727,7 @@ dependencies = [
     { name = "beautifulsoup4" },
     { name = "billiard" },
     { name = "black" },
+    { name = "bleach" },
     { name = "celery" },
     { name = "celery-sqlalchemy-scheduler" },
     { name = "certifi" },
@@ -781,6 +794,7 @@ dependencies = [
     { name = "sqlalchemy" },
     { name = "sqlparse" },
     { name = "tqdm" },
+    { name = "types-bleach" },
     { name = "types-mock" },
     { name = "types-pytz" },
     { name = "types-requests" },
@@ -805,6 +819,7 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = "==4.13.3" },
     { name = "billiard", specifier = "==4.2.1" },
     { name = "black", specifier = "==25.1.0" },
+    { name = "bleach", specifier = "==6.2.0" },
     { name = "celery", specifier = "==5.4.0" },
     { name = "celery-sqlalchemy-scheduler", specifier = "==0.3.0" },
     { name = "certifi", specifier = "==2025.1.31" },
@@ -871,6 +886,7 @@ requires-dist = [
     { name = "sqlalchemy", specifier = "==2.0.38" },
     { name = "sqlparse", specifier = "==0.5.3" },
     { name = "tqdm", specifier = "==4.67.1" },
+    { name = "types-bleach", specifier = "==6.1.0.20240311" },
     { name = "types-mock", specifier = "==5.2.0.20250306" },
     { name = "types-pytz", specifier = "==2025.1.0.20250318" },
     { name = "types-requests", specifier = "==2.32.0.20250306" },
@@ -1159,6 +1175,27 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a8/4b/29b4ef32e036bb34e4ab51796dd745cdba7ed47ad142a9f4a1eb8e0c744d/tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2", size = 169737 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d0/30/dc54f88dd4a2b5dc8a0279bdd7270e735851848b762aeb1c1184ed1f6b14/tqdm-4.67.1-py3-none-any.whl", hash = "sha256:26445eca388f82e72884e0d580d5464cd801a3ea01e63e5601bdff9ba6a48de2", size = 78540 },
+]
+
+[[package]]
+name = "types-bleach"
+version = "6.1.0.20240311"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "types-html5lib" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2c/0b/ba78648bfee3a113c405d79de698f4733553afb60eabfe2722c285c09781/types-bleach-6.1.0.20240311.tar.gz", hash = "sha256:1e65b16ab56d61c1d963f53a8dc44e9de50c6c44e3e267e2d3ae76fa41484c8e", size = 6322 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/48/8b/311e790fd830d22aba9eac9bdb3a37f6ee46b5aa52c337ac5773ee692e11/types_bleach-6.1.0.20240311-py3-none-any.whl", hash = "sha256:bd2bc2d57b677c44d0439f3cfdb98759f61200477fa1b602f6dc668e71f0ab7c", size = 6992 },
+]
+
+[[package]]
+name = "types-html5lib"
+version = "1.1.11.20250516"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d0/ed/9f092ff479e2b5598941855f314a22953bb04b5fb38bcba3f880feb833ba/types_html5lib-1.1.11.20250516.tar.gz", hash = "sha256:65043a6718c97f7d52567cc0cdf41efbfc33b1f92c6c0c5e19f60a7ec69ae720", size = 16136 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cc/3b/cb5b23c7b51bf48b8c9f175abb9dce2f1ecd2d2c25f92ea9f4e3720e9398/types_html5lib-1.1.11.20250516-py3-none-any.whl", hash = "sha256:5e407b14b1bd2b9b1107cbd1e2e19d4a0c46d60febd231c7ab7313d7405663c1", size = 21770 },
 ]
 
 [[package]]

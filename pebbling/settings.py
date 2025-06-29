@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "pebbling_apps.feeds",
     "pebbling_apps.home",
     "pebbling_apps.unfurl",
+    "pebbling_apps.inbox",
 ]
 
 # Add debug toolbar app in debug mode

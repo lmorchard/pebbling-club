@@ -1,0 +1,74 @@
+/* Inbox-specific styles */
+
+/* Define thumbnail size for inbox items */
+:root {
+    --inbox-thumbnail-size: 84px;
+}
+
+/* Bulk selection checkbox styling */
+.inbox-item .item-checkbox {
+    margin-right: 0.5em;
+}
+
+/* Bulk actions section styling */
+.bulk-actions {
+    margin: 1em 0;
+    padding: 0.75em;
+    background-color: var(--theme-highlighted-bg-color);
+    border: 1px solid var(--theme-border-color);
+    border-radius: 4px;
+}
+
+.bulk-controls {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}
+
+.bulk-controls label {
+    margin: 0;
+}
+
+.bulk-controls select,
+.bulk-controls button {
+    padding: 0.25em 0.5em;
+}
+
+.bulk-controls button:disabled,
+.bulk-controls select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#selection-count {
+    margin-left: 1em;
+    font-style: italic;
+}
+
+
+/* Inbox item layout consistency */
+.inbox-items {
+    width: 100%;
+}
+
+.inbox-items li {
+    width: 100%;
+    max-width: 100%;
+}
+
+.inbox-item {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Prevent text content from expanding grid columns */
+.inbox-item .item-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inbox-item .meta {
+    min-width: 0; /* Allow flex items to shrink below content size */
+}

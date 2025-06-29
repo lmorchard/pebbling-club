@@ -1,0 +1,139 @@
+/* Inbox item specific styles */
+
+.inbox-item {
+  display: grid;
+  column-gap: var(--column-gap);
+  row-gap: calc(var(--column-gap) * 0.75);
+  grid-template-columns:
+    [full-start checkbox-start] 30px
+    [checkbox-end thumbnail-start] var(--inbox-thumbnail-size, 84px)
+    [thumbnail-end main-start] 1fr
+    [main-end full-end];
+  padding: 1em 0;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.inbox-item > * {
+  grid-column: main;
+}
+
+.inbox-item > .item-checkbox {
+  grid-column: checkbox;
+  grid-row: 1;
+  align-self: start;
+  margin-top: 0.25em;
+}
+
+.inbox-item > .thumbnail {
+  grid-column: thumbnail;
+  grid-row: 1 / span 2;
+  
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: var(--inbox-thumbnail-size, 84px);
+  height: var(--inbox-thumbnail-size, 84px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--theme-text-color);
+  background-color: rgb(128, 128, 128, 0.1);
+  border: solid 1px rgb(128, 128, 128, 0.3);
+}
+
+.inbox-item > .thumbnail img,
+.inbox-item > .thumbnail svg {
+  width: 100%;
+  object-fit: contain;
+}
+
+.inbox-item > .item-title {
+  grid-column: main;
+  font-size: 1.2em;
+  font-weight: bold;
+  text-decoration: none;
+  color: var(--theme-link-color);
+}
+
+.inbox-item > .item-title:hover {
+  text-decoration: underline;
+}
+
+.inbox-item > .meta {
+  grid-column: main;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  column-gap: var(--column-gap);
+  row-gap: calc(var(--column-gap) * 0.75);
+  font-size: 0.9em;
+  opacity: 0.75;
+}
+
+.inbox-item > .actions {
+  grid-column: main;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin-top: 0.5em;
+}
+
+.inbox-item .actions .action-btn {
+  padding: 0.25em 0.5em;
+  border: 1px solid var(--theme-border-color);
+  border-radius: 4px;
+  background: var(--theme-highlighted-bg-color);
+  color: var(--theme-text-color);
+  text-decoration: none;
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.inbox-item .actions .action-btn:hover {
+  background: var(--theme-background-color);
+}
+
+.inbox-item .actions .action-btn.primary {
+  background: var(--theme-link-color);
+  color: white;
+}
+
+.inbox-item .actions .action-btn.danger {
+  background: var(--theme-error-message-color);
+  color: white;
+}
+
+.inbox-item .tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin-top: 0.5em;
+}
+
+.inbox-item .tag {
+  background-color: var(--theme-highlighted-bg-color);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.8em;
+}
+
+.inbox-item .tag.system-tag {
+  background-color: var(--theme-text-muted-color);
+  color: white;
+}
+
+.inbox-item .description {
+  margin-top: 0.5em;
+}
+
+.inbox-item .description summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.inbox-item .description-content {
+  margin-top: 0.5em;
+  padding: 0.5em;
+  background-color: var(--theme-highlighted-bg-color);
+  border-radius: 4px;
+}

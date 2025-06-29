@@ -57,12 +57,14 @@
                                 </theme-selector>
                                 {% if user.is_authenticated %}
                                     <a class="newBookmark" href="{% url 'bookmarks:add' %}">+ New</a>
+                                    <a class="inbox-link" href="{% url 'inbox:list' %}">📥 Inbox</a>
                                     <details class="autoclose">
                                         <summary>
                                             <span>{{ user.username }}</span>
                                         </summary>
                                         <div>
                                             <a href="{% url 'bookmarks:add' %}">+ New</a>
+                                            <a href="{% url 'inbox:list' %}">📥 Inbox</a>
                                             <a href="{% url 'bookmarks:import' %}">Import</a>
                                             <a href="{% url "profiles:view" user.username %}">Profile</a>
                                             <a href="{% url "profiles:edit" user.username %}">Settings</a>
