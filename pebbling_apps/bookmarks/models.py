@@ -11,7 +11,7 @@ from pebbling_apps.common.models import QueryPage, TimestampedModel
 from pebbling_apps.common.utils import django_enum
 from pebbling_apps.unfurl.models import UnfurlMetadataField
 from urllib.parse import urlparse
-from django.db.models import Case, When, Value, Q
+from django.db.models import Case, When, Value, Q, F
 from django.db.models.expressions import RawSQL
 import logging
 
@@ -312,3 +312,60 @@ class Bookmark(TimestampedModel):
     def host_name(self):
         """Extracts the host name from the bookmark URL."""
         return urlparse(self.url).hostname
+
+
+class ImportJob(TimestampedModel):
+    """Model to track bookmark import jobs."""
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("processing", "Processing"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    file_path = models.CharField(max_length=500)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    file_size = models.BigIntegerField()
+    total_bookmarks = models.IntegerField(null=True, blank=True)
+    processed_bookmarks = models.IntegerField(default=0)
+    failed_bookmarks = models.IntegerField(default=0)
+    error_message = models.TextField(null=True, blank=True)
+    failed_bookmark_details = models.JSONField(default=list, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    import_options = models.JSONField(default=dict)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.status}"
+
+    @property
+    def progress_percentage(self):
+        """Calculate the progress percentage if total_bookmarks is set."""
+        if self.total_bookmarks and self.total_bookmarks > 0:
+            return int((self.processed_bookmarks / self.total_bookmarks) * 100)
+        return 0
+
+    def update_progress(self, processed, failed=0):
+        """Update progress efficiently with minimal database writes."""
+        # Only update if progress changed significantly (1% or 10 records)
+        if self.total_bookmarks:
+            old_percentage = self.progress_percentage
+            new_percentage = int((processed / self.total_bookmarks) * 100)
+
+            # Update if percentage changed by 1% or processed changed by 10 or more
+            if (
+                abs(new_percentage - old_percentage) >= 1
+                or abs(processed - self.processed_bookmarks) >= 10
+                or failed != self.failed_bookmarks
+            ):
+
+                # Use F() expressions for atomic updates
+                ImportJob.objects.filter(id=self.id).update(
+                    processed_bookmarks=processed, failed_bookmarks=failed
+                )

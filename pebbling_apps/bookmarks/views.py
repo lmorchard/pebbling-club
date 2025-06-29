@@ -2,13 +2,21 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.contrib import messages
+from django.views.generic import (
+    ListView,
+    CreateView,
+    UpdateView,
+    DeleteView,
+    TemplateView,
+)
 from django.views import View
 from django.core.exceptions import PermissionDenied
 import logging
 
-from .models import Bookmark, BookmarkSort, Tag
-from .forms import BookmarkForm
+from .models import Bookmark, BookmarkSort, Tag, ImportJob
+from .forms import BookmarkForm, ImportJobForm
+from .services import save_import_file
 from urllib.parse import quote, unquote
 from django.db import models
 from django.db.models import Q
@@ -22,6 +30,7 @@ from django.http import (
 from django.utils.html import escape
 from django.views.decorators.http import require_GET
 from enum import StrEnum, auto
+from django.utils import timezone
 
 import datetime
 import json
@@ -518,248 +527,10 @@ class BookmarkExportActivityStreamView(LoginRequiredMixin, View):
         return response
 
 
-class BookmarkImportActivityStreamView(LoginRequiredMixin, View):
-    """Import bookmarks from ActivityStream JSON-LD format."""
-
-    def post(self, request):
-        import time
-        from django.db import transaction
-
-        start_time = time.time()
-
-        from .serializers import ActivityStreamSerializer
-
-        # Validate request size (prevent DoS attacks)
-        content_length = request.META.get("CONTENT_LENGTH")
-        if content_length:
-            try:
-                content_length = int(content_length)
-                max_size = 50 * 1024 * 1024  # 50MB limit
-                if content_length > max_size:
-                    return JsonResponse(
-                        {
-                            "error": f"Request too large. Maximum size is {max_size // (1024*1024)}MB"
-                        },
-                        status=413,
-                    )
-            except ValueError:
-                pass  # Invalid content length header, continue
-
-        # Check for skip_duplicates parameter (query param or JSON body)
-        skip_duplicates = False
-
-        # Check query parameter first
-        if request.GET.get("skip_duplicates", "").lower() in ("true", "1"):
-            skip_duplicates = True
-
-        # Validate content type
-        content_type = request.content_type
-        if not content_type or not content_type.startswith("application/json"):
-            return JsonResponse(
-                {"error": "Content-Type must be application/json"}, status=400
-            )
-
-        try:
-            # Parse JSON data with size validation
-            import json
-
-            request_body = request.body
-            if len(request_body) > 50 * 1024 * 1024:  # 50MB limit
-                return JsonResponse({"error": "Request body too large"}, status=413)
-
-            json_data = json.loads(request_body.decode("utf-8"))
-
-            # Check for skip_duplicates in JSON body (overrides query param)
-            if isinstance(json_data, dict) and "skip_duplicates" in json_data:
-                skip_duplicates = bool(json_data.get("skip_duplicates", False))
-                # If data is wrapped, extract the actual ActivityStream data
-                if "data" in json_data:
-                    json_data = json_data["data"]
-
-        except json.JSONDecodeError as e:
-            return JsonResponse({"error": f"Invalid JSON: {str(e)}"}, status=400)
-        except UnicodeDecodeError as e:
-            return JsonResponse(
-                {"error": f"Invalid UTF-8 encoding: {str(e)}"}, status=400
-            )
-        except MemoryError:
-            return JsonResponse({"error": "Request too large to process"}, status=413)
-
-        serializer = ActivityStreamSerializer()
-
-        try:
-            # Validate ActivityStream format
-            collection_data = serializer.parse_collection(json_data)
-
-            total_items = len(collection_data["items"])
-
-            # Validate collection size
-            max_items = 50000  # Prevent processing extremely large collections
-            if total_items > max_items:
-                return JsonResponse(
-                    {
-                        "error": f"Collection too large. Maximum {max_items} items allowed, got {total_items}"
-                    },
-                    status=413,
-                )
-
-            # Log start of import for large collections
-            if total_items > 100:
-                logger.info(
-                    f"Starting import of {total_items} bookmarks for user {request.user.username}"
-                )
-
-            # Process bookmarks in batches within transactions
-            imported_count = 0
-            updated_count = 0
-            skipped_count = 0
-            errors = []
-
-            batch_size = 100
-            batches = [
-                collection_data["items"][i : i + batch_size]
-                for i in range(0, total_items, batch_size)
-            ]
-
-            for batch_num, batch in enumerate(batches):
-                try:
-                    with transaction.atomic():
-                        for i, link_item in enumerate(batch):
-                            try:
-                                # Convert Link to bookmark data
-                                bookmark_data = serializer.link_to_bookmark_data(
-                                    link_item, request.user
-                                )
-
-                                # Extract tags for separate processing
-                                tags_data = bookmark_data.pop("_tags", [])
-
-                                # Remove timestamps for update_or_create (let Django handle them)
-                                bookmark_data.pop("created_at", None)
-                                bookmark_data.pop("updated_at", None)
-
-                                # Create or update bookmark based on skip_duplicates setting
-                                from .models import Bookmark
-
-                                if skip_duplicates:
-                                    # Use get_or_create to skip existing bookmarks
-                                    bookmark, created = Bookmark.objects.get_or_create(
-                                        url=bookmark_data["url"],
-                                        owner=request.user,
-                                        defaults=bookmark_data,
-                                    )
-                                    if created:
-                                        imported_count += 1
-                                    else:
-                                        skipped_count += 1
-                                else:
-                                    # Use update_or_create to update existing bookmarks
-                                    bookmark, created = (
-                                        Bookmark.objects.update_or_create(
-                                            url=bookmark_data["url"],
-                                            owner=request.user,
-                                            defaults=bookmark_data,
-                                        )
-                                    )
-                                    if created:
-                                        imported_count += 1
-                                    else:
-                                        updated_count += 1
-
-                                # Process tags (always update tags, even for skipped duplicates)
-                                if tags_data:
-                                    bookmark_data["_tags"] = tags_data
-                                    tags = serializer.process_bookmark_tags(
-                                        bookmark_data, request.user
-                                    )
-                                    bookmark.tags.set(tags)
-
-                            except Exception as e:
-                                global_index = batch_num * batch_size + i
-                                logger.error(
-                                    f"Error processing bookmark {global_index}: {str(e)}"
-                                )
-                                errors.append(f"Item {global_index}: {str(e)}")
-
-                        # Log progress for large imports
-                        if total_items > 100:
-                            progress = min(
-                                100, ((batch_num + 1) * batch_size / total_items) * 100
-                            )
-                            logger.debug(
-                                f"Import progress: {progress:.1f}% ({batch_num + 1}/{len(batches)} batches)"
-                            )
-
-                except Exception as e:
-                    logger.error(f"Error processing batch {batch_num}: {str(e)}")
-                    errors.append(f"Batch {batch_num} failed: {str(e)}")
-                    # Continue with next batch instead of failing completely
-
-            # Log completion timing and statistics
-            end_time = time.time()
-            duration = end_time - start_time
-
-            logger.info(
-                f"User {request.user.username} imported ActivityStream bookmarks",
-                extra={
-                    "user": request.user.username,
-                    "format": "activitystream",
-                    "skip_duplicates": skip_duplicates,
-                    "total_items": total_items,
-                    "imported": imported_count,
-                    "updated": updated_count,
-                    "skipped": skipped_count,
-                    "errors": len(errors),
-                    "duration_seconds": duration,
-                    "items_per_second": total_items / duration if duration > 0 else 0,
-                    "timestamp": datetime.datetime.now().isoformat(),
-                },
-            )
-
-            response_data = {
-                "imported": imported_count,
-                "updated": updated_count,
-                "skipped": skipped_count,
-                "errors": errors,
-                "processing_time_seconds": round(duration, 2),
-                "total_items_processed": total_items,
-            }
-
-            # Return appropriate status code based on results
-            if len(errors) > total_items // 2 and total_items > 1:
-                # More than half failed - partial failure (only for multiple items)
-                return JsonResponse(response_data, status=207)  # Multi-Status
-            else:
-                # Success or partial success - collection was processed successfully
-                # even if individual items had errors
-                return JsonResponse(response_data, status=200)
-
-        except ValueError as e:
-            logger.error(f"ActivityStream validation error: {str(e)}")
-            return JsonResponse(
-                {"error": f"Invalid ActivityStream format: {str(e)}"}, status=400
-            )
-        except transaction.TransactionManagementError as e:
-            logger.error(
-                f"Database transaction error during import: {str(e)}", exc_info=True
-            )
-            return JsonResponse(
-                {
-                    "error": "Database transaction failed. Import may be partially complete."
-                },
-                status=500,
-            )
-        except MemoryError:
-            logger.error("Memory error during import - collection too large")
-            return JsonResponse(
-                {
-                    "error": "Collection too large to process. Try importing smaller batches."
-                },
-                status=413,
-            )
-        except Exception as e:
-            logger.error(f"Unexpected error during import: {str(e)}", exc_info=True)
-            return JsonResponse({"error": f"Import failed: {str(e)}"}, status=500)
+# NOTE: BookmarkImportActivityStreamView has been removed in favor of the new
+# asynchronous import system using ImportJob model and Celery tasks.
+# The new system provides better UX with progress tracking, error handling,
+# and the ability to handle large files without blocking the web server.
 
 
 @login_required
@@ -781,3 +552,141 @@ def fetch_unfurl_metadata(request):
         return JsonResponse(out)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+class BookmarkImportView(LoginRequiredMixin, TemplateView):
+    """Display the import page with form and job list."""
+
+    template_name = "bookmarks/import.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = ImportJobForm()
+        import_jobs = ImportJob.objects.filter(user=self.request.user).order_by(
+            "-created_at"
+        )
+        context["import_jobs"] = import_jobs
+
+        # Check if any jobs are pending or processing to enable auto-refresh
+        context["needs_refresh"] = import_jobs.filter(
+            status__in=["pending", "processing"]
+        ).exists()
+
+        return context
+
+
+class BookmarkImportSubmitView(LoginRequiredMixin, View):
+    """Handle import form submission."""
+
+    def post(self, request):
+        form = ImportJobForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            # Save the uploaded file
+            uploaded_file = form.cleaned_data["file"]
+            file_path = save_import_file(uploaded_file, request.user)
+
+            # Create import job
+            import_job = ImportJob.objects.create(
+                user=request.user,
+                file_path=file_path,
+                file_size=uploaded_file.size,
+                import_options={
+                    "duplicate_handling": form.cleaned_data["duplicate_handling"]
+                },
+            )
+
+            # Trigger async processing task
+            from .tasks import process_import_job
+
+            process_import_job.delay(import_job.id)
+
+            messages.success(
+                request, "Import job has been queued for background processing."
+            )
+            return redirect("bookmarks:import")
+        else:
+            # Add form errors to messages
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+            return redirect("bookmarks:import")
+
+
+class BookmarkImportRetryView(LoginRequiredMixin, View):
+    """Handle retry action for failed import jobs."""
+
+    def post(self, request):
+        import_job_id = request.POST.get("import_job_id")
+
+        if not import_job_id:
+            messages.error(request, "Invalid import job.")
+            return redirect("bookmarks:import")
+
+        try:
+            import_job = ImportJob.objects.get(id=import_job_id, user=request.user)
+
+            if import_job.status != "failed":
+                messages.error(request, "Only failed imports can be retried.")
+                return redirect("bookmarks:import")
+
+            # Reset job to pending status
+            import_job.status = "pending"
+            import_job.error_message = None
+            import_job.failed_bookmark_details = []
+            import_job.processed_bookmarks = 0
+            import_job.failed_bookmarks = 0
+            import_job.started_at = None
+            import_job.completed_at = None
+            import_job.save()
+
+            # Trigger the processing task again
+            from .tasks import process_import_job
+
+            process_import_job.delay(import_job.id)
+
+            messages.success(request, "Import job has been queued for retry.")
+
+        except ImportJob.DoesNotExist:
+            messages.error(request, "Import job not found.")
+        except Exception as e:
+            messages.error(request, f"Failed to retry import: {str(e)}")
+
+        return redirect("bookmarks:import")
+
+
+class BookmarkImportCancelView(LoginRequiredMixin, View):
+    """Handle cancel action for pending/processing import jobs."""
+
+    def post(self, request):
+        import_job_id = request.POST.get("import_job_id")
+
+        if not import_job_id:
+            messages.error(request, "Invalid import job.")
+            return redirect("bookmarks:import")
+
+        try:
+            import_job = ImportJob.objects.get(id=import_job_id, user=request.user)
+
+            if import_job.status not in ["pending", "processing"]:
+                messages.error(
+                    request, "Only pending or processing imports can be cancelled."
+                )
+                return redirect("bookmarks:import")
+
+            # Update status to cancelled
+            import_job.status = "cancelled"
+            import_job.completed_at = timezone.now()
+            import_job.save()
+
+            # TODO: Attempt to revoke the Celery task if it's still pending
+            # This would require task ID tracking or other task management
+
+            messages.success(request, "Import job has been cancelled.")
+
+        except ImportJob.DoesNotExist:
+            messages.error(request, "Import job not found.")
+        except Exception as e:
+            messages.error(request, f"Failed to cancel import: {str(e)}")
+
+        return redirect("bookmarks:import")

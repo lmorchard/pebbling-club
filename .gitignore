@@ -5,6 +5,7 @@
 /venv/
 /tmp/
 /static/
+/media/
 *.pyc
 __pycache__/
 node_modules/

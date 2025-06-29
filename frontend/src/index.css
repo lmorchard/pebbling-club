@@ -4,6 +4,7 @@
 @import url("./css/pagination.css");
 @import url("./css/header.css");
 @import url("./css/profile.css");
+@import url("./css/import.css");
 
 :root {
   --column-gap: 1.25em;
@@ -70,10 +71,18 @@ body {
   padding: 0;
 }
 
-a:link { color: var(--theme-link-color); }
-a:visited { color: var(--theme-link-visited-color); }
-a:link:active { color: var(--theme-link-active-color); }
-a:visited:active { color: var(--theme-link-visited-active-color); }
+a:link {
+  color: var(--theme-link-color);
+}
+a:visited {
+  color: var(--theme-link-visited-color);
+}
+a:link:active {
+  color: var(--theme-link-active-color);
+}
+a:visited:active {
+  color: var(--theme-link-visited-active-color);
+}
 
 section.home {
   width: 100%;
