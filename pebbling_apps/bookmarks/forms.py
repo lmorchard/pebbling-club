@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from .models import Bookmark, Tag
 
 
@@ -69,3 +70,34 @@ class BookmarkForm(forms.ModelForm):
             self._tags = tags
 
         return instance
+
+
+class ImportJobForm(forms.Form):
+    """Form for handling import file uploads."""
+
+    file = forms.FileField(
+        label="ActivityStreams JSON file",
+        widget=forms.FileInput(attrs={"accept": ".json"}),
+    )
+    duplicate_handling = forms.ChoiceField(
+        choices=[("skip", "Skip duplicates"), ("overwrite", "Overwrite duplicates")],
+        initial="skip",
+        label="Duplicate handling",
+    )
+
+    def clean_file(self):
+        """Validate file size and extension."""
+        file = self.cleaned_data.get("file")
+        if file:
+            # Check file extension
+            if not file.name.endswith(".json"):
+                raise ValidationError("Only JSON files are supported.")
+
+            # Check file size (25MB limit)
+            max_size = 25 * 1024 * 1024  # 25MB in bytes
+            if file.size > max_size:
+                raise ValidationError(
+                    f"File size must not exceed 25MB. Your file is {file.size / 1024 / 1024:.1f}MB."
+                )
+
+        return file

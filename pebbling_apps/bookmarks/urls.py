@@ -8,7 +8,10 @@ from .views import (
     TagDetailView,
     BookmarkExportNetscapeView,
     BookmarkExportActivityStreamView,
-    BookmarkImportActivityStreamView,
+    BookmarkImportView,
+    BookmarkImportSubmitView,
+    BookmarkImportRetryView,
+    BookmarkImportCancelView,
     fetch_unfurl_metadata,
 )
 
@@ -28,11 +31,11 @@ urlpatterns = [
         BookmarkExportActivityStreamView.as_view(),
         name="export_activitystream",
     ),
-    path(
-        "bookmarks/import/activitystream/",
-        BookmarkImportActivityStreamView.as_view(),
-        name="import_activitystream",
-    ),
+    # NOTE: Legacy ActivityStream import endpoint removed in favor of async import system
+    path("import/", BookmarkImportView.as_view(), name="import"),
+    path("import/submit/", BookmarkImportSubmitView.as_view(), name="import_submit"),
+    path("import/retry/", BookmarkImportRetryView.as_view(), name="import_retry"),
+    path("import/cancel/", BookmarkImportCancelView.as_view(), name="import_cancel"),
     path("bookmarks/<int:pk>/edit", BookmarkUpdateView.as_view(), name="edit"),
     path("bookmarks/<int:pk>/delete", BookmarkDeleteView.as_view(), name="delete"),
     path("t/", TagListView.as_view(), name="tag_list"),

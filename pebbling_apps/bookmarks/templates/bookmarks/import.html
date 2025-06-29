@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Import Bookmarks{% endblock %}
+{% block content %}
+    <h2>Import Bookmarks</h2>
+    <!-- Upload Form Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Upload ActivityStreams JSON File</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <form method="post"
+                          enctype="multipart/form-data"
+                          action="{% url 'bookmarks:import_submit' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.file.label_tag }}
+                            {{ form.file }}
+                            {% if form.file.errors %}<div class="text-danger small">{{ form.file.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.duplicate_handling.label_tag }}
+                            {{ form.duplicate_handling }}
+                            {% if form.duplicate_handling.errors %}
+                                <div class="text-danger small">{{ form.duplicate_handling.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload and Import</button>
+                    </form>
+                </div>
+                <div class="col-md-4">
+                    <div class="alert alert-info">
+                        <h6>File Requirements:</h6>
+                        <ul class="mb-0 small">
+                            <li>ActivityStreams JSON format</li>
+                            <li>Maximum file size: 25MB</li>
+                            <li>
+                                <strong>Skip duplicates:</strong> Existing bookmarks unchanged
+                            </li>
+                            <li>
+                                <strong>Overwrite duplicates:</strong> Updates existing bookmarks
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Import History Section -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Import History</h3>
+        </div>
+        <div class="card-body">
+            {% if import_jobs %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>File Size</th>
+                                <th>Status</th>
+                                <th>Bookmarks</th>
+                                <th>Progress</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for job in import_jobs %}
+                                <tr>
+                                    <td>
+                                        <span title="{{ job.created_at|date:'Y-m-d H:i:s' }}">{{ job.created_at|timesince }} ago</span>
+                                    </td>
+                                    <td>
+                                        {% if job.file_size %}
+                                            {% if job.file_size > 1048576 %}
+                                                {% widthratio job.file_size 1048576 1 %} MB
+                                            {% else %}
+                                                {% widthratio job.file_size 1024 1 %} KB
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if job.status == 'pending' %}
+                                            <span class="badge bg-secondary">{{ job.get_status_display }}</span>
+                                        {% elif job.status == 'processing' %}
+                                            <span class="badge bg-primary">{{ job.get_status_display }}</span>
+                                        {% elif job.status == 'completed' %}
+                                            <span class="badge bg-success">{{ job.get_status_display }}</span>
+                                        {% elif job.status == 'failed' %}
+                                            <span class="badge bg-danger">{{ job.get_status_display }}</span>
+                                        {% elif job.status == 'cancelled' %}
+                                            <span class="badge bg-warning">{{ job.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if job.total_bookmarks %}
+                                            {{ job.total_bookmarks|floatformat:0 }}
+                                            {% if job.failed_bookmarks > 0 %}<small class="text-danger">({{ job.failed_bookmarks }} failed)</small>{% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if job.status == 'processing' and job.total_bookmarks %}
+                                            {{ job.processed_bookmarks }} of {{ job.total_bookmarks }} ({{ job.progress_percentage }}%)
+                                        {% elif job.status == 'completed' %}
+                                            Completed
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if job.status == 'failed' %}
+                                            <form method="post"
+                                                  action="{% url 'bookmarks:import_retry' %}"
+                                                  class="import-form-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="import_job_id" value="{{ job.id }}">
+                                                <button type="submit" class="btn btn-warning btn-sm">Retry</button>
+                                            </form>
+                                        {% elif job.status == 'pending' or job.status == 'processing' %}
+                                            <form method="post"
+                                                  action="{% url 'bookmarks:import_cancel' %}"
+                                                  class="import-form-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="import_job_id" value="{{ job.id }}">
+                                                <button type="submit"
+                                                        class="btn btn-danger btn-sm"
+                                                        onclick="return confirm('Are you sure you want to cancel this import?')">
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if job.status == 'failed' and job.error_message %}
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="alert alert-danger mb-0 small">
+                                                <strong>Error:</strong> {{ job.error_message }}
+                                                {% if job.failed_bookmark_details %}
+                                                    <details class="mt-2">
+                                                        <summary>Failed bookmark details ({{ job.failed_bookmark_details|length }} items)</summary>
+                                                        <ul class="mt-2 mb-0">
+                                                            {% for detail in job.failed_bookmark_details|slice:":5" %}
+                                                                <li>{{ detail.url|default:"Unknown URL" }}: {{ detail.error }}</li>
+                                                            {% endfor %}
+                                                            {% if job.failed_bookmark_details|length > 5 %}
+                                                                <li>
+                                                                    <em>... and {{ job.failed_bookmark_details|length|add:"-5" }} more</em>
+                                                                </li>
+                                                            {% endif %}
+                                                        </ul>
+                                                    </details>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">No import jobs found. Upload a file above to get started.</div>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Auto-refresh for pending/processing jobs -->
+    {% if needs_refresh %}
+        <script>
+    setTimeout(function() {
+        window.location.reload();
+    }, 5000);
+        </script>
+    {% endif %}
+{% endblock content %}

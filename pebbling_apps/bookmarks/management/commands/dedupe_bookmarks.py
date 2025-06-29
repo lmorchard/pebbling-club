@@ -42,7 +42,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Set up logging
         log_level = getattr(logging, options["log_level"])
-        logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s")
+        logging.basicConfig(
+            level=log_level, format="%(asctime)s - %(levelname)s - %(message)s"
+        )
         logger = logging.getLogger("bookmarks.dedupe")
 
         dry_run = options["dry_run"]
@@ -78,18 +80,18 @@ class Command(BaseCommand):
             try:
                 # Calculate normalized hash
                 new_hash = normalizer.generate_hash(bookmark.url)
-                
+
                 # Create composite key for user-specific duplicates
                 hash_key = f"{bookmark.owner_id}:{new_hash}"
-                
+
                 if hash_key not in hash_map:
                     hash_map[hash_key] = []
                 hash_map[hash_key].append(bookmark.id)
-                
+
                 processed += 1
                 if processed % 100 == 0:
                     logger.info(f"Processed {processed}/{total_bookmarks} bookmarks")
-                    
+
             except Exception as e:
                 logger.error(f"Error processing bookmark {bookmark.id}: {e}")
 
@@ -98,10 +100,12 @@ class Command(BaseCommand):
         for hash_key, bookmark_ids in hash_map.items():
             if len(bookmark_ids) > 1:
                 duplicates_found += len(bookmark_ids) - 1
-                
+
                 # Get all bookmarks with this hash
-                bookmarks = list(Bookmark.objects.filter(id__in=bookmark_ids).order_by("created_at"))
-                
+                bookmarks = list(
+                    Bookmark.objects.filter(id__in=bookmark_ids).order_by("created_at")
+                )
+
                 # Determine which to keep
                 if keep_newer:
                     # Keep the last one (newest)
@@ -111,7 +115,7 @@ class Command(BaseCommand):
                     # Keep the first one (oldest)
                     to_keep = bookmarks[0]
                     to_delete = bookmarks[1:]
-                
+
                 # Process deletions
                 for bookmark in to_delete:
                     deletion_log = {
@@ -129,9 +133,9 @@ class Command(BaseCommand):
                         "kept_bookmark_id": to_keep.id,
                         "kept_bookmark_url": to_keep.url,
                     }
-                    
+
                     logger.info(f"Duplicate: {json.dumps(deletion_log, indent=2)}")
-                    
+
                     if not dry_run:
                         try:
                             with transaction.atomic():
@@ -143,11 +147,17 @@ class Command(BaseCommand):
         # Log final statistics
         self.stdout.write(self.style.SUCCESS("\nDeduplication completed:"))
         self.stdout.write(f"  Total bookmarks processed: {processed}")
-        self.stdout.write(f"  Duplicate groups found: {len([ids for ids in hash_map.values() if len(ids) > 1])}")
+        self.stdout.write(
+            f"  Duplicate groups found: {len([ids for ids in hash_map.values() if len(ids) > 1])}"
+        )
         self.stdout.write(f"  Total duplicates found: {duplicates_found}")
-        
+
         if dry_run:
-            self.stdout.write(self.style.WARNING(f"  Bookmarks that would be deleted: {duplicates_found}"))
+            self.stdout.write(
+                self.style.WARNING(
+                    f"  Bookmarks that would be deleted: {duplicates_found}"
+                )
+            )
         else:
             self.stdout.write(f"  Bookmarks deleted: {bookmarks_deleted}")
             final_count = Bookmark.objects.count()

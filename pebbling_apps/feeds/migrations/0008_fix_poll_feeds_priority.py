@@ -6,7 +6,7 @@ from django.db import migrations
 def fix_poll_feeds_priority(apps, schema_editor):
     """Remove incorrect kwargs from Poll All Feeds periodic task."""
     PeriodicTask = apps.get_model("django_celery_beat", "PeriodicTask")
-    
+
     try:
         task = PeriodicTask.objects.get(name="Poll All Feeds")
         # Remove the kwargs that were causing the error
@@ -19,7 +19,7 @@ def fix_poll_feeds_priority(apps, schema_editor):
 def revert_poll_feeds_priority(apps, schema_editor):
     """Revert to previous state (for rollback)."""
     PeriodicTask = apps.get_model("django_celery_beat", "PeriodicTask")
-    
+
     try:
         task = PeriodicTask.objects.get(name="Poll All Feeds")
         task.kwargs = '{"priority": 3}'

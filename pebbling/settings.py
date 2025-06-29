@@ -177,6 +177,10 @@ DATABASE_ROUTERS = [
     "pebbling.routers.FeedsRouter",
 ]
 
+# File upload settings
+DATA_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024  # 25MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024  # 25MB
+
 # Celery settings
 CELERY_BEAT_SCHEDULE_FILENAME = str(DATA_BASE_DIR / "celerybeat-schedule")
 
