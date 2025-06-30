@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}
+    Edit Timeline - {{ timeline }}
+{% endblock title %}
+{% block content %}
+    <div class="page-header">
+        <div class="breadcrumb">
+            <a href="{% url 'mastodon_integration:settings' %}">Mastodon Settings</a>
+            <span class="separator">/</span>
+            <a href="{% url 'mastodon_integration:account_timelines' account.id %}">{{ account.username }}@{{ account.server_url }}</a>
+            <span class="separator">/</span>
+            <span>Edit Timeline</span>
+        </div>
+        <h1>Edit Timeline</h1>
+        <p>Modify the configuration for this timeline.</p>
+    </div>
+    <pc-mastodon-timeline-form data-account-id="{{ account.id }}"
+                               data-fetch-lists-url="{% url 'mastodon_integration:fetch_lists' account.id %}">
+        <div class="timeline-form">
+            <form method="post" id="timeline-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.timeline_type.id_for_label }}">Timeline Type:</label>
+                    {{ form.timeline_type }}
+                    {% if form.timeline_type.help_text %}<small class="form-help">{{ form.timeline_type.help_text }}</small>{% endif %}
+                    {% if form.timeline_type.errors %}
+                        <ul class="form-errors">
+                            {% for error in form.timeline_type.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                <!-- Hashtag-specific field -->
+                <div class="form-group hashtag-field hidden">
+                    <label for="{{ form.hashtag.id_for_label }}">Hashtag:</label>
+                    {{ form.hashtag }}
+                    {% if form.hashtag.help_text %}<small class="form-help">{{ form.hashtag.help_text }}</small>{% endif %}
+                    {% if form.hashtag.errors %}
+                        <ul class="form-errors">
+                            {% for error in form.hashtag.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                <!-- List-specific field -->
+                <div class="form-group list-field hidden">
+                    <label for="{{ form.list_choice.id_for_label }}">Mastodon List:</label>
+                    {{ form.list_choice }}
+                    <div class="list-loading hidden">
+                        <small>Loading your Mastodon lists...</small>
+                    </div>
+                    {% if form.list_choice.help_text %}<small class="form-help">{{ form.list_choice.help_text }}</small>{% endif %}
+                    {% if form.list_choice.errors %}
+                        <ul class="form-errors">
+                            {% for error in form.list_choice.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label>
+                        {{ form.is_active }}
+                        Enable this timeline
+                    </label>
+                    {% if form.is_active.help_text %}<small class="form-help">{{ form.is_active.help_text }}</small>{% endif %}
+                    {% if form.is_active.errors %}
+                        <ul class="form-errors">
+                            {% for error in form.is_active.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                {% if form.non_field_errors %}
+                    <div class="form-errors">
+                        {% for error in form.non_field_errors %}<div class="error">{{ error }}</div>{% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-actions">
+                    <button type="submit" class="button primary">Update Timeline</button>
+                    <a href="{% url 'mastodon_integration:account_timelines' account.id %}"
+                       class="button secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </pc-mastodon-timeline-form>
+    <div class="timeline-info">
+        <h3>Current Configuration</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <strong>Type:</strong> {{ timeline.get_timeline_type_display }}
+            </div>
+            <div class="info-item">
+                <strong>Status:</strong>
+                <span class="status-indicator {{ timeline.is_active|yesno:'active,inactive' }}">
+                    {{ timeline.get_status_display }}
+                </span>
+            </div>
+            {% if timeline.timeline_type == 'HASHTAG' and timeline.config.hashtag %}
+                <div class="info-item">
+                    <strong>Hashtag:</strong> #{{ timeline.config.hashtag }}
+                </div>
+            {% elif timeline.timeline_type == 'LIST' and timeline.config.list_name %}
+                <div class="info-item">
+                    <strong>List:</strong> {{ timeline.config.list_name }}
+                </div>
+            {% endif %}
+            {% if timeline.last_poll_attempt %}
+                <div class="info-item">
+                    <strong>Last Poll:</strong> {{ timeline.get_last_poll_summary }}
+                </div>
+            {% endif %}
+            {% if timeline.consecutive_failures > 0 %}
+                <div class="info-item">
+                    <strong>Consecutive Failures:</strong>
+                    <span class="warning">{{ timeline.consecutive_failures }}</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock content %}

@@ -18,3 +18,8 @@ DJANGO_SQLITE_MULTIPLE_DB=false
 # Celery - Use Redis in Docker
 CELERY_BROKER_URL=redis://localhost:6379/0
 REDIS_URL=redis://localhost:6379/1
+
+# Mastodon integration
+# MASTODON_POLL_FREQUENCY=60
+# MASTODON_EXCERPT_LENGTH=100
+# MASTODON_MAX_CONSECUTIVE_FAILURES=3

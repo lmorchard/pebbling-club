@@ -36,6 +36,14 @@ COLLECT_BOOKMARK_METRICS = env.bool("COLLECT_BOOKMARK_METRICS", default=True)
 COLLECT_USER_METRICS = env.bool("COLLECT_USER_METRICS", default=True)
 MAX_METRICS_PER_MINUTE = env.int("MAX_METRICS_PER_MINUTE", default=1000)
 
+# Mastodon integration settings
+MASTODON_POLL_FREQUENCY = env.int("MASTODON_POLL_FREQUENCY", default=60)
+MASTODON_POLL_LIMIT = env.int("MASTODON_POLL_LIMIT", default=250)
+MASTODON_EXCERPT_LENGTH = env.int("MASTODON_EXCERPT_LENGTH", default=100)
+MASTODON_MAX_CONSECUTIVE_FAILURES = env.int(
+    "MASTODON_MAX_CONSECUTIVE_FAILURES", default=3
+)
+
 # Development-specific settings
 if DEBUG:
     INTERNAL_IPS = ["127.0.0.1"]
@@ -68,6 +76,7 @@ INSTALLED_APPS = [
     "pebbling_apps.home",
     "pebbling_apps.unfurl",
     "pebbling_apps.inbox",
+    "pebbling_apps.mastodon_integration",
 ]
 
 # Add debug toolbar app in debug mode

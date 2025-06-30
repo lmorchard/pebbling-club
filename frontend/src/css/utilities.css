@@ -13,3 +13,135 @@
   justify-content: center;
   gap: var(--column-gap);
 }
+
+/* General utility classes */
+.hidden {
+    display: none;
+}
+
+/* General button styles */
+.button {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--theme-border-color);
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    cursor: pointer;
+    background-color: var(--theme-background-color);
+    color: var(--theme-text-color);
+    transition: all 0.2s ease;
+}
+
+.button:hover {
+    background-color: var(--theme-highlighted-bg-color);
+}
+
+.button.primary {
+    background-color: var(--theme-link-color);
+    border-color: var(--theme-link-color);
+    color: var(--theme-background-color);
+}
+
+.button.primary:hover {
+    background-color: var(--theme-link-active-color);
+}
+
+.button.secondary {
+    background-color: transparent;
+    color: var(--theme-link-color);
+    border-color: var(--theme-link-color);
+}
+
+.button.secondary:hover {
+    background-color: var(--theme-link-color);
+    color: var(--theme-background-color);
+}
+
+.button.danger {
+    background-color: transparent;
+    color: var(--theme-error-message-color);
+    border-color: var(--theme-error-message-color);
+}
+
+.button.danger:hover {
+    background-color: var(--theme-error-message-color);
+    color: var(--theme-background-color);
+}
+
+.button.small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* General message styles */
+.messages {
+    margin-bottom: 1.5rem;
+}
+
+.message {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.message.success {
+    background-color: var(--theme-highlighted-bg-color);
+    color: var(--theme-text-color);
+    border: 1px solid var(--theme-border-color);
+}
+
+.message.error {
+    background-color: transparent;
+    color: var(--theme-error-message-color);
+    border: 1px solid var(--theme-error-message-color);
+}
+
+.message.info {
+    background-color: var(--theme-highlighted-bg-color);
+    color: var(--theme-text-color);
+    border: 1px solid var(--theme-border-color);
+}
+
+/* General status indicator styles */
+.status-indicator {
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    display: inline-block;
+    width: fit-content;
+}
+
+.status-indicator.active {
+    background-color: var(--theme-highlighted-bg-color);
+    color: var(--theme-text-color);
+    border: 1px solid var(--theme-border-color);
+}
+
+.status-indicator.inactive {
+    background-color: transparent;
+    color: var(--theme-error-message-color);
+    border: 1px solid var(--theme-error-message-color);
+}
+
+/* General warning text */
+.warning {
+    color: var(--theme-error-message-color);
+    font-weight: 500;
+}
+
+/* General empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    border: 1px dashed var(--theme-border-color);
+    border-radius: 8px;
+    background-color: var(--theme-background-color-transparent);
+}
+
+.empty-state p {
+    margin-bottom: 1rem;
+    color: var(--theme-text-muted-color);
+}

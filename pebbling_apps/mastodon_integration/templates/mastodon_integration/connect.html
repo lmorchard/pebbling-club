@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}
+    Connect Mastodon Account
+{% endblock title %}
+{% block content %}
+    <div class="page-header">
+        <h1>Connect Mastodon Account</h1>
+        <p>Connect your Mastodon account to automatically receive posts with links in your inbox.</p>
+    </div>
+    <pc-mastodon-server-connect data-validate-server-url="{% url 'mastodon_integration:validate_server' %}"
+                                data-initiate-oauth-url="{% url 'mastodon_integration:initiate_oauth' %}">
+        <div class="mastodon-connect-form">
+            <form id="server-form" class="server-validation-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="server_url">Mastodon Server:</label>
+                    <input type="text"
+                           id="server_url"
+                           name="server_url"
+                           placeholder="mastodon.social"
+                           class="form-control"
+                           required>
+                    <small class="form-help">Enter the domain of your Mastodon server (e.g., mastodon.social, fosstodon.org)</small>
+                    <div id="server-error" class="form-errors hidden"></div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" id="validate-btn" class="button primary">Validate Server</button>
+                    <a href="{% url 'mastodon_integration:settings' %}"
+                       class="button secondary">Cancel</a>
+                </div>
+            </form>
+            <!-- Server confirmation dialog (hidden initially) -->
+            <div id="server-confirmation" class="server-confirmation hidden">
+                <div class="confirmation-content">
+                    <h3>Confirm Mastodon Server</h3>
+                    <div class="server-info">
+                        <p>
+                            <strong>Server:</strong> <span id="confirmed-server-name"></span>
+                        </p>
+                        <p>
+                            <strong>Description:</strong> <span id="confirmed-server-description"></span>
+                        </p>
+                    </div>
+                    <div class="form-actions">
+                        <button id="proceed-oauth-btn" class="button primary">Connect to This Server</button>
+                        <button id="back-to-form-btn" class="button secondary">Choose Different Server</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </pc-mastodon-server-connect>
+    <div class="help-section">
+        <h3>About Mastodon Integration</h3>
+        <p>
+            This feature allows you to connect your Mastodon account and automatically receive posts
+            containing links in your Pebbling Club inbox for review and curation.
+        </p>
+        <ul>
+            <li>
+                <strong>Read-only access:</strong> We only request permission to read your timelines
+            </li>
+            <li>
+                <strong>Links only:</strong> Only posts containing external links are added to your inbox
+            </li>
+            <li>
+                <strong>Multiple accounts:</strong> You can connect accounts from multiple Mastodon servers
+            </li>
+            <li>
+                <strong>Timeline selection:</strong> Choose which timelines to monitor after connecting
+            </li>
+        </ul>
+    </div>
+{% endblock content %}
