@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}
+    Add to Collection
+{% endblock title %}
+{% block content %}
+    <div class="page-header">
+        <h1>Add to Collection</h1>
+        <p>
+            Adding inbox item: <strong>{{ item.title }}</strong>
+        </p>
+    </div>
+    <form method="post" class="bookmark-form">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="{{ form.url.id_for_label }}">URL:</label>
+            {{ form.url }}
+            {% if form.url.errors %}
+                <ul class="form-errors">
+                    {% for error in form.url.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.title.id_for_label }}">Title:</label>
+            {{ form.title }}
+            {% if form.title.errors %}
+                <ul class="form-errors">
+                    {% for error in form.title.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">Description:</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <ul class="form-errors">
+                    {% for error in form.description.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        {% if form.tag_string %}
+            <div class="form-group">
+                <label for="{{ form.tag_string.id_for_label }}">Tags:</label>
+                {{ form.tag_string }}
+                <small class="form-help">Space-separated tags</small>
+                {% if form.tag_string.errors %}
+                    <ul class="form-errors">
+                        {% for error in form.tag_string.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endif %}
+        <div class="form-actions">
+            <button type="submit" class="button primary">Add to Collection</button>
+            <a href="{% url 'inbox:list' %}" class="button secondary">Cancel</a>
+        </div>
+    </form>
+    <div class="original-item">
+        <h3>Original Inbox Item</h3>
+        <div class="item-preview">
+            <strong>Source:</strong> {{ item.source }}
+            <br>
+            <strong>URL:</strong> <a href="{{ item.url }}" target="_blank">{{ item.url }}</a>
+            <br>
+            {% if item.description %}
+                <strong>Description:</strong> {{ item.description }}
+                <br>
+            {% endif %}
+            {% if item.tags.all %}
+                <strong>Tags:</strong>
+                {% for tag in item.tags.all %}
+                    <span class="tag {% if tag.is_system %}system-tag{% endif %}">{{ tag.name }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+{% endblock content %}

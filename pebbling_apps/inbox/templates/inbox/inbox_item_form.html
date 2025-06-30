@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}
+    Add Inbox Item
+{% endblock title %}
+{% block content %}
+    <div class="page-header">
+        <h1>Add Inbox Item</h1>
+        <p>Manually add an item to your inbox for testing or organizing.</p>
+    </div>
+    <form method="post" class="inbox-item-form">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="{{ form.url.id_for_label }}">{{ form.url.label }}:</label>
+            {{ form.url }}
+            {% if form.url.help_text %}<small class="form-help">{{ form.url.help_text }}</small>{% endif %}
+            {% if form.url.errors %}
+                <ul class="form-errors">
+                    {% for error in form.url.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.title.id_for_label }}">{{ form.title.label }}:</label>
+            {{ form.title }}
+            {% if form.title.help_text %}<small class="form-help">{{ form.title.help_text }}</small>{% endif %}
+            {% if form.title.errors %}
+                <ul class="form-errors">
+                    {% for error in form.title.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">{{ form.description.label }}:</label>
+            {{ form.description }}
+            {% if form.description.help_text %}<small class="form-help">{{ form.description.help_text }}</small>{% endif %}
+            {% if form.description.errors %}
+                <ul class="form-errors">
+                    {% for error in form.description.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.source.id_for_label }}">{{ form.source.label }}:</label>
+            {{ form.source }}
+            {% if form.source.help_text %}<small class="form-help">{{ form.source.help_text }}</small>{% endif %}
+            {% if form.source.errors %}
+                <ul class="form-errors">
+                    {% for error in form.source.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="button primary">Add to Inbox</button>
+            <a href="{% url 'inbox:list' %}" class="button secondary">Cancel</a>
+        </div>
+    </form>
+    <div class="help-section">
+        <h3>About Manual Inbox Items</h3>
+        <p>
+            This form allows you to manually add items to your inbox for testing the inbox functionality.
+            In normal usage, items are added automatically when feeds are processed.
+        </p>
+        <ul>
+            <li>
+                <strong>URL:</strong> The web address of the content you want to save
+            </li>
+            <li>
+                <strong>Title:</strong> A descriptive title for the item
+            </li>
+            <li>
+                <strong>Description:</strong> Optional notes or description
+            </li>
+            <li>
+                <strong>Source:</strong> Where this item came from (defaults to "manual")
+            </li>
+        </ul>
+    </div>
+{% endblock content %}

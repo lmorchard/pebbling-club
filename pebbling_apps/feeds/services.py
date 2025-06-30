@@ -39,12 +39,33 @@ class FeedService:
             parsed = feedparser.parse(feed.url, etag=feed.etag, modified=feed.modified)
             feed.update_from_parsed(parsed.feed)
 
-            # Track new items discovered
+            # Track new items discovered and collect them for inbox delivery
             new_items_count = 0
+            new_feed_items = []
+
             for entry in parsed.entries:
                 _, created = FeedItem.objects.update_or_create_from_parsed(feed, entry)
                 if created:
                     new_items_count += 1
+                    # Collect new items for inbox delivery
+                    new_feed_items.append(
+                        {
+                            "url": entry.get("link", ""),
+                            "title": entry.get("title", ""),
+                            "description": entry.get("description", ""),
+                            "summary": entry.get("summary", ""),
+                        }
+                    )
+
+            # Trigger inbox delivery for new items (if any)
+            if new_feed_items and self._is_inbox_delivery_enabled():
+                try:
+                    self._trigger_inbox_delivery(feed.url, new_feed_items)
+                except Exception as e:
+                    # Don't let inbox delivery errors break feed polling
+                    logger.error(
+                        f"Error triggering inbox delivery for feed {feed.url}: {e}"
+                    )
 
             # Record metrics
             duration = time.time() - start_time
@@ -57,3 +78,20 @@ class FeedService:
             duration = time.time() - start_time
             observe_feed_poll_duration(feed.id, duration)
             raise e
+
+    def _is_inbox_delivery_enabled(self) -> bool:
+        """Check if inbox delivery is enabled."""
+        from django.conf import settings
+
+        return getattr(settings, "INBOX_DELIVERY_ENABLED", True)
+
+    def _trigger_inbox_delivery(self, feed_url: str, new_feed_items: list) -> None:
+        """Trigger inbox delivery for new feed items."""
+        from pebbling_apps.inbox.tasks import lookup_users_for_feed_items
+
+        logger.info(
+            f"Triggering inbox delivery for {len(new_feed_items)} new items from {feed_url}"
+        )
+
+        # Trigger Stage 1 task asynchronously
+        lookup_users_for_feed_items.delay(feed_url, new_feed_items)

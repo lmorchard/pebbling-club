@@ -1,0 +1,9 @@
+/* Description iframe styling */
+.description-iframe {
+    width: 100%;
+    border: none;
+    background: transparent;
+    min-height: 50px;
+    max-height: 500px;
+    overflow-y: auto;
+}

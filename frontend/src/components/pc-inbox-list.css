@@ -1,0 +1,20 @@
+/* Inbox list specific styles */
+
+.inbox-items {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
+/* Selection count styling */
+#selection-count {
+  color: var(--theme-text-muted-color);
+  font-size: 0.9em;
+}
+
+/* Indeterminate checkbox styling */
+#select-all:indeterminate {
+  opacity: 0.6;
+}

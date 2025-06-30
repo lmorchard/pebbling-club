@@ -5,6 +5,7 @@
 @import url("./css/header.css");
 @import url("./css/profile.css");
 @import url("./css/import.css");
+@import url("./css/inbox.css");
 
 :root {
   --column-gap: 1.25em;

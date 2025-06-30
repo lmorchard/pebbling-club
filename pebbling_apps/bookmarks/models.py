@@ -26,16 +26,38 @@ class TagManager(models.Manager):
         """Converts a queryset of Tag objects into a space-separated string."""
         return delimiter.join([str(tag.name) for tag in tags_queryset])
 
+    def get_or_create_system_tag(self, name, owner):
+        """Get or create a system tag for the given owner."""
+        tag, created = self.get_or_create(
+            name=name, owner=owner, defaults={"is_system": True}
+        )
+        return tag
+
 
 # ExportModelOperationsMixin is a factory function that returns a class dynamically
 # mypy cannot analyze this pattern, but it's the standard django-prometheus usage
 class Tag(ExportModelOperationsMixin("tag"), TimestampedModel):  # type: ignore[misc]
     objects = TagManager()
-    name = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=64)
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    is_system = models.BooleanField(
+        default=False, help_text="Whether this is a system-managed tag"
+    )
+
+    class Meta:
+        unique_together = ["name", "owner"]
+        indexes = [
+            models.Index(fields=["owner", "name"]),
+        ]
 
     def __str__(self):
+        if self.is_system:
+            return f"🔧 {self.name}"
         return self.name
+
+    def is_system_tag(self):
+        """Check if this is a system tag."""
+        return self.is_system
 
 
 @django_enum

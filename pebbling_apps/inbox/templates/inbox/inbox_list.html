@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load queryparam_tags %}
+{% block title %}
+    Inbox
+{% endblock title %}
+{% block content %}
+    <pc-inbox-list>
+        <div class="page-header">
+            <h1>
+                Inbox
+                {% if unread_count > 0 %}<span class="unread-badge">{{ unread_count }}</span>{% endif %}
+            </h1>
+            <!-- Search and Filter Form -->
+            <form method="get" class="search-form">
+                <div class="search-controls">
+                    <input type="text"
+                           name="q"
+                           value="{{ search_query }}"
+                           placeholder="Search inbox items..."
+                           class="search-input">
+                    <select name="source" class="filter-select">
+                        <option value="">All Sources</option>
+                        {% for source in available_sources %}
+                            <option value="{{ source }}"
+                                    {% if source == current_source %}selected{% endif %}>{{ source }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="sort" class="sort-select">
+                        <option value="date" {% if current_sort == "date" %}selected{% endif %}>Newest First</option>
+                        <option value="title" {% if current_sort == "title" %}selected{% endif %}>Title A-Z</option>
+                        <option value="source" {% if current_sort == "source" %}selected{% endif %}>Source</option>
+                    </select>
+                    <button type="submit" class="search-button">Filter</button>
+                    <a href="{% url 'inbox:list' %}" class="clear-button">Clear</a>
+                    <a href="{% url 'inbox:create' %}" class="button primary">+ Add Item</a>
+                </div>
+                <div class="filter-options">
+                    <label>
+                        <input type="checkbox"
+                               name="show_archived"
+                               value="1"
+                               {% if request.GET.show_archived %}checked{% endif %}>
+                        Show Archived
+                    </label>
+                </div>
+            </form>
+            <!-- Bulk Actions (Phase 2) -->
+            <div class="bulk-actions">
+                <form id="bulk-actions-form" method="post">
+                    {% csrf_token %}
+                    <div class="bulk-controls">
+                        <label>
+                            <input type="checkbox" id="select-all">
+                            Select All
+                        </label>
+                        <select id="bulk-action" disabled>
+                            <option value="">Bulk Actions...</option>
+                            <option value="mark_read">Mark as Read</option>
+                            <option value="mark_unread">Mark as Unread</option>
+                            <option value="archive">Archive</option>
+                            <option value="trash">Trash (Delete)</option>
+                            <option value="add_to_collection">Add to Collection</option>
+                        </select>
+                        <button type="button" id="apply-bulk" disabled>Apply</button>
+                        <span id="selection-count"></span>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- Inbox Items List -->
+        {% include "inbox/_inbox_item_list.html" %}
+        <!-- Pagination -->
+        {% include "_pagination.html" %}
+    </pc-inbox-list>
+{% endblock content %}

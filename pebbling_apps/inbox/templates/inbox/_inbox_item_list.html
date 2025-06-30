@@ -1,0 +1,19 @@
+<ul class="inbox-items">
+    {% for item in inbox_items %}
+        <li>{% include "inbox/_inbox_item.html" with item=item %}</li>
+    {% empty %}
+        <li class="empty-state">
+            <div class="empty-message">
+                <h3>No inbox items found</h3>
+                <p>
+                    {% if search_query or current_source %}
+                        Try adjusting your search or filters.
+                    {% else %}
+                        Your inbox is empty. Inbox items will appear here when feeds are processed.
+                    {% endif %}
+                </p>
+                <a href="{% url 'inbox:create' %}" class="button">Add Test Item</a>
+            </div>
+        </li>
+    {% endfor %}
+</ul>
