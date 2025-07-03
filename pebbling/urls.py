@@ -25,6 +25,7 @@ urlpatterns = [
     path("u/", include("pebbling_apps.profiles.urls")),
     path("feeds/", include("pebbling_apps.feeds.urls")),
     path("inbox/", include("pebbling_apps.inbox.urls")),
+    path("mastodon/", include("pebbling_apps.mastodon_integration.urls")),
     path("", include("django_prometheus.urls")),
     path("", include("pebbling_apps.bookmarks.urls")),
     path("", include("pebbling_apps.home.urls")),

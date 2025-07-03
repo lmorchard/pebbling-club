@@ -5,6 +5,24 @@
     --inbox-thumbnail-size: 84px;
 }
 
+/* Mastodon status link styling */
+.mastodon-status-link {
+    margin-left: 0.5em;
+    font-size: 0.875em;
+    color: var(--theme-accent-color);
+    text-decoration: none;
+    border: 1px solid var(--theme-border-color);
+    padding: 0.25em 0.5em;
+    border-radius: 3px;
+    background-color: var(--theme-background-color);
+    transition: all 0.2s ease;
+}
+
+.mastodon-status-link:hover {
+    background-color: var(--theme-highlighted-bg-color);
+    border-color: var(--theme-accent-color);
+}
+
 /* Bulk selection checkbox styling */
 .inbox-item .item-checkbox {
     margin-right: 0.5em;

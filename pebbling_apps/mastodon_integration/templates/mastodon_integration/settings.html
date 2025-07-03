@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}
+    Mastodon Connections
+{% endblock title %}
+{% block content %}
+    <div class="page-header">
+        <h1>Mastodon Connections</h1>
+        <p>Manage your connected Mastodon accounts and timeline subscriptions.</p>
+    </div>
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+        </div>
+    {% endif %}
+    <div class="mastodon-settings">
+        <!-- Connected Accounts Section -->
+        <section class="connected-accounts">
+            <div class="section-header">
+                <h2>Connected Accounts</h2>
+                <a href="{% url 'mastodon_integration:connect' %}"
+                   class="button primary">+ Connect New Account</a>
+            </div>
+            {% if mastodon_accounts %}
+                <div class="accounts-list">
+                    {% for account in mastodon_accounts %}
+                        <div class="account-card">
+                            <div class="account-info">
+                                <h3>{{ account.username }}@{{ account.server_url }}</h3>
+                                {% if account.display_name %}<p class="display-name">{{ account.display_name }}</p>{% endif %}
+                                <p class="server-info">
+                                    <strong>Server:</strong> {{ account.server_name|default:account.server_url }}
+                                </p>
+                                <p class="status">
+                                    <strong>Status:</strong>
+                                    <span class="status-indicator {{ account.is_active|yesno:'active,inactive' }}">
+                                        {{ account.is_active|yesno:"Active,Disabled" }}
+                                    </span>
+                                </p>
+                                <p class="timeline-count">
+                                    <strong>Timelines:</strong> {{ account.timelines.count }} configured
+                                </p>
+                            </div>
+                            <div class="account-actions">
+                                {% if account.is_active %}
+                                    <a href="{% url 'mastodon_integration:account_timelines' account.id %}"
+                                       class="button secondary">Manage Timelines</a>
+                                {% else %}
+                                    <form method="post"
+                                          action="{% url 'mastodon_integration:reenable_account' account.id %}"
+                                          class="action-form">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="button primary"
+                                                title="Try to re-enable this account">Re-enable</button>
+                                    </form>
+                                    <form method="post"
+                                          action="{% url 'mastodon_integration:reauthenticate_account' account.id %}"
+                                          class="action-form">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="button secondary"
+                                                title="Get a new access token for this account">
+                                            Re-authenticate
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                <form method="post"
+                                      action="{% url 'mastodon_integration:disconnect_account' account.id %}"
+                                      class="disconnect-form"
+                                      onsubmit="return confirm('Are you sure you want to disconnect {{ account.username }}@{{ account.server_url }}? This will remove all associated timelines.')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="button danger">Disconnect</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No Mastodon accounts connected yet.</p>
+                    <a href="{% url 'mastodon_integration:connect' %}"
+                       class="button primary">Connect Your First Account</a>
+                </div>
+            {% endif %}
+        </section>
+        <!-- Help Section -->
+        <section class="help-section">
+            <h3>About Mastodon Integration</h3>
+            <div class="help-content">
+                <p>
+                    Connect your Mastodon accounts to automatically receive posts containing links
+                    in your Pebbling Club inbox for review and curation.
+                </p>
+                <h4>Features:</h4>
+                <ul>
+                    <li>
+                        <strong>Multiple Accounts:</strong> Connect accounts from different Mastodon servers
+                    </li>
+                    <li>
+                        <strong>Timeline Selection:</strong> Choose which timelines to monitor (home, local, public, hashtags, lists)
+                    </li>
+                    <li>
+                        <strong>Link Filtering:</strong> Only posts with external links are added to your inbox
+                    </li>
+                    <li>
+                        <strong>Read-Only Access:</strong> We only request permission to read your timelines
+                    </li>
+                    <li>
+                        <strong>Automatic Updates:</strong> New posts are checked every minute
+                    </li>
+                </ul>
+                <h4>Timeline Types:</h4>
+                <ul>
+                    <li>
+                        <strong>Home:</strong> Posts from accounts you follow
+                    </li>
+                    <li>
+                        <strong>Local:</strong> Public posts from your server
+                    </li>
+                    <li>
+                        <strong>Public:</strong> Public posts from the federated timeline
+                    </li>
+                    <li>
+                        <strong>Hashtag:</strong> Posts containing specific hashtags
+                    </li>
+                    <li>
+                        <strong>List:</strong> Posts from your Mastodon lists
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </div>
+{% endblock content %}

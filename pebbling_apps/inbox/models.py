@@ -5,6 +5,7 @@ from django_prometheus.models import ExportModelOperationsMixin
 from pebbling_apps.common.models import TimestampedModel
 from pebbling_apps.unfurl.models import UnfurlMetadataField
 from urllib.parse import urlparse
+from .constants import SourceType
 
 
 class InboxItemManager(models.Manager):
@@ -93,9 +94,20 @@ class InboxItem(ExportModelOperationsMixin("inbox_item"), TimestampedModel):  # 
     unfurl_metadata = UnfurlMetadataField(blank=True, null=True, omit_html=omit_html)
     feed_url = models.URLField(blank=True, null=True, verbose_name="Feed URL")
     source = models.CharField(max_length=255, help_text="Source of this inbox item")
+    source_type = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Type of source (e.g., 'mastodon', 'feed', 'manual')",
+        db_index=True,
+    )
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Source-specific metadata (e.g., Mastodon status ID, feed item ID)",
+    )
 
     class Meta:
-        unique_together = ["owner", "unique_hash"]
+        unique_together = ["owner", "unique_hash", "source"]
         indexes = [
             models.Index(fields=["owner", "created_at"]),
             models.Index(fields=["source"]),
@@ -142,3 +154,13 @@ class InboxItem(ExportModelOperationsMixin("inbox_item"), TimestampedModel):  # 
             "inbox:archived", self.owner
         )
         self.tags.add(archived_tag)
+
+    def get_mastodon_status_url(self):
+        """Get the original Mastodon status URL if this item came from Mastodon."""
+        if self.metadata and "mastodon_status_url" in self.metadata:
+            return self.metadata["mastodon_status_url"]
+        return None
+
+    def is_from_mastodon(self):
+        """Check if this inbox item originated from Mastodon."""
+        return self.source_type == SourceType.MASTODON

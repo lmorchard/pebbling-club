@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}
+    {{ account.username }}@{{ account.server_url }} Timelines
+{% endblock title %}
+{% block content %}
+    <div class="page-header">
+        <div class="header-content">
+            <div class="breadcrumb">
+                <a href="{% url 'mastodon_integration:settings' %}">Mastodon Settings</a>
+                <span class="separator">/</span>
+                <span>{{ account.username }}@{{ account.server_url }}</span>
+            </div>
+            <h1>Timeline Configuration</h1>
+            <p>Manage which timelines to monitor for links on this Mastodon account.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'mastodon_integration:add_timeline' account.id %}"
+               class="button primary">+ Add Timeline</a>
+        </div>
+    </div>
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+        </div>
+    {% endif %}
+    <pc-mastodon-timeline-manager>
+        <div class="timeline-management">
+            <!-- Account Info Section -->
+            <section class="account-summary">
+                <div class="account-info">
+                    <h3>{{ account.display_name|default:account.username }}</h3>
+                    <p class="account-handle">@{{ account.username }}@{{ account.server_url }}</p>
+                    <p class="server-info">{{ account.server_name|default:account.server_url }}</p>
+                    <p class="status">
+                        <span class="status-indicator {{ account.is_active|yesno:'active,inactive' }}">
+                            {{ account.is_active|yesno:"Active,Disabled" }}
+                        </span>
+                    </p>
+                </div>
+            </section>
+            <!-- Configured Timelines Section -->
+            <section class="timeline-list">
+                <h2>Configured Timelines ({{ timelines.count }})</h2>
+                {% if timelines %}
+                    <div class="timelines-grid">
+                        {% for timeline in timelines %}
+                            <div class="timeline-card" data-timeline-id="{{ timeline.id }}">
+                                <div class="timeline-info">
+                                    <h4>{{ timeline.get_timeline_type_display }}</h4>
+                                    {% if timeline.timeline_type == 'HASHTAG' and timeline.config.hashtag %}
+                                        <p class="timeline-detail">#{{ timeline.config.hashtag }}</p>
+                                    {% elif timeline.timeline_type == 'LIST' and timeline.config.list_name %}
+                                        <p class="timeline-detail">{{ timeline.config.list_name }}</p>
+                                    {% endif %}
+                                    <div class="timeline-status">
+                                        <span class="status-indicator {{ timeline.is_active|yesno:'active,inactive' }}">
+                                            {{ timeline.is_active|yesno:"Active,Disabled" }}
+                                        </span>
+                                        <span class="status-text">{{ timeline.get_status_display }}</span>
+                                    </div>
+                                    {% if timeline.last_poll_attempt %}
+                                        <p class="poll-info">
+                                            <small>{{ timeline.get_last_poll_summary }}</small>
+                                        </p>
+                                    {% endif %}
+                                    {% if timeline.consecutive_failures > 0 %}
+                                        <p class="failure-count">
+                                            <small class="warning">{{ timeline.consecutive_failures }} consecutive failures</small>
+                                        </p>
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-actions">
+                                    <button type="button"
+                                            class="button small toggle-btn"
+                                            data-timeline-id="{{ timeline.id }}"
+                                            data-current-state="{{ timeline.is_active|yesno:'true,false' }}">
+                                        {{ timeline.is_active|yesno:"Disable,Enable" }}
+                                    </button>
+                                    <button type="button"
+                                            class="button small test-btn"
+                                            data-timeline-id="{{ timeline.id }}">Test</button>
+                                    <a href="{% url 'mastodon_integration:edit_timeline' timeline.id %}"
+                                       class="button small secondary">Edit</a>
+                                    <form method="post"
+                                          action="{% url 'mastodon_integration:delete_timeline' timeline.id %}"
+                                          class="delete-form"
+                                          onsubmit="return confirm('Are you sure you want to delete this timeline configuration?')">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="account_id" value="{{ account.id }}">
+                                        <button type="submit" class="button small danger">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No timelines configured yet.</p>
+                        <p>Add your first timeline to start receiving Mastodon posts in your inbox.</p>
+                        <a href="{% url 'mastodon_integration:add_timeline' account.id %}"
+                           class="button primary">Add Your First Timeline</a>
+                    </div>
+                {% endif %}
+            </section>
+            <!-- Help Section -->
+            <section class="help-section">
+                <h3>Timeline Types</h3>
+                <div class="timeline-types-help">
+                    <div class="help-item">
+                        <strong>Home:</strong> Posts from accounts you follow
+                    </div>
+                    <div class="help-item">
+                        <strong>Local:</strong> Public posts from your server only
+                    </div>
+                    <div class="help-item">
+                        <strong>Public:</strong> Public posts from the federated timeline
+                    </div>
+                    <div class="help-item">
+                        <strong>Hashtag:</strong> Posts containing specific hashtags
+                    </div>
+                    <div class="help-item">
+                        <strong>List:</strong> Posts from your Mastodon lists
+                    </div>
+                </div>
+            </section>
+        </div>
+    </pc-mastodon-timeline-manager>
+{% endblock content %}

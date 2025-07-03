@@ -68,6 +68,7 @@
                                             <a href="{% url 'bookmarks:import' %}">Import</a>
                                             <a href="{% url "profiles:view" user.username %}">Profile</a>
                                             <a href="{% url "profiles:edit" user.username %}">Settings</a>
+                                            <a href="{% url 'mastodon_integration:settings' %}">🐘 Mastodon</a>
                                             <a href="{% bookmarklet_new_bookmark %}">Bookmarklet</a>
                                             <a href="{% bookmarklet_new_bookmark popup=True %}">Bookmarklet (popup)</a>
                                             <form action="{% url 'users:logout' %}" method="post">

@@ -71,6 +71,12 @@
             </div>
             <div class="source">
                 Source: <span class="source-name">{{ item.source }}</span>
+                {% if item.is_from_mastodon and item.get_mastodon_status_url %}
+                    <a href="{{ item.get_mastodon_status_url }}"
+                       target="_blank"
+                       class="mastodon-status-link"
+                       title="View original Mastodon post">🐘 View Original</a>
+                {% endif %}
             </div>
             {% with created=item.created_at|date:'c' %}
                 <time class="created-date" title="{{ created }}" datetime="{{ created }}">

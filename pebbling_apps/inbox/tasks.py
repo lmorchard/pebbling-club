@@ -76,8 +76,8 @@ def deliver_items_to_user_inbox(user_id: int, feed_items: list, source: str) -> 
 
         logger.info(f"Delivering {len(feed_items)} items to user {user.username} inbox")
 
-        # Prepare inbox items for bulk creation
-        inbox_items_to_create = []
+        # Prepare items data for shared service
+        items_data = []
 
         for feed_item in feed_items:
             try:
@@ -90,30 +90,27 @@ def deliver_items_to_user_inbox(user_id: int, feed_items: list, source: str) -> 
                     logger.warning(f"Skipping feed item without URL for user {user_id}")
                     continue
 
-                # Generate unique hash for the item
-                unique_hash = InboxItem.objects.generate_unique_hash_for_url(url)
-
-                # Create inbox item instance (don't save yet)
-                inbox_item = InboxItem(
-                    url=url,
-                    owner=user,
-                    unique_hash=unique_hash,
-                    title=title[:255],  # Truncate to fit field limit
-                    description=description,
-                    source=source,
+                items_data.append(
+                    {
+                        "url": url,
+                        "title": title[:255],  # Truncate to fit field limit
+                        "description": description,
+                    }
                 )
-
-                inbox_items_to_create.append(inbox_item)
 
             except Exception as e:
                 logger.warning(f"Error processing feed item for user {user_id}: {e}")
                 continue
 
-        # Bulk create all items
-        if inbox_items_to_create:
-            created_items = InboxItem.objects.bulk_create(
-                inbox_items_to_create,
-                ignore_conflicts=True,  # Handle duplicates gracefully
+        # Create items using shared service
+        if items_data:
+            from .services import InboxItemCreationService
+
+            created_items = InboxItemCreationService.create_inbox_items(
+                owner=user,
+                items_data=items_data,
+                source=source,
+                use_bulk_create=True,  # Use bulk creation for better performance
             )
             created_count = len(created_items)
             logger.info(f"Created {created_count} inbox items for user {user.username}")
