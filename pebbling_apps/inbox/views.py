@@ -9,7 +9,6 @@ from django.urls import reverse_lazy
 from django.views.decorators.clickjacking import xframe_options_exempt
 import bleach
 from .models import InboxItem
-from .metrics import increment_bulk_operation
 
 
 class InboxListView(LoginRequiredMixin, ListView):
@@ -432,11 +431,9 @@ def bulk_mark_read(request):
             count += 1
 
         messages.success(request, f"Marked {count} items as read.")
-        increment_bulk_operation("mark_read", "success")
 
     except Exception as e:
         messages.error(request, f"Error marking items as read: {e}")
-        increment_bulk_operation("mark_read", "error")
 
     return redirect("inbox:list")
 

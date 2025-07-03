@@ -1,7 +1,6 @@
 from celery import shared_task
 from .services import BookmarksService
 from .models import ImportJob
-from .metrics import record_import_job_start, record_import_job_completion
 from django.utils import timezone
 import json
 import logging
@@ -38,9 +37,7 @@ def process_import_job(import_job_id: int):
         # Fetch the import job
         import_job = ImportJob.objects.get(id=import_job_id)
 
-        # Record job start metrics
         job_format = getattr(import_job, "format", "unknown")
-        record_import_job_start(import_job.user_id, job_format)
 
         # Update status to processing
         import_job.status = "processing"
@@ -65,17 +62,6 @@ def process_import_job(import_job_id: int):
         import_job.completed_at = timezone.now()
         import_job.save()
 
-        # Record completion metrics
-        duration = time.time() - start_time
-        record_import_job_completion(
-            import_job.user_id,
-            job_format,
-            duration,
-            "completed",
-            results["processed"],
-            results["failed"],
-        )
-
         # Delete the uploaded file on success
         import_service.cleanup_import_file(import_job.file_path)
 
@@ -89,22 +75,10 @@ def process_import_job(import_job_id: int):
     except (FileNotFoundError, json.JSONDecodeError, MemoryError) as e:
         if import_job:
             _fail_import_job(import_job, str(e), logger, import_job_id)
-            # Record failed job metrics
-            duration = time.time() - start_time
-            job_format = getattr(import_job, "format", "unknown")
-            record_import_job_completion(
-                import_job.user_id, job_format, duration, "failed"
-            )
 
     except Exception as e:
         error_message = f"Import processing failed: {str(e)}"
         logger.error(f"Import job {import_job_id}: {error_message}", exc_info=True)
-        if import_job:
-            duration = time.time() - start_time
-            job_format = getattr(import_job, "format", "unknown")
-            record_import_job_completion(
-                import_job.user_id, job_format, duration, "failed"
-            )
 
         if import_job:
             _fail_import_job(import_job, error_message, logger, import_job_id)

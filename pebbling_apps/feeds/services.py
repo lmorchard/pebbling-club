@@ -5,7 +5,6 @@ from typing import Tuple
 import feedparser
 import time
 from .models import Feed, FeedItem
-from .metrics import observe_feed_poll_duration, set_feed_items_discovered
 
 logger = logging.getLogger(__name__)
 
@@ -67,16 +66,9 @@ class FeedService:
                         f"Error triggering inbox delivery for feed {feed.url}: {e}"
                     )
 
-            # Record metrics
-            duration = time.time() - start_time
-            observe_feed_poll_duration(feed.id, duration)
-            set_feed_items_discovered(feed.id, new_items_count)
-
             return True
         except Exception as e:
-            # Still record duration even on failure
-            duration = time.time() - start_time
-            observe_feed_poll_duration(feed.id, duration)
+            # Error handling for feed fetch failures
             raise e
 
     def _is_inbox_delivery_enabled(self) -> bool:

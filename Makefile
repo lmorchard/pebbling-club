@@ -21,9 +21,6 @@ help:
 	@echo "  make test              - Run tests"
 	@echo "  make migrate           - Run database migrations (single DB)"
 	@echo "  make migrate_multi     - Run database migrations (multiple SQLite DBs)"
-	@echo "  make metrics-test      - Test metrics collection"
-	@echo "  make metrics-show      - Show current metrics"
-	@echo "  make metrics-endpoint  - Show metrics endpoint URL"
 	@echo ""
 	@echo "Docker Commands:"
 	@echo "  make docker_build      - Build Docker image"
@@ -83,16 +80,6 @@ test:
 test-multidb:
 	DJANGO_SQLITE_MULTIPLE_DB=true uv run python manage.py test
 
-# Metrics commands
-metrics-test:
-	uv run python manage.py test_metrics
-
-metrics-show:
-	uv run python manage.py test_metrics --show-metrics
-
-metrics-endpoint:
-	@echo "Metrics endpoint: http://localhost:8000/metrics/"
-	@echo "Make sure the development server is running first!"
 
 # Format code
 format:

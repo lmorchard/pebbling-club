@@ -7,7 +7,6 @@ from django.db import models
 from django.conf import settings
 from django.db import connection, connections
 from django.contrib.auth import get_user_model
-from django_prometheus.models import ExportModelOperationsMixin
 from pebbling_apps.common.models import QueryPage, TimestampedModel
 from pebbling_apps.common.utils import django_enum
 from pebbling_apps.unfurl.models import UnfurlMetadataField
@@ -34,9 +33,7 @@ class TagManager(models.Manager):
         return tag
 
 
-# ExportModelOperationsMixin is a factory function that returns a class dynamically
-# mypy cannot analyze this pattern, but it's the standard django-prometheus usage
-class Tag(ExportModelOperationsMixin("tag"), TimestampedModel):  # type: ignore[misc]
+class Tag(TimestampedModel):
     objects = TagManager()
     name = models.CharField(max_length=64)
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
@@ -301,9 +298,8 @@ class BookmarkManager(models.Manager):
         return queryset
 
 
-# ExportModelOperationsMixin is a factory function that returns a class dynamically
 # mypy cannot analyze this pattern, but it's the standard django-prometheus usage
-class Bookmark(ExportModelOperationsMixin("bookmark"), TimestampedModel):  # type: ignore[misc]
+class Bookmark(TimestampedModel):
     """Bookmark model with url and title."""
 
     omit_html = getattr(settings, "OMIT_HTML_FROM_UNFURL_METADATA", True)
@@ -338,15 +334,7 @@ class Bookmark(ExportModelOperationsMixin("bookmark"), TimestampedModel):  # typ
         self.unique_hash = self.generate_unique_hash()
         result = super().save(*args, **kwargs)
 
-        # Record metrics after successful save (with error handling)
-        try:
-            from .metrics import increment_bookmark_operation
-
-            operation = "create" if is_create else "update"
-            increment_bookmark_operation(operation, self.owner_id, "manual")
-        except Exception:
-            # Metrics collection should never break the save operation
-            pass
+        # Save completed successfully
 
         return result
 
