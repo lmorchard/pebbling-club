@@ -2,7 +2,6 @@
 
 import django.db.models.deletion
 import django.utils.timezone
-import django_prometheus.models
 from django.conf import settings
 from django.db import migrations, models
 
@@ -82,10 +81,7 @@ class Migration(migrations.Migration):
             options={
                 "ordering": ["-created_at"],
             },
-            bases=(
-                django_prometheus.models.ExportModelOperationsMixin("mastodon_account"),
-                models.Model,
-            ),
+            bases=(models.Model,),
         ),
         migrations.CreateModel(
             name="MastodonTimeline",
@@ -170,12 +166,7 @@ class Migration(migrations.Migration):
             options={
                 "ordering": ["-created_at"],
             },
-            bases=(
-                django_prometheus.models.ExportModelOperationsMixin(
-                    "mastodon_timeline"
-                ),
-                models.Model,
-            ),
+            bases=(models.Model,),
         ),
         migrations.AddIndex(
             model_name="mastodonaccount",

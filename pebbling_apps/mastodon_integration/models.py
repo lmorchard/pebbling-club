@@ -2,7 +2,6 @@ from django.conf import settings
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from django_prometheus.models import ExportModelOperationsMixin
 from pebbling_apps.common.models import TimestampedModel
 import logging
 
@@ -19,7 +18,7 @@ class MastodonAccountManager(models.Manager):
         return self.filter(server_url=server_url)
 
 
-class MastodonAccount(ExportModelOperationsMixin("mastodon_account"), TimestampedModel):  # type: ignore[misc]
+class MastodonAccount(TimestampedModel):
     """Mastodon account connection for a user."""
 
     objects = MastodonAccountManager()
@@ -74,9 +73,7 @@ class MastodonTimelineManager(models.Manager):
         return self.filter(timeline_type=timeline_type)
 
 
-class MastodonTimeline(
-    ExportModelOperationsMixin("mastodon_timeline"), TimestampedModel  # type: ignore[misc]
-):
+class MastodonTimeline(TimestampedModel):
     """Timeline configuration for a Mastodon account."""
 
     TIMELINE_CHOICES = [

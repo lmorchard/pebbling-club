@@ -2,7 +2,6 @@
 
 import django.db.models.deletion
 import django.utils.timezone
-import django_prometheus.models
 import pebbling_apps.unfurl.models
 from django.conf import settings
 from django.db import migrations, models
@@ -82,9 +81,6 @@ class Migration(migrations.Migration):
                 ],
                 "unique_together": {("owner", "unique_hash")},
             },
-            bases=(
-                django_prometheus.models.ExportModelOperationsMixin("inbox_item"),
-                models.Model,
-            ),
+            bases=(models.Model,),
         ),
     ]

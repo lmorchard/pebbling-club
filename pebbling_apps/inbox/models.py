@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.db import models
 from django.contrib.auth import get_user_model
-from django_prometheus.models import ExportModelOperationsMixin
 from pebbling_apps.common.models import TimestampedModel
 from pebbling_apps.unfurl.models import UnfurlMetadataField
 from urllib.parse import urlparse
@@ -74,9 +73,8 @@ class InboxItemManager(models.Manager):
         return queryset.select_related("owner").prefetch_related("tags")
 
 
-# ExportModelOperationsMixin is a factory function that returns a class dynamically
 # mypy cannot analyze this pattern, but it's the standard django-prometheus usage
-class InboxItem(ExportModelOperationsMixin("inbox_item"), TimestampedModel):  # type: ignore[misc]
+class InboxItem(TimestampedModel):
     """Inbox item model - potential bookmarks for user review."""
 
     omit_html = getattr(settings, "OMIT_HTML_FROM_UNFURL_METADATA", True)

@@ -1,10 +1,5 @@
 from celery import shared_task
 from .models import InboxItem
-from .metrics import (
-    observe_inbox_delivery_duration,
-    set_inbox_users_found,
-    increment_inbox_delivery_total,
-)
 from django.contrib.auth import get_user_model
 import logging
 import time
@@ -37,9 +32,6 @@ def lookup_users_for_feed_items(feed_url: str, feed_items: list) -> None:
         user_count = len(user_ids)
         logger.info(f"Found {user_count} users subscribed to feed: {feed_url}")
 
-        # Record metrics
-        set_inbox_users_found(feed_url, user_count)
-
         if user_count == 0:
             logger.info(f"No users found for feed: {feed_url}")
             return
@@ -53,10 +45,6 @@ def lookup_users_for_feed_items(feed_url: str, feed_items: list) -> None:
 
     except Exception as e:
         logger.error(f"Error in user lookup for feed {feed_url}: {e}", exc_info=True)
-    finally:
-        # Record duration
-        duration = time.time() - start_time
-        observe_inbox_delivery_duration("stage1", duration)
 
 
 @shared_task(name="deliver_items_to_user_inbox")
@@ -115,16 +103,8 @@ def deliver_items_to_user_inbox(user_id: int, feed_items: list, source: str) -> 
             created_count = len(created_items)
             logger.info(f"Created {created_count} inbox items for user {user.username}")
 
-            # Record metrics for successful delivery
-            source_type = "feed" if source.startswith("feed:") else "manual"
-            for _ in range(created_count):
-                increment_inbox_delivery_total(user_id, source_type)
         else:
             logger.warning(f"No valid items to create for user {user_id}")
 
     except Exception as e:
         logger.error(f"Error delivering items to user {user_id}: {e}", exc_info=True)
-    finally:
-        # Record duration
-        duration = time.time() - start_time
-        observe_inbox_delivery_duration("stage2", duration)
