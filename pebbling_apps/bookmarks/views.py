@@ -182,7 +182,7 @@ class BookmarkQueryListView(ListView):
 
 
 # Create View: Add a new bookmark
-class BookmarkCreateView(CreateView):
+class BookmarkCreateView(LoginRequiredMixin, CreateView):
     model = Bookmark
     template_name = "bookmarks/bookmark_form.html"
     form_class = BookmarkForm
@@ -193,7 +193,7 @@ class BookmarkCreateView(CreateView):
         initial = super().get_initial()
         url = self.request.GET.get("url", "")
 
-        if url:
+        if url and self.request.user.is_authenticated:
             self.existing_bookmark = Bookmark.objects.filter(
                 owner=self.request.user,
                 unique_hash=Bookmark.objects.generate_unique_hash_for_url(url),
@@ -279,7 +279,7 @@ class BookmarkCreateView(CreateView):
         return super().form_valid(form)
 
 
-class BookmarkUpdateView(UpdateView):
+class BookmarkUpdateView(LoginRequiredMixin, UpdateView):
     model = Bookmark
     form_class = BookmarkForm
     template_name = "bookmarks/bookmark_form.html"
@@ -298,7 +298,7 @@ class BookmarkUpdateView(UpdateView):
         return bookmark
 
 
-class BookmarkDeleteView(DeleteView):
+class BookmarkDeleteView(LoginRequiredMixin, DeleteView):
     model = Bookmark
     template_name = "bookmarks/bookmark_confirm_delete.html"
     success_url = reverse_lazy("bookmarks:list")
