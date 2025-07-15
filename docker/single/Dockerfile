@@ -68,7 +68,7 @@ COPY docker/single/nginx.conf /etc/nginx/nginx.conf
 
 # Create necessary directories with appropriate permissions
 RUN mkdir -p /app/run /app/static /app/media /app/data && \
-    chown -R django:django /app/run /app/static /app/media /app/data
+    chown -R django:django /app/run /app/static /app/media /app/data /app/.venv
 
 # Now copy application code - this will invalidate cache from this point forward
 COPY --chown=django:django . .
