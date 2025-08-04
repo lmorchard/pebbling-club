@@ -19,10 +19,10 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--user", 
-            type=str, 
+            "--user",
+            type=str,
             required=True,
-            help="Username to delete old inbox items for (required)"
+            help="Username to delete old inbox items for (required)",
         )
         parser.add_argument(
             "--hours",
@@ -58,10 +58,7 @@ class Command(BaseCommand):
             timespan_desc = f"{options['hours']} hours"
 
         # Find items to delete
-        old_items = InboxItem.objects.filter(
-            owner=user,
-            created_at__lt=cutoff_time
-        )
+        old_items = InboxItem.objects.filter(owner=user, created_at__lt=cutoff_time)
 
         item_count = old_items.count()
 
@@ -80,7 +77,7 @@ class Command(BaseCommand):
 
         if options["dry_run"]:
             self.stdout.write(self.style.WARNING("DRY RUN - No items will be deleted"))
-            
+
             # Show sample of items that would be deleted
             sample_items = old_items[:5]
             self.stdout.write("\nSample items that would be deleted:")
@@ -89,13 +86,13 @@ class Command(BaseCommand):
                 self.stdout.write(
                     f"  - {item.title[:60]}... (created {age.days} days ago)"
                 )
-            
+
             if item_count > 5:
                 self.stdout.write(f"  ... and {item_count - 5} more items")
         else:
             # Actually delete the items
             deleted_count, _ = old_items.delete()
-            
+
             self.stdout.write(
                 self.style.SUCCESS(
                     f"Successfully deleted {deleted_count} inbox items older than {timespan_desc}"
@@ -104,4 +101,6 @@ class Command(BaseCommand):
 
         # Show remaining stats
         remaining_count = InboxItem.objects.filter(owner=user).count()
-        self.stdout.write(f"\nRemaining inbox items for user '{username}': {remaining_count}")
+        self.stdout.write(
+            f"\nRemaining inbox items for user '{username}': {remaining_count}"
+        )
