@@ -13,3 +13,14 @@ docs/
 .git
 .github
 .vscode
+# Additional build optimization excludes
+__pycache__/
+*.py[cod]
+*.log
+node_modules/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/

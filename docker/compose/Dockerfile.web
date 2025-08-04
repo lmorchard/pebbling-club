@@ -15,7 +15,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 # Copy the rest of the project and build 
-# We need the full project and not just the frontend directory
+# We need the full project because Tailwind scans Django templates
 COPY . .
 RUN npm run build
 
@@ -25,7 +25,7 @@ RUN npm run build
 ##########################################################################
 FROM python:${PYTHON_VERSION}
 
-# Install system dependencies
+# Install system dependencies and uv in one layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     gcc \
@@ -43,35 +43,32 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONWARNINGS="ignore::SyntaxWarning" \
+    PYTHONCOMPILED=1 \
     SECRET_KEY=your-secret-key-here-1234567890 \
     DEBUG=True \
     ALLOWED_HOSTS=* \
     DATA_BASE_DIR=/app/data
 
-# Create user early to avoid cache invalidation
-RUN useradd -ms /bin/bash django
+# Create user and directories early to avoid cache invalidation
+RUN useradd -ms /bin/bash django && \
+    mkdir -p /app/run /app/static /app/media /app/data
 
-# Copy only dependency files first for better caching
-COPY pyproject.toml ./
+# Copy dependency files first for better caching
+COPY pyproject.toml uv.lock* ./
 
-# Create and activate virtual environment - this layer will only be rebuilt if pyproject.toml changes
+# Create and activate virtual environment - this layer will only be rebuilt if dependencies change
 RUN uv venv --python=python3.13 && \
-    . .venv/bin/activate && \
-    uv sync
-
-# Create necessary directories with appropriate permissions
-RUN mkdir -p /app/run /app/static /app/media /app/data && \
-    chown -R django:django /app/run /app/static /app/media /app/data /app/.venv
+    uv sync --frozen --no-dev
 
 # Now copy application code - this will invalidate cache from this point forward
 COPY --chown=django:django . .
 
-# Copy frontend build artifacts
+# Copy frontend build artifacts and set permissions in one step
 COPY --from=frontend-builder --chown=django:django /app/frontend/build/ /app/frontend/build/
-USER django
-RUN uv run manage.py collectstatic --noinput
 
-USER root
+# Set permissions and collect static files
+RUN chown -R django:django /app/run /app/static /app/media /app/data /app/.venv && \
+    su django -c 'uv run manage.py collectstatic --noinput'
 
 # Set up volumes
 VOLUME ["/app/data", "/app/static", "/app/media"]
