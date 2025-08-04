@@ -14,9 +14,8 @@ COPY package.json package-lock.json* ./
 # Install frontend dependencies
 RUN npm ci
 
-# Copy the rest of the project and build 
-# We need the full project because Tailwind scans Django templates
-COPY . .
+# Copy only frontend source files for building
+COPY frontend/ ./frontend/
 RUN npm run build
 
 ##########################################################################
