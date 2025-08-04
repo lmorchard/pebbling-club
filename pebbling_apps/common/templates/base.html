@@ -72,6 +72,7 @@
                                             <a href="{% bookmarklet_new_bookmark %}">Bookmarklet</a>
                                             <a href="{% bookmarklet_new_bookmark popup=True %}">Bookmarklet (popup)</a>
                                             <form action="{% url 'users:logout' %}" method="post">
+                                                {% csrf_token %}
                                                 <button type="submit">Logout</button>
                                             </form>
                                         </div>
