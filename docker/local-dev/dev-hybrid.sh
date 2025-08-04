@@ -62,7 +62,7 @@ fi
 
 # Check if required tools are installed
 command -v uv >/dev/null 2>&1 || { echo -e "${RED}❌ uv is not installed. See: https://docs.astral.sh/uv/getting-started/installation/${NC}"; exit 1; }
-command -v honcho >/dev/null 2>&1 || { echo -e "${RED}❌ honcho is not installed. Run: uv pip install honcho${NC}"; exit 1; }
+# honcho will be installed via uv sync, no need to check separately
 
 # Ensure dependencies are synced (including psycopg2-binary)
 echo -e "${YELLOW}📦 Syncing Python dependencies with uv...${NC}"
@@ -118,7 +118,7 @@ DOCKER_LOGS_PID=$!
 sleep 2
 
 # Start the application services
-honcho start -f "$RELATIVE_SCRIPT_DIR/Procfile" &
+uv run honcho start -f "$RELATIVE_SCRIPT_DIR/Procfile" &
 HONCHO_PID=$!
 
 # Wait for honcho to finish
