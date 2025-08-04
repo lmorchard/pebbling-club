@@ -61,7 +61,12 @@ while read oldrev newrev refname; do
     
     # Rebuild Docker containers
     log "Rebuilding Docker containers..."
-    docker-compose -f docker/compose/docker-compose.yml build django-builder nginx
+    # Use BuildKit with increased timeout (30 minutes) and better caching
+    export DOCKER_BUILDKIT=1
+    export COMPOSE_DOCKER_CLI_BUILD=1
+    export DOCKER_CLIENT_TIMEOUT=1800
+    export COMPOSE_HTTP_TIMEOUT=1800
+    docker-compose -f docker/compose/docker-compose.yml build --progress=plain django-builder nginx
     
     # Restart containers with new code
     log "Restarting containers..."
