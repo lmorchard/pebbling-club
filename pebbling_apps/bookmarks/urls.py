@@ -8,6 +8,7 @@ from .views import (
     TagDetailView,
     BookmarkExportNetscapeView,
     BookmarkExportActivityStreamView,
+    BookmarkExportOPMLView,
     BookmarkImportView,
     BookmarkImportSubmitView,
     BookmarkImportRetryView,
@@ -30,6 +31,11 @@ urlpatterns = [
         "bookmarks/export/activitystream.json",
         BookmarkExportActivityStreamView.as_view(),
         name="export_activitystream",
+    ),
+    path(
+        "bookmarks/export/bookmarks.opml",
+        BookmarkExportOPMLView.as_view(),
+        name="export_opml",
     ),
     # NOTE: Legacy ActivityStream import endpoint removed in favor of async import system
     path("import/", BookmarkImportView.as_view(), name="import"),

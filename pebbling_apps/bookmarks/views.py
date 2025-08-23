@@ -630,10 +630,104 @@ class BookmarkExportActivityStreamView(LoginRequiredMixin, View):
         return response
 
 
-# NOTE: BookmarkImportActivityStreamView has been removed in favor of the new
-# asynchronous import system using ImportJob model and Celery tasks.
-# The new system provides better UX with progress tracking, error handling,
-# and the ability to handle large files without blocking the web server.
+class BookmarkExportOPMLView(LoginRequiredMixin, View):
+    """Export bookmarks in OPML 2.0 format."""
+
+    def get(self, request):
+        from .exporters import OPMLBookmarkExporter
+
+        # Validate tag parameters before processing
+        tags = request.GET.getlist("tag")
+        if tags:
+            for tag_name in tags:
+                if not Tag.objects.filter(name=tag_name).exists():
+                    return HttpResponseBadRequest(f"Tag '{tag_name}' does not exist")
+
+        # Validate and parse since parameter
+        since = request.GET.get("since")
+        since_date = None
+        if since:
+            try:
+                since_date = parse_since(since)
+            except Exception as e:
+                return HttpResponseBadRequest(f"Invalid 'since' parameter: {str(e)}")
+
+        # Validate limit parameter
+        limit = request.GET.get("limit")
+        limit_value = None
+        if limit:
+            try:
+                limit_value = int(limit)
+                if limit_value <= 0:
+                    return HttpResponseBadRequest("Limit must be a positive integer")
+            except ValueError:
+                return HttpResponseBadRequest(
+                    "Invalid 'limit' parameter: must be an integer"
+                )
+
+        exporter = OPMLBookmarkExporter()
+
+        def generate():
+            try:
+                yield exporter.generate_header(user=request.user)
+
+                # Get user's bookmarks with prefetched tags
+                bookmarks = Bookmark.objects.query(owner=request.user).prefetch_related(
+                    "tags"
+                )
+
+                # Apply tag filtering if requested
+                if tags:
+                    # Filter bookmarks that have ALL specified tags
+                    for tag_name in tags:
+                        bookmarks = bookmarks.filter(tags__name=tag_name)
+                    bookmarks = bookmarks.distinct()
+
+                # Apply date filtering if requested
+                if since_date:
+                    bookmarks = bookmarks.filter(created_at__gte=since_date)
+
+                # Apply limit if requested
+                if limit_value:
+                    bookmarks = bookmarks[:limit_value]
+
+                # Generate bookmarks using iterator for memory efficiency
+                for bookmark_content in exporter.generate_bookmarks(
+                    bookmarks.iterator(chunk_size=100)
+                ):
+                    yield bookmark_content
+
+                yield exporter.generate_footer()
+            except Exception as e:
+                logger.error(
+                    f"Error during OPML bookmark export: {str(e)}", exc_info=True
+                )
+                yield f"\n<!-- ERROR: Export failed: {escape(str(e))} -->\n"
+                yield exporter.generate_footer()
+
+        response = StreamingHttpResponse(
+            generate(), content_type="application/xml; charset=utf-8"
+        )
+
+        # Add Content-Disposition header with timestamp
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d")
+        filename = f"pebbling_club_bookmarks_{timestamp}.opml"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        # Log export activity
+        logger.info(
+            f"User {request.user.username} exported bookmarks as OPML",
+            extra={
+                "user": request.user.username,
+                "format": "opml",
+                "tags": tags,
+                "since": since,
+                "limit": limit,
+                "timestamp": datetime.datetime.now().isoformat(),
+            },
+        )
+
+        return response
 
 
 @login_required

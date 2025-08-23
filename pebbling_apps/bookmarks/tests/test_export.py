@@ -349,3 +349,339 @@ class BookmarkPerformanceTest(TestCase):
         # Verify all bookmarks are present
         bookmark_count = content.count("<DT><A HREF=")
         self.assertEqual(bookmark_count, 20)
+
+
+class BookmarkExportOPMLViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username="testuser", password="testpass")
+        self.url = reverse("bookmarks:export_opml")
+
+    def parse_opml_response(self, response):
+        """Helper method to parse OPML response content as XML."""
+        import xml.etree.ElementTree as ET
+
+        content = b"".join(response.streaming_content).decode("utf-8")
+        return ET.fromstring(content), content
+
+    def test_authentication_required(self):
+        """Test that anonymous users cannot access the export."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)  # Redirect to login
+
+    def test_basic_export_headers(self):
+        """Test that authenticated users get correct content type and headers."""
+        self.client.login(username="testuser", password="testpass")
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/xml; charset=utf-8")
+        self.assertIn("attachment; filename=", response["Content-Disposition"])
+        self.assertIn("pebbling_club_bookmarks_", response["Content-Disposition"])
+        self.assertIn(".opml", response["Content-Disposition"])
+
+    def test_empty_export_structure(self):
+        """Test the basic OPML structure when no bookmarks exist."""
+        self.client.login(username="testuser", password="testpass")
+        response = self.client.get(self.url)
+        root, content = self.parse_opml_response(response)
+
+        # Check XML declaration in raw content (XMLGenerator uses lowercase encoding)
+        self.assertTrue(
+            content.startswith('<?xml version="1.0" encoding="UTF-8"?>')
+            or content.startswith('<?xml version="1.0" encoding="utf-8"?>')
+        )
+
+        # Check root element and version
+        self.assertEqual(root.tag, "opml")
+        self.assertEqual(root.get("version"), "2.0")
+
+        # Check head structure
+        head = root.find("head")
+        self.assertIsNotNone(head)
+
+        # Check metadata elements
+        title_elem = head.find("title")
+        self.assertIsNotNone(title_elem)
+        self.assertEqual(title_elem.text, "testuser's Pebbling Club Bookmarks")
+
+        owner_elem = head.find("ownerName")
+        self.assertIsNotNone(owner_elem)
+        self.assertEqual(owner_elem.text, "testuser")
+
+        docs_elem = head.find("docs")
+        self.assertIsNotNone(docs_elem)
+        self.assertEqual(docs_elem.text, "http://opml.org/spec2.opml")
+
+        # Check date elements exist (don't check exact values since they're timestamps)
+        self.assertIsNotNone(head.find("dateCreated"))
+        self.assertIsNotNone(head.find("dateModified"))
+
+        # Check body exists (empty for no bookmarks)
+        body = root.find("body")
+        self.assertIsNotNone(body)
+
+        # Should have no outline elements
+        outlines = body.findall("outline")
+        self.assertEqual(len(outlines), 0)
+
+    def test_single_bookmark_export(self):
+        """Test exporting a single bookmark."""
+        self.client.login(username="testuser", password="testpass")
+        bookmark = Bookmark.objects.create(
+            owner=self.user,
+            url="https://example.com",
+            title="Example Site",
+            description="A test bookmark",
+        )
+
+        response = self.client.get(self.url)
+        root, content = self.parse_opml_response(response)
+
+        # Check body has one outline element
+        body = root.find("body")
+        outlines = body.findall("outline")
+        self.assertEqual(len(outlines), 1)
+
+        # Check outline attributes
+        outline = outlines[0]
+        self.assertEqual(outline.get("text"), "Example Site")
+        self.assertEqual(outline.get("type"), "link")
+        self.assertEqual(outline.get("url"), "https://example.com")
+        self.assertEqual(outline.get("_note"), "A test bookmark")
+
+        # Check that created date exists
+        self.assertIsNotNone(outline.get("created"))
+
+    def test_xml_escaping(self):
+        """Test that XML special characters are properly escaped."""
+        self.client.login(username="testuser", password="testpass")
+        bookmark = Bookmark.objects.create(
+            owner=self.user,
+            url="https://example.com?foo=bar&baz=qux",
+            title='Test <b>Bold</b> & "Quotes"',
+            description='Description with <script>alert("xss")</script>',
+        )
+
+        response = self.client.get(self.url)
+        root, content = self.parse_opml_response(response)
+
+        # Get the outline element
+        body = root.find("body")
+        outline = body.find("outline")
+
+        # XML parser automatically unescapes, so we check the actual values
+        self.assertEqual(outline.get("url"), "https://example.com?foo=bar&baz=qux")
+        self.assertEqual(outline.get("text"), 'Test <b>Bold</b> & "Quotes"')
+        self.assertEqual(
+            outline.get("_note"), 'Description with <script>alert("xss")</script>'
+        )
+
+        # Verify that the raw XML content is properly escaped (XMLGenerator handles this)
+        self.assertIn("&amp;", content)  # & should be escaped
+        self.assertIn("&lt;", content)  # < should be escaped
+
+    def test_bookmark_with_tags(self):
+        """Test exporting bookmarks with tags as categories."""
+        self.client.login(username="testuser", password="testpass")
+        bookmark = Bookmark.objects.create(
+            owner=self.user,
+            url="https://example.com",
+            title="Example",
+        )
+        tag1 = Tag.objects.create(name="python", owner=self.user)
+        tag2 = Tag.objects.create(name="web", owner=self.user)
+        bookmark.tags.add(tag1, tag2)
+
+        response = self.client.get(self.url)
+        root, content = self.parse_opml_response(response)
+
+        # Get the outline element
+        body = root.find("body")
+        outline = body.find("outline")
+
+        # Check that tags are exported as categories
+        category = outline.get("category")
+        self.assertIsNotNone(category)
+        # Tags could be in any order
+        self.assertTrue(category == "python,web" or category == "web,python")
+
+    def test_date_formatting(self):
+        """Test that dates are formatted correctly for OPML."""
+        self.client.login(username="testuser", password="testpass")
+        bookmark = Bookmark.objects.create(
+            owner=self.user,
+            url="https://example.com",
+            title="Example",
+        )
+
+        response = self.client.get(self.url)
+        root, content = self.parse_opml_response(response)
+
+        # Get the outline element
+        body = root.find("body")
+        outline = body.find("outline")
+
+        # Check date format (RFC 822)
+        import re
+
+        created = outline.get("created")
+        self.assertIsNotNone(created)
+
+        date_pattern = r"[A-Za-z]{3}, \d{2} [A-Za-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT"
+        self.assertTrue(re.match(date_pattern, created))
+
+    def test_opml_filter_by_tags(self):
+        """Test filtering OPML export by tags."""
+        self.client.login(username="testuser", password="testpass")
+
+        # Create bookmarks with different tags
+        bookmark1 = Bookmark.objects.create(
+            owner=self.user, url="https://example1.com", title="Python Bookmark"
+        )
+        tag_python = Tag.objects.create(name="python", owner=self.user)
+        bookmark1.tags.add(tag_python)
+
+        bookmark2 = Bookmark.objects.create(
+            owner=self.user, url="https://example2.com", title="Django Bookmark"
+        )
+        tag_django = Tag.objects.create(name="django", owner=self.user)
+        bookmark2.tags.add(tag_django)
+
+        # Export only python tagged bookmarks
+        response = self.client.get(self.url + "?tag=python")
+        root, content = self.parse_opml_response(response)
+
+        # Should have only one outline
+        body = root.find("body")
+        outlines = body.findall("outline")
+        self.assertEqual(len(outlines), 1)
+
+        # Check it's the python bookmark
+        outline = outlines[0]
+        self.assertEqual(outline.get("text"), "Python Bookmark")
+        self.assertEqual(outline.get("url"), "https://example1.com")
+
+    def test_opml_limit_parameter(self):
+        """Test limiting the number of bookmarks in OPML export."""
+        self.client.login(username="testuser", password="testpass")
+
+        # Create multiple bookmarks
+        for i in range(5):
+            Bookmark.objects.create(
+                owner=self.user,
+                url=f"https://example{i}.com",
+                title=f"Bookmark {i}",
+            )
+
+        response = self.client.get(self.url + "?limit=2")
+        root, content = self.parse_opml_response(response)
+
+        # Should have exactly 2 outline elements
+        body = root.find("body")
+        outlines = body.findall("outline")
+        self.assertEqual(len(outlines), 2)
+
+
+class OPMLBookmarkExporterUnitTest(TestCase):
+    """Unit tests for the OPMLBookmarkExporter class."""
+
+    def setUp(self):
+        from pebbling_apps.bookmarks.exporters import OPMLBookmarkExporter
+
+        self.exporter = OPMLBookmarkExporter()
+        self.user = User.objects.create_user(username="testuser", password="testpass")
+
+    def parse_outline_xml(self, xml_string):
+        """Helper method to parse an outline XML string."""
+        import xml.etree.ElementTree as ET
+
+        # Wrap in root element to make it valid XML
+        wrapped = f"<root>{xml_string}</root>"
+        root = ET.fromstring(wrapped)
+        return root.find("outline")
+
+    def test_format_bookmark_xml_escaping(self):
+        """Test that XML special characters are properly escaped in bookmark formatting."""
+        # Create a bookmark with special characters that need escaping
+        bookmark = Bookmark.objects.create(
+            owner=self.user,
+            url='https://example.com?foo=bar&baz=qux&test="value"',
+            title="Test <b>Bold</b> & \"Quotes\" & 'Apostrophe'",
+            description='Description with <script>alert("xss")</script> & more',
+        )
+
+        # Add tags with special characters
+        tag1 = Tag.objects.create(name="python & django", owner=self.user)
+        tag2 = Tag.objects.create(name="<web>", owner=self.user)
+        bookmark.tags.add(tag1, tag2)
+
+        # Format the bookmark
+        result = self.exporter.format_bookmark(bookmark)
+
+        # Parse the result as XML
+        outline = self.parse_outline_xml(result)
+        self.assertIsNotNone(outline)
+
+        # Check that values are correctly unescaped by the XML parser
+        self.assertEqual(
+            outline.get("url"), 'https://example.com?foo=bar&baz=qux&test="value"'
+        )
+        self.assertEqual(
+            outline.get("text"), "Test <b>Bold</b> & \"Quotes\" & 'Apostrophe'"
+        )
+        self.assertEqual(
+            outline.get("_note"),
+            'Description with <script>alert("xss")</script> & more',
+        )
+
+        # Check tags (order might vary)
+        category = outline.get("category")
+        self.assertTrue("python & django" in category and "<web>" in category)
+
+    def test_format_bookmark_with_feed_url(self):
+        """Test that feed URLs from unfurl metadata are properly handled."""
+        bookmark = Bookmark.objects.create(
+            owner=self.user,
+            url="https://blog.example.com",
+            title="Blog with Feed",
+            unfurl_metadata='{"feed": "https://blog.example.com/rss.xml"}',
+        )
+
+        result = self.exporter.format_bookmark(bookmark)
+
+        # Check that feed URL is included and type is changed to rss
+        self.assertIn('xmlUrl="https://blog.example.com/rss.xml"', result)
+        self.assertIn('type="rss"', result)
+
+    def test_format_bookmark_minimal(self):
+        """Test formatting a bookmark with minimal data."""
+        bookmark = Bookmark.objects.create(
+            owner=self.user,
+            url="https://minimal.example.com",
+            title="",  # Empty title to test "Untitled" fallback
+            description=None,  # No description
+        )
+
+        result = self.exporter.format_bookmark(bookmark)
+
+        # Check that it uses "Untitled" for missing title
+        self.assertIn('text="Untitled"', result)
+        self.assertIn('url="https://minimal.example.com"', result)
+        self.assertIn('type="link"', result)
+
+        # Should not have _note attribute if no description
+        self.assertNotIn("_note=", result)
+
+    def test_format_bookmark_no_url(self):
+        """Test that bookmarks without URLs return empty string."""
+        bookmark = Bookmark.objects.create(
+            owner=self.user,
+            url="",  # Empty URL
+            title="No URL Bookmark",
+        )
+
+        result = self.exporter.format_bookmark(bookmark)
+
+        # Should return empty string for bookmarks without URLs
+        self.assertEqual(result, "")
