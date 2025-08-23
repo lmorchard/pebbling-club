@@ -42,7 +42,7 @@ cleanup() {
     
     # Stop the docker containers
     echo -e "${YELLOW}Stopping Docker containers...${NC}"
-    docker-compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" down
+    docker compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" down
     
     echo -e "${GREEN}✅ Cleanup complete. Goodbye!${NC}"
     exit $exit_code
@@ -69,14 +69,14 @@ echo -e "${YELLOW}📦 Syncing Python dependencies with uv...${NC}"
 uv sync
 
 echo -e "${YELLOW}📦 Starting infrastructure services (PostgreSQL + Redis + Nginx)...${NC}"
-docker-compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" build
-docker-compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" up -d
+docker compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" build
+docker compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" up -d
 
 echo -e "${YELLOW}⏳ Waiting for services to be ready...${NC}"
 
 # Wait for PostgreSQL
 echo -n "Waiting for PostgreSQL"
-until docker-compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" exec -T postgres pg_isready -U pebbling -d pebbling_club > /dev/null 2>&1; do
+until docker compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" exec -T postgres pg_isready -U pebbling -d pebbling_club > /dev/null 2>&1; do
     echo -n "."
     sleep 1
 done
@@ -84,7 +84,7 @@ echo -e " ${GREEN}✓${NC}"
 
 # Wait for Redis
 echo -n "Waiting for Redis"
-until docker-compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" exec -T redis redis-cli ping > /dev/null 2>&1; do
+until docker compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" exec -T redis redis-cli ping > /dev/null 2>&1; do
     echo -n "."
     sleep 1
 done
@@ -111,7 +111,7 @@ echo -e "${YELLOW}To stop everything: Press Ctrl+C (Docker containers will stop 
 
 # Start Docker logs streaming in background
 echo -e "${YELLOW}🐳 Starting Docker logs streaming...${NC}"
-docker-compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" logs -f --tail=10 &
+docker compose -f "$RELATIVE_SCRIPT_DIR/docker-compose.yml" logs -f --tail=10 &
 DOCKER_LOGS_PID=$!
 
 # Give Docker logs a moment to start
