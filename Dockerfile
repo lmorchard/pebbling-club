@@ -1,0 +1,79 @@
+ARG PYTHON_VERSION=3.13-slim
+
+##########################################################################
+# Frontend build stage
+# We only need Node.js to build the frontend assets
+##########################################################################
+FROM node:22-slim AS frontend-builder
+
+WORKDIR /app
+
+# Copy package files first for better layer caching
+COPY package.json package-lock.json* ./
+
+# Install frontend dependencies
+RUN npm ci
+
+# Copy only frontend source files for building
+COPY frontend/ ./frontend/
+RUN npm run build
+
+##########################################################################
+# Production stage
+# Everything else we need to run a production stack
+##########################################################################
+FROM python:${PYTHON_VERSION}
+
+# Install system dependencies and uv in one layer
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    gcc \
+    python3-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONWARNINGS="ignore::SyntaxWarning" \
+    PYTHONCOMPILED=1 \
+    SECRET_KEY=your-secret-key-here-1234567890 \
+    DEBUG=True \
+    ALLOWED_HOSTS=* \
+    DATA_BASE_DIR=/app/data
+
+# Create user and directories early to avoid cache invalidation
+RUN useradd -ms /bin/bash django && \
+    mkdir -p /app/run /app/static /app/media /app/data
+
+# Copy dependency files first for better caching
+COPY pyproject.toml uv.lock* ./
+
+# Create and activate virtual environment - this layer will only be rebuilt if dependencies change
+RUN uv venv --python=python3.13 && \
+    uv sync --frozen --no-dev
+
+# Now copy application code - this will invalidate cache from this point forward
+COPY --chown=django:django . .
+
+# Copy frontend build artifacts and set permissions in one step
+COPY --from=frontend-builder --chown=django:django /app/frontend/build/ /app/frontend/build/
+
+# Set permissions and collect static files
+RUN chown -R django:django /app/run /app/static /app/media /app/data /app/.venv && \
+    su django -c 'uv run manage.py collectstatic --noinput'
+
+# Set up volumes
+VOLUME ["/app/data", "/app/static", "/app/media"]
+
+# Expose the port the app runs on
+EXPOSE 8001
+
+# Set the default command
+CMD ["/app/.venv/bin/gunicorn", "pebbling.wsgi:application", "--bind", "0.0.0.0:8001", "--workers", "3"]
