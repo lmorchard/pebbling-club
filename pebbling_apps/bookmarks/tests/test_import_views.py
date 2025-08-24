@@ -89,7 +89,7 @@ class ImportSubmitViewTests(TestCase):
         self.client.login(username="testuser", password="testpass123")
 
     @patch("pebbling_apps.bookmarks.tasks.process_import_job")
-    @patch("pebbling_apps.bookmarks.views.save_import_file")
+    @patch("pebbling_apps.bookmarks.views.import_views.save_import_file")
     def test_import_submit_success(self, mock_save_file, mock_task):
         """Test successful import submission."""
         mock_save_file.return_value = "imports/1/test.json"
