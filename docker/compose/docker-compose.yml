@@ -12,6 +12,9 @@ x-django-environment: &django-env
   DJANGO_SQLITE_MULTIPLE_DB: ${DJANGO_SQLITE_MULTIPLE_DB:-false}
   LOG_LEVEL: ${LOG_LEVEL:-INFO}
   ALLOW_USER_REGISTRATION: ${ALLOW_USER_REGISTRATION:-true}
+  # Nginx authentication (use htpasswd to generate hashes)
+  FLOWER_PASSWORD_HASH: ${FLOWER_PASSWORD_HASH:-}
+  METRICS_PASSWORD_HASH: ${METRICS_PASSWORD_HASH:-}
 
 x-django-base: &django-base
   image: lmorchard/pebbling-club:latest
@@ -30,7 +33,7 @@ services:
     image: lmorchard/pebbling-club:latest
     build:
       context: ../../
-      dockerfile: docker/compose/Dockerfile.web
+      dockerfile: docker/compose/Dockerfile
     command: echo "Build complete"
     profiles:
       - build-only
@@ -92,7 +95,7 @@ services:
 
   # Celery Flower (monitoring) - minimal env vars
   celery_flower:
-    image: pebbling-club-django:latest
+    image: lmorchard/pebbling-club:latest
     command: celery -A pebbling flower --port=5555 --url-prefix=flower
     depends_on:
       - redis
@@ -112,21 +115,43 @@ services:
 
   # Nginx web server
   nginx:
-    image: pebbling-club-nginx:latest
-    build:
-      context: ../../
-      dockerfile: docker/compose/Dockerfile.nginx
+    image: nginx:1.25-alpine
     ports:
       - "8000:8000"
     volumes:
       - static_files:/app/static:ro
       - media_files:/app/media:ro
+      - ./docker/compose/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - web
     environment:
-      FLOWER_PASSWORD: ${FLOWER_PASSWORD:-changeme}
-      METRICS_PASSWORD: ${METRICS_PASSWORD:-metricspass}
       FORWARDED_PROTO: ${FORWARDED_PROTO:-http}
+      FLOWER_PASSWORD_HASH: ${FLOWER_PASSWORD_HASH:-}
+      METRICS_PASSWORD_HASH: ${METRICS_PASSWORD_HASH:-}
+    command: |
+      sh -c "
+        # Create htpasswd files from environment variables
+        mkdir -p /etc/nginx
+        
+        if [ -n \"$$FLOWER_PASSWORD_HASH\" ]; then
+          echo \"admin:$$FLOWER_PASSWORD_HASH\" > /etc/nginx/.htpasswd_flower
+          echo '✓ Created Flower authentication for user admin'
+        else
+          echo '⚠️  FLOWER_PASSWORD_HASH not set - Flower UI will be inaccessible'
+          echo 'Generate with: htpasswd -nbB admin your_password'
+        fi
+        
+        if [ -n \"$$METRICS_PASSWORD_HASH\" ]; then
+          echo \"prometheus:$$METRICS_PASSWORD_HASH\" > /etc/nginx/.htpasswd_metrics
+          echo '✓ Created metrics authentication for user prometheus'
+        else
+          echo '⚠️  METRICS_PASSWORD_HASH not set - metrics endpoints will be inaccessible'
+          echo 'Generate with: htpasswd -nbB prometheus your_password'
+        fi
+        
+        # Start nginx
+        exec nginx -g 'daemon off;'
+      "
     restart: unless-stopped
 
 volumes:
