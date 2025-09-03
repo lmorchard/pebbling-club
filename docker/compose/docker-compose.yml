@@ -14,7 +14,7 @@ x-django-environment: &django-env
   ALLOW_USER_REGISTRATION: ${ALLOW_USER_REGISTRATION:-true}
 
 x-django-base: &django-base
-  image: pebbling-club-django:latest
+  image: lmorchard/pebbling-club:latest
   environment:
     <<: *django-env
   restart: unless-stopped
@@ -27,7 +27,7 @@ x-django-base: &django-base
 services:
   # This service is only for building the image
   django-builder:
-    image: pebbling-club-django:latest
+    image: lmorchard/pebbling-club:latest
     build:
       context: ../../
       dockerfile: docker/compose/Dockerfile.web
