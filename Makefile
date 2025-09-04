@@ -197,6 +197,3 @@ docker_compose_shell:
 docker_compose_django_command:
 	docker-compose -f docker/compose/docker-compose.yml exec web python manage.py $(cmd)
 
-# Migrate PostgreSQL data from Docker volume to host directory
-docker_compose_migrate_postgres_volume:
-	./docker/compose/migrate-postgres-volume.sh
